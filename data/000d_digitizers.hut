@@ -52,4 +52,8 @@
 53	Device Index
 54	Contact Count
 55	Contact Max
-56-FFFF	Reserved
+56	Scan Time
+57	Surface Switch
+58	Button Switch
+59	Button Type
+5A-FFFF	Reserved
