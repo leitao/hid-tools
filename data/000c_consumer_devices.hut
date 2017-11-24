@@ -43,7 +43,14 @@
 6C	Yellow Menu Button
 6D	Aspect
 6E	3D Mode Select
-6F-7F	Reserved
+6F	Display Brightness Increment
+70	Display Brightness Decrement
+71	Display Brightness
+72	Display Backlight Toggle
+73	Display Set Brightness to Minimum
+74	Display Set Brightness to Maximum
+75	Display Set Auto Brightness
+76-7F	Reserved
 80	Selection
 81	Assign Selection
 82	Mode Step
