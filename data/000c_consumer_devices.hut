@@ -121,7 +121,15 @@ CC	Stop/Eject
 CD	Play/Pause
 CE	Play/Skip
 CF	Voice Command
-D0-DF	Reserved
+D0	Invoke Capture Interface
+D1	Start or Stop Game Recording
+D2	Historical Game Capture
+D3	Capture Game Screenshot
+D4	Show or Hide Recording Indicator
+D5	Start or Stop Microphone Capture
+D6	Start or Stop Camera Capture
+D7	Start or Stop Game Broadcast
+D8-DF	Reserved
 E0	Volume
 E1	Balance
 E2	Mute
