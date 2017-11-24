@@ -88,4 +88,6 @@ C5	Chassis Enclosure
 C6	Wireless Radio Button
 C7	Wireless Radio LED
 C8	Wireless Radio Slider Switch
-C9-FFFF	Reserved
+C9-CA	Reserved
+CB	Control Enable
+CC-FFFF	Reserved
