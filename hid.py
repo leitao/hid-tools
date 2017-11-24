@@ -1,7 +1,7 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Hid replay / hid.py: table of hid usages and definitions
+# Hid tools / hid.py: table of hid usages and definitions
 #
 # Copyright (c) 2012-2017 Benjamin Tissoires <benjamin.tissoires@gmail.com>
 # Copyright (c) 2012-2017 Red Hat, Inc.
