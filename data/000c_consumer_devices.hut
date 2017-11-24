@@ -35,7 +35,9 @@
 64	Broadcast Mode
 65	Snapshot
 66	Still
-67-7F	Reserved
+67	Picture-in-Picture Toggle
+68	Picture-in-Picture Swap
+69-7F	Reserved
 80	Selection
 81	Assign Selection
 82	Mode Step
