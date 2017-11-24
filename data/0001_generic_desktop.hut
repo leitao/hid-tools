@@ -14,7 +14,8 @@
 0C	Wireless Radio Controls
 0D	Portable Device Control
 0E	System Multi-Axis Controller
-0F-2F	Reserved
+0F	Spatial Controller
+10-2F	Reserved
 30	X
 31	Y
 32	Z
@@ -40,7 +41,11 @@
 46	Vno
 47	Feature
 48	Resolution Multiplier
-49-7F	Reserved
+49	Qx
+4A	Qy
+4B	Qz
+4C	Qw
+4D-7F	Reserved
 80	System Control
 81	System Power Down
 82	System Sleep
@@ -61,7 +66,10 @@
 91	D-Pad Down
 92	D-Pad Right
 93	D-Pad Left
-94-9F	Reserved
+94	Index Trigger
+95	Palm Trigger
+96	Thumbstick
+97-9F	Reserved
 A0	System Dock
 A1	System UnDock
 A2	System Setup
