@@ -50,7 +50,10 @@
 73	Display Set Brightness to Minimum
 74	Display Set Brightness to Maximum
 75	Display Set Auto Brightness
-76-7F	Reserved
+76	Camera Access Enabled
+77	Camera Access Disabled
+78	Camera Access Toggle
+79-7F	Reserved
 80	Selection
 81	Assign Selection
 82	Mode Step
