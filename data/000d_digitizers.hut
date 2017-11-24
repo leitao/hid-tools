@@ -42,4 +42,7 @@
 44	Barrel Switch
 45	Eraser
 46	Tablet Pick
-47-FFFF	Reserved
+47	Confidence
+48	Width
+49	Height
+4A-FFFF	Reserved
