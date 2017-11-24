@@ -89,6 +89,7 @@ C5	Chassis Enclosure
 C6	Wireless Radio Button
 C7	Wireless Radio LED
 C8	Wireless Radio Slider Switch
-C9-CA	Reserved
+C9	System Display Rotation Lock Button
+CA	System Display Rotation Lock Slider Switch
 CB	Control Enable
 CC-FFFF	Reserved
