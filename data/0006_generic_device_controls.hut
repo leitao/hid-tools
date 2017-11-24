@@ -12,4 +12,10 @@
 27	Sequence ID
 28	Sequence ID Reset
 29	RF Signal Strength
-2A-FFFF	Reserved
+2A	Software Version
+2B	Protocol Version
+2C	Hardware Version
+2D	Major
+2E	Minor
+2F	Revision
+30-FFFF	Reserved
