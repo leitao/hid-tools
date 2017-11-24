@@ -117,6 +117,8 @@ E4-0199	Reserved
 0314	Property: Maximum
 0315	Property: Minimum
 0316	Property: Reporting State
+031A	Property: Maximum FIFO Events
+031B	Property: Report Latency
 031A-03FF	Reserved
 
 0400	Data Field: Location
