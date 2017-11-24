@@ -87,3 +87,14 @@
 55	Blue LEDChannel
 56	LEDIntensity
 57-FFFF	Reserved
+57-5F	Reserved
+60	Player Indicator
+61	Player 1
+62	Player 2
+63	Player 3
+64	Player 4
+65	Player 5
+66	Player 6
+67	Player 7
+68	Player 8
+69-FFFF	Reserved
