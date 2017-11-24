@@ -12,7 +12,8 @@
 0A	Water Cooling Device
 0B	Computer Chassis Device
 0C	Wireless Radio Controls
-0D-2F	Reserved
+0D	Portable Device Control
+0E-2F	Reserved
 30	X
 31	Y
 32	Z
