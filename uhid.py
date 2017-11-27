@@ -66,10 +66,13 @@ class UHIDDevice(object):
         self._rdesc = None
         self._info = None
         self._fd = os.open('/dev/uhid', os.O_RDWR)
+        self.start = self._start
+        self.stop = self._stop
+        self.open = self._open
+        self.close = self._close
         self.set_report = self._set_report
         self.get_report = self._get_report
         self.output_report = self._output_report
-        self.opened = False
         self._udev = None
         self.uniq = f'uhid_{str(uuid.uuid4())}'
         UHIDDevice.poll.register(self._fd)
@@ -123,31 +126,12 @@ class UHIDDevice(object):
     def pid(self):
         return self._info[2]
 
-    @property
-    def set_report(self):
-        return self._set_report_fun
-
-    @set_report.setter
-    def set_report(self, set_report):
-        self._set_report_fun = set_report
-
     def call_set_report(self, req, err):
         buf = struct.pack('< L L H',
                           UHIDDevice.UHID_SET_REPORT_REPLY,
                           req,
                           err)
         os.write(self._fd, buf)
-
-    def _set_report(self, req, rnum, rtype, size, data):
-        self.call_set_report(req, 1)
-
-    @property
-    def get_report(self):
-        return self._get_report_fun
-
-    @get_report.setter
-    def get_report(self, get_report):
-        self._get_report_fun = get_report
 
     def call_get_report(self, req, data, err):
         data = bytes(data)
@@ -159,19 +143,61 @@ class UHIDDevice(object):
                           data)
         os.write(self._fd, buf)
 
-    def _get_report(self, req, rnum, rtype):
-        self.call_get_report(req, [], 1)
+    @property
+    def set_report(self):
+        return self._set_report_fun
+
+    @set_report.setter
+    def set_report(self, fun):
+        self._set_report_fun = fun
+
+    @property
+    def get_report(self):
+        return self._get_report_fun
+
+    @get_report.setter
+    def get_report(self, get_report):
+        self._get_report_fun = get_report
 
     @property
     def output_report(self):
         return self._output_report_fun
 
     @output_report.setter
-    def output_report(self, output_report):
-        self._output_report_fun = output_report
+    def output_report(self, fun):
+        self._output_report_fun = fun
 
-    def _output_report(self, data, size, rtype):
-        pass
+    @property
+    def start(self):
+        return self._start_fun
+
+    @start.setter
+    def start(self, fun):
+        self._start_fun = fun
+
+    @property
+    def stop(self):
+        return self._stop_fun
+
+    @stop.setter
+    def stop(self, fun):
+        self._stop_fun = fun
+
+    @property
+    def open(self):
+        return self._open_fun
+
+    @open.setter
+    def open(self, fun):
+        self._open_fun = fun
+
+    @property
+    def close(self):
+        return self._close_fun
+
+    @close.setter
+    def close(self, fun):
+        self._close_fun = fun
 
     def call_input_event(self, data):
         data = bytes(data)
@@ -222,29 +248,48 @@ class UHIDDevice(object):
         os.write(self._fd, buf)
         UHIDDevice.poll.unregister(self._fd)
 
+    def _start(self, flags):
+        print('start')
+
+    def _stop(self):
+        print('stop')
+
+    def _open(self):
+        print('open', self.sys_path)
+
+    def _close(self):
+        print('close')
+
+    def _set_report(self, req, rnum, rtype, size, data):
+        print('set report', req, rtype, size, [f'{d:02x}' for d in data[:size]])
+        self.call_set_report(req, 1)
+
+    def _get_report(self, req, rnum, rtype):
+        print('get report', req, rnum, rtype)
+        self.call_get_report(req, [], 1)
+
+    def _output_report(self, data, size, rtype):
+        print('output', rtype, size, [f'{d:02x}' for d in data[:size]])
+
     def _process_one_event(self):
         buf = os.read(self._fd, 4380)
         assert len(buf) == 4380
         evtype = struct.unpack_from('< L', buf)[0]
         if evtype == UHIDDevice.UHID_START:
             ev, flags = struct.unpack_from('< L Q', buf)
+            self.start(flags)
         elif evtype == UHIDDevice.UHID_OPEN:
-            self.opened = True
-            print('open', self.sys_path)
+            self.open()
         elif evtype == UHIDDevice.UHID_STOP:
-            print('stop')
+            self.stop()
         elif evtype == UHIDDevice.UHID_CLOSE:
-            self.opened = False
-            print('close')
+            self.close()
         elif evtype == UHIDDevice.UHID_SET_REPORT:
             ev, req, rnum, rtype, size, data = struct.unpack_from('< L L B B H 4096s', buf)
             self.set_report(req, rnum, rtype, size, data)
-            print('set report', req, rtype, size, [f'{d:02x}' for d in data[:size]])
         elif evtype == UHIDDevice.UHID_GET_REPORT:
             ev, req, rnum, rtype = struct.unpack_from('< L L B B', buf)
             self.get_report(req, rnum, rtype)
-            print('get report', req, rnum, rtype)
         elif evtype == UHIDDevice.UHID_OUTPUT:
             ev, data, size, rtype = struct.unpack_from('< L 4096s H B', buf)
             self.output_report(data, size, rtype)
-            print('output', rtype, size, [f'{d:02x}' for d in data[:size]])
