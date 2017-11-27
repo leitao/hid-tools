@@ -53,9 +53,9 @@ class UHIDDevice(object):
         self._rdesc = None
         self._info = None
         self._fd = os.open('/dev/uhid', os.O_RDWR)
-        self._set_report_fun = self._set_report
-        self._get_report_fun = self._get_report
-        self._output_report_fun = self._output_report
+        self.set_report = self._set_report
+        self.get_report = self._get_report
+        self.output_report = self._output_report
         self.opened = False
         self._udev = None
         self.uniq = f'uhid_{str(uuid.uuid4())}'
