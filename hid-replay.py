@@ -114,6 +114,8 @@ def main(argv):
         print('Hit enter (re)start replaying the events')
         sys.stdin.readline()
         replay.inject_events()
+    except KeyboardInterrupt:
+        pass
     finally:
         replay.destroy()
 
