@@ -21,7 +21,9 @@
 #
 
 import os
+import pyudev
 import struct
+import uuid
 
 
 class UHIDUncompleteException(Exception):
@@ -55,6 +57,8 @@ class UHIDDevice(object):
         self._get_report_fun = self._get_report
         self._output_report_fun = self._output_report
         self.opened = False
+        self._udev = None
+        self.uniq = f'uhid_{str(uuid.uuid4())}'
 
     @property
     def fd(self):
@@ -162,6 +166,19 @@ class UHIDDevice(object):
                           data)
         os.write(self._fd, buf)
 
+    @property
+    def udev(self):
+        if self._udev is None:
+            context = pyudev.Context()
+            for device in context.list_devices(subsystem='hid'):
+                if self.uniq == device.properties['HID_UNIQ']:
+                    self._udev = device
+        return self._udev
+
+    @property
+    def sys_path(self):
+        return self.udev.sys_path
+
     def create_kernel_device(self):
         if (self._name is None or
            self._rdesc is None or
@@ -172,7 +189,7 @@ class UHIDDevice(object):
                           UHIDDevice.UHID_CREATE2,
                           bytes(self._name, 'utf-8'),  # name
                           bytes(self._phys, 'utf-8'),  # phys
-                          b'',  # uniq
+                          bytes(self.uniq, 'utf-8'),  # uniq
                           len(self._rdesc),  # rd_size
                           self.bus,  # bus
                           self.vid,  # vendor
@@ -197,7 +214,7 @@ class UHIDDevice(object):
             ev, flags = struct.unpack_from('< L Q', buf)
         elif evtype == UHIDDevice.UHID_OPEN:
             self.opened = True
-            print('open')
+            print('open', self.sys_path)
         elif evtype == UHIDDevice.UHID_STOP:
             print('stop')
         elif evtype == UHIDDevice.UHID_CLOSE:
