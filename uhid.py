@@ -206,7 +206,7 @@ class UHIDDevice(object):
         elif evtype == UHIDDevice.UHID_SET_REPORT:
             ev, req, rnum, rtype, size, data = struct.unpack_from('< L L B B H 4096s', buf)
             self.set_report(req, rnum, rtype, size, data)
-            print('set report', req, rtype, size, data[:size])
+            print('set report', req, rtype, size, [f'{d:02x}' for d in data[:size]])
         elif evtype == UHIDDevice.UHID_GET_REPORT:
             ev, req, rnum, rtype = struct.unpack_from('< L L B B', buf)
             self.get_report(req, rnum, rtype)
@@ -214,4 +214,4 @@ class UHIDDevice(object):
         elif evtype == UHIDDevice.UHID_OUTPUT:
             ev, data, size, rtype = struct.unpack_from('< L 4096s H B', buf)
             self.output_report(data, size, rtype)
-            print('output', data[:size], size, rtype)
+            print('output', rtype, size, [f'{d:02x}' for d in data[:size]])
