@@ -22,6 +22,7 @@
 
 import os
 import pyudev
+import select
 import struct
 import uuid
 
@@ -47,6 +48,18 @@ class UHIDDevice(object):
     UHID_SET_REPORT = 13
     UHID_SET_REPORT_REPLY = 14
 
+    devices = {}
+    poll = select.poll()
+
+    @classmethod
+    def process_one_event(cls, timeout=None):
+        devices = cls.poll.poll(timeout)
+        if len(devices) > 0:
+            fd, mask = devices[0]
+            dev = cls.devices[fd]
+            dev._process_one_event()
+        return len(devices)
+
     def __init__(self):
         self._name = None
         self._phys = ''
@@ -59,6 +72,8 @@ class UHIDDevice(object):
         self.opened = False
         self._udev = None
         self.uniq = f'uhid_{str(uuid.uuid4())}'
+        UHIDDevice.poll.register(self._fd)
+        UHIDDevice.devices[self._fd] = self
 
     @property
     def fd(self):
@@ -205,8 +220,9 @@ class UHIDDevice(object):
         buf = struct.pack('< L',
                           UHIDDevice.UHID_DESTROY)
         os.write(self._fd, buf)
+        UHIDDevice.poll.unregister(self._fd)
 
-    def process_one_event(self):
+    def _process_one_event(self):
         buf = os.read(self._fd, 4380)
         assert len(buf) == 4380
         evtype = struct.unpack_from('< L', buf)[0]

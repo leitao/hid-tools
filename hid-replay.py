@@ -21,7 +21,6 @@
 #
 
 from datetime import datetime, timedelta
-import select
 import sys
 import time
 import uhid
@@ -30,7 +29,6 @@ import uhid
 class HIDReplay(object):
     def __init__(self, filename):
         self._devices = {}
-        self._devices_fd = {}
         self.filename = filename
         with open(filename) as f:
             idx = 0
@@ -65,18 +63,8 @@ class HIDReplay(object):
                     assert int(length) == len(rdesc)
                     dev.rdesc = rdesc
 
-        self.poll = select.poll()
         for d in self._devices.values():
             d.create_kernel_device()
-            self.poll.register(d.fd)
-            self._devices_fd[d.fd] = d
-
-    def process_one_event(self, timeout=None):
-        devices = self.poll.poll(timeout)
-        for fd, mask in devices:
-            dev = self._devices_fd[fd]
-            dev.process_one_event()
-        return len(devices)
 
     def destroy(self):
         for d in self._devices.values():
@@ -121,7 +109,7 @@ class HIDReplay(object):
 def main(argv):
     try:
         replay = HIDReplay(argv[0])
-        while replay.process_one_event(1000):
+        while uhid.UHIDDevice.process_one_event(1000):
             pass
         print('Hit enter (re)start replaying the events')
         sys.stdin.readline()
