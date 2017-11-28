@@ -78,6 +78,13 @@ class UHIDDevice(object):
         UHIDDevice.poll.register(self._fd)
         UHIDDevice.devices[self._fd] = self
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc_details):
+        UHIDDevice.poll.unregister(self._fd)
+        os.close(self._fd)
+
     @property
     def fd(self):
         return self._fd
@@ -190,7 +197,6 @@ class UHIDDevice(object):
         buf = struct.pack('< L',
                           UHIDDevice.UHID_DESTROY)
         os.write(self._fd, buf)
-        UHIDDevice.poll.unregister(self._fd)
 
     def start(self, flags):
         print('start')
