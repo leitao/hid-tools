@@ -55,7 +55,8 @@ def parse():
             with open(os.path.join(DATA_DIR, filename), 'r') as f:
                 try:
                     idx, name, usages_list = parse_usages(f.readlines())
-                    usages[idx] = (name, filename, usages_list)
+                    inv_usages_list = dict([(v, k) for k, v, in usages_list.items()])
+                    usages[idx] = (name, filename, usages_list, inv_usages_list)
                 except:
                     print(filename)
                     raise

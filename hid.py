@@ -97,7 +97,7 @@ usages = parse_hut.parse()
 usage_pages = {}
 inv_usage_pages = {}
 inv_usages = {}
-for usage, (name, filename, usage_list) in usages.items():
+for usage, (name, filename, usage_list, inv_usages_list) in usages.items():
     inv_usage_pages[usage] = name
     usage_pages[name] = usage
     for k, v in list(usage_list.items()):
