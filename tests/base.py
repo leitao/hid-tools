@@ -128,4 +128,5 @@ def main(argv):
 
 if __name__ == '__main__':
     from mouse import *  # noqa
+    from multitouch import *  # noqa
     main(sys.argv[1:])
