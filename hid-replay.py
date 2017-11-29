@@ -24,6 +24,7 @@ from datetime import datetime, timedelta
 import sys
 import time
 import uhid
+from parse import parse, findall
 
 
 class HIDReplay(object):
@@ -32,36 +33,35 @@ class HIDReplay(object):
         self.filename = filename
         with open(filename) as f:
             idx = 0
-            name = None
-            rdesc = None
-            phys = None
-            info = None
             for l in f.readlines():
+                l = l.strip()
                 if l.startswith('D:'):
-                    idx = int(l.split(' ')[1])
-                    name = None
-                    rdesc = None
-                    phys = None
-                    info = None
+                    r = parse('D: {idx:d}', l)
+                    assert r is not None
+                    idx = r['idx']
                     continue
                 if idx not in self._devices:
                     self._devices[idx] = uhid.UHIDDevice()
                 dev = self._devices[idx]
                 if l.startswith('N:'):
-                    name = l.split(' ', 1)[1].strip()
-                    dev.name = name
+                    r = parse('N: {name}', l)
+                    assert r is not None
+                    dev.name = r['name']
                 elif l.startswith('I:'):
-                    bus, vid, pid = l.split(' ')[1:]
-                    info = [int(i, 16) for i in (bus, vid, pid)]
-                    dev.info = info
+                    r = parse('I: {bus:x} {vid:x} {pid:x}', l)
+                    assert r is not None
+                    dev.info = [r['bus'], r['vid'], r['pid']]
                 elif l.startswith('P:'):
-                    phys = l.split(' ', 1)[1].strip()
-                    dev.phys = phys
+                    r = parse('P: {phys}', l)
+                    if r is not None:
+                        dev.phys = r['phys']
                 elif l.startswith('R:'):
-                    length, rdesc = l.split(' ', 2)[1:]
-                    rdesc = [int(r, 16) for r in rdesc.split()]
-                    assert int(length) == len(rdesc)
-                    dev.rdesc = rdesc
+                    r = parse('R: {length:d} {desc}', l)
+                    assert r is not None
+                    length = r['length']
+                    r = findall(' {:x}', " " + r['desc'])
+                    dev.rdesc = [x[0] for x in r]
+                    assert len(dev.rdesc) == length
 
         for d in self._devices.values():
             d.create_kernel_device()
@@ -80,13 +80,16 @@ class HIDReplay(object):
                 dev = self._devices[idx]
             for l in f.readlines():
                 if l.startswith('D:'):
-                    idx = int(l.split(' ')[1])
-                    dev = self._devices[idx]
+                    r = parse('D: {idx:d}', l)
+                    assert r is not None
+                    dev = self._devices[r['idx']]
                 elif l.startswith('E:'):
-                    data = l.split(' ', 1)[1]
-                    timestamp, length, data = data.split(' ', 2)
-                    timestamp = float(timestamp)
-                    data = [int(d, 16) for d in data.split()]
+                    r = parse('E: {sec:d}.{usec:d} {len:2d}{data}', l)
+                    assert r is not None
+                    length = r['len']
+                    timestamp = r['sec'] + r['usec']/1000000
+                    r = findall(' {:x}', r['data'])
+                    data = [x[0] for x in r]
                     assert len(data) == int(length)
                     now = datetime.today()
                     if t is None:
