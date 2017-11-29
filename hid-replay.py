@@ -112,15 +112,17 @@ class HIDReplay(object):
 def main(argv):
     try:
         replay = HIDReplay(argv[0])
-        while uhid.UHIDDevice.process_one_event(1000):
+        try:
+            while uhid.UHIDDevice.process_one_event(1000):
+                pass
+            print('Hit enter (re)start replaying the events')
+            sys.stdin.readline()
+            replay.inject_events()
+        except KeyboardInterrupt:
             pass
-        print('Hit enter (re)start replaying the events')
-        sys.stdin.readline()
-        replay.inject_events()
-    except KeyboardInterrupt:
-        pass
-    finally:
         replay.destroy()
+    except PermissionError:
+        print('Insufficient permissions, please run me as root.')
 
 
 if __name__ == '__main__':
