@@ -211,6 +211,13 @@ class Digitizer(base.UHIDTest):
             elif usage.name == 'Contact Max':
                 self.append_logical_min(0, rdesc)
                 self.append_logical_max(self.max_slots, rdesc)
+            elif usage.name == 'Scan Time':
+                self.append_item('Global', 'Unit Exponent', -4, rdesc)
+                self.append_item('Global', 'Unit', 0x1001, rdesc)  # Unit (Seconds,SILinear)
+                self.append_logical_min(usage.min, rdesc)
+                self.append_logical_max(usage.max, rdesc)
+                self.append_physical_min(usage.min, rdesc)
+                self.append_physical_max(usage.max, rdesc)
             else:
                 self.append_logical_min(usage.min, rdesc)
                 self.append_logical_max(usage.max, rdesc)
