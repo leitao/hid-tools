@@ -86,11 +86,11 @@
 95	No Protocol
 96	Wacom AES Protocol
 97	USI Protocol
-98‐9F	Reserved for future transducer protocols
+98-9F	Reserved for future transducer protocols
 A0	Supported Report Rates
 A1	Report Rate
 A2	Transducer Connected
 A3	Switch Disabled
 A4	Switch Unimplemented
 A5	Transducer Switches
-A6‐FFFF	Reserved
+A6-FFFF	Reserved
