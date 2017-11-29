@@ -432,7 +432,7 @@ def dump_rdesc_array(rdesc_item, indent, dump_file):
     return indent
 
 
-def parse_rdesc(rdesc_str, dump_file=None):
+def parse_rdesc(rdesc, dump_file=None):
     """
     Parse the given report descriptor and outputs it to stdout if show is True.
     Returns:
@@ -441,15 +441,15 @@ def parse_rdesc(rdesc_str, dump_file=None):
      - if the multitouch device has been Win 8 certified
     """
 
-    rdesc = [int(r, 16) for r in rdesc_str.split()]
+    if isinstance(rdesc, str):
+        rdesc = [int(r, 16) for r in rdesc.split()[1:]]
 
     rdesc_object = ReportDescriptor()
-    for i in range(1, len(rdesc)):
-        v = rdesc[i]
+    for i, v in enumerate(rdesc):
         if i == len(rdesc) - 1 and v == 0:
             # some device present a trailing 0, skipping it
             break
-        rdesc_object.consume(v, i)
+        rdesc_object.consume(v, i + 1)
 
     rdesc_object.close_rdesc()
 
