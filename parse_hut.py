@@ -21,6 +21,7 @@
 #
 
 import os
+from parse import parse as _parse
 
 DATA_DIRNAME = "data"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -35,16 +36,25 @@ def parse_usages(usage_list):
         if not line:
             continue
         if line.startswith('('):
-            idx, page_name = line.split('\t')
-            idx = int(idx.lstrip('(').rstrip(')'), 16)
+            r = _parse('({idx:x})\t{page_name}', line)
+            assert(r is not None)
+            idx = r['idx']
+            page_name = r['page_name']
             continue
-        usage, name = line.split('\t')
-        if 'reserved' in name.lower():
+
+        r = _parse('{:x}-{:x}\t{name}', line)
+        if r:
+            if not 'reserved' in r['name'].lower():
+                print(line)
             continue
-        if '-' in usage:
-            print(line)
+
+        r = _parse('{usage:x}\t{name}', line)
+        assert r is not None
+        if 'reserved' in r['name'].lower():
             continue
-        usages[int(usage, 16)] = name
+
+        usages[r['usage']] = r['name']
+
     return idx, page_name, usages
 
 
