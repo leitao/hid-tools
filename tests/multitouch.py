@@ -279,8 +279,8 @@ class Digitizer(base.UHIDTest):
         self.contactcount = len(slots)
         for u in self.usages[1][1]:
             self.process_event(slots, u, r)
-        print('r is', r)
         self.call_input_event(r)
+        return r
 
 
 class MinWin8TSParallel(Digitizer):
@@ -333,11 +333,14 @@ class TestMultitouch(unittest.TestCase):
                 uhdev.process_one_event(100)
             t0 = Touch(1, 5, 5)
             t0.tipswitch = 1
-            uhdev.event([t0])
+            print()
+            r = uhdev.event([t0])
+            print('r is', r)
             events = uhdev.next_sync_events()
             print([(e.type_name, e.code_name, e.value) for e in events])
             t0.tipswitch = 0
-            uhdev.event([t0])
+            r = uhdev.event([t0])
+            print('r is', r)
             events = uhdev.next_sync_events()
             print([(e.type_name, e.code_name, e.value) for e in events])
             uhdev.destroy()
