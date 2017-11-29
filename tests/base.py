@@ -79,6 +79,14 @@ class UHIDTest(UHIDDevice):
     def start(self, flags):
         pass
 
+    def stop(self):
+        if self.evdev is not None:
+            self.evdev.fd.close()
+            self.evdev = None
+
+    def get_report(self, req, rnum, rtype):
+        self.call_get_report(req, [], 1)
+
     def next_sync_events(self):
         events = []
         e = self.evdev.next_event()
