@@ -87,8 +87,8 @@ sensor_mods = {
 
 inv_hid = {}
 hid_type = {}
-for type, items in list(hid_items.items()):
-    for k, v in list(items.items()):
+for type, items in hid_items.items():
+    for k, v in items.items():
         inv_hid[v] = k
         hid_type[k] = type
 
@@ -103,4 +103,4 @@ for usage, (name, filename, usage_list, inv_usages_list) in usages.items():
     for k, v in list(usage_list.items()):
         inv_usages[(usage << 16) | k] = v
 
-inv_collections = dict([(v, k) for k, v in list(collections.items())])
+inv_collections = dict([(v, k) for k, v in collections.items()])
