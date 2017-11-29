@@ -162,13 +162,13 @@ class Digitizer(base.UHIDTest):
         self.cur_logical_max = value
 
     def append_physical_min(self, value, rdesc):
-        if value == self.cur_logical_min:
+        if value == self.cur_physical_min:
             return
         self.append_item('Global', 'Physical Minimum', value, rdesc)
         self.cur_physical_min = value
 
     def append_physical_max(self, value, rdesc):
-        if value == self.cur_logical_max:
+        if value == self.cur_physical_max:
             return
         self.append_item('Global', 'Physical Maximum', value, rdesc)
         self.cur_physical_max = value
