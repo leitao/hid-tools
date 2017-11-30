@@ -87,7 +87,7 @@ class HIDReplay(object):
                     r = parse('E: {sec:d}.{usec:d} {len:2d}{data}', l)
                     assert r is not None
                     length = r['len']
-                    timestamp = r['sec'] + r['usec']/1000000
+                    timestamp = r['sec'] + r['usec'] / 1000000
                     r = findall(' {:x}', r['data'])
                     data = [x[0] for x in r]
                     assert len(data) == int(length)

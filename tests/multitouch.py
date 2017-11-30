@@ -294,24 +294,27 @@ class MinWin8TSParallel(Digitizer):
     def __init__(self):
         self.max_slots = 2
         finger_usages = [
-                        InputUsage('Digitizers', 'Tip Switch'),
-                        InputUsage('Digitizers', 'Tip Switch', 7, 'padding'),
-                        InputUsage('Digitizers', 'Contact Id', 8),
-                        InputUsage('Generic Desktop', 'X', 16),
-                        InputUsage('Generic Desktop', 'Y', 16),
-                        ]
+            InputUsage('Digitizers', 'Tip Switch'),
+            InputUsage('Digitizers', 'Tip Switch', 7, 'padding'),
+            InputUsage('Digitizers', 'Contact Id', 8),
+            InputUsage('Generic Desktop', 'X', 16),
+            InputUsage('Generic Desktop', 'Y', 16),
+        ]
         usages = {
-            1: ('Touch Screen', [
-                *([finger_usages] * self.max_slots),
-                InputUsage('Digitizers', 'Scan Time', 16),
-                InputUsage('Digitizers', 'Contact Count', 8),
+            1: ('Touch Screen',
+                [
+                    *([finger_usages] * self.max_slots),
+                    InputUsage('Digitizers', 'Scan Time', 16),
+                    InputUsage('Digitizers', 'Contact Count', 8),
                 ]),
-            2: ('Touch Screen', [
-                FeatureUsage('Digitizers', 'Contact Max', 8),
+            2: ('Touch Screen',
+                [
+                    FeatureUsage('Digitizers', 'Contact Max', 8),
                 ]),
-            68: ('Touch Screen', [
-                Usage(None, 'CertificationBlob', 8),
-                ]),
+            68: ('Touch Screen',
+                 [
+                     Usage(None, 'CertificationBlob', 8),
+                 ]),
         }
         super(MinWin8TSParallel, self).__init__("uhid test simple",
                                                 usages,

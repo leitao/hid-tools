@@ -44,7 +44,7 @@ def parse_usages(usage_list):
 
         r = _parse('{:x}-{:x}\t{name}', line)
         if r:
-            if not 'reserved' in r['name'].lower():
+            if 'reserved' not in r['name'].lower():
                 print(line)
             continue
 

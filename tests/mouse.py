@@ -63,7 +63,7 @@ class Mouse(base.UHIDTest):
             0xc0,        # ...End Collection                    52
             0xc0,        # ..End Collection                     53
             0xc0,        # .End Collection                      54
-            ]
+        ]
         self.create_kernel_device()
 
     def event(self, x, y, buttons=None):

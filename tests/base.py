@@ -63,7 +63,7 @@ class UHIDTest(UHIDDevice):
             devname = c.properties['DEVNAME']
             if devname.startswith('/dev/input/event'):
                 self.evdev = libevdev.Libevdev()
-                self.evdev.fd = open(devname,  'rb')
+                self.evdev.fd = open(devname, 'rb')
                 fd = self.evdev.fd.fileno()
                 flag = fcntl.fcntl(fd, fcntl.F_GETFD)
                 fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
