@@ -191,7 +191,7 @@ class ReportDescriptor(object):
             self.count = value
         elif item == "Report Size":
             self.item_size = value
-        elif item == "Input":  # or item == "Output":
+        elif item == "Input":
             # if self.logical_min > self.logical_max:
             #     self.logical_min = self.logical_min_item.twos_comp()
             #     self.logical_max = self.logical_max_item.twos_comp()
@@ -243,6 +243,8 @@ class ReportDescriptor(object):
         elif item == "Feature":
             if len(self.usage) > 0 and self.usage[-1] == 0xff0000c5:
                 self.win8 = True
+            self.usage = []
+        elif item == "Output":
             self.usage = []
 
     def dump(self, dump_file):
