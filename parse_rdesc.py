@@ -433,8 +433,8 @@ class ReportDescriptor(object):
     def close_rdesc(self):
         if self.report_ID and self.r_size > 8:
             self.reports[self.report_ID] = self.report, (self.r_size >> 3)
-            self.report = []
-            self.r_size = 0
+        self.report = []
+        self.r_size = 0
 
     def parse_item(self, rdesc_item):
         # store current usage_page in rdesc_item
@@ -443,9 +443,7 @@ class ReportDescriptor(object):
         value = rdesc_item.value
 
         if item == "Report ID":
-            if self.report_ID and self.r_size > 8:
-                self.reports[self.report_ID] = self.report, (self.r_size >> 3)
-            self.report = []
+            self.close_rdesc()
             self.report_ID = value
             self.r_size = 8
         elif item == "Push":
