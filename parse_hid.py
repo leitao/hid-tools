@@ -22,7 +22,6 @@
 
 import sys
 import parse_rdesc
-import hid
 from parse import parse as _parse
 
 
@@ -42,19 +41,13 @@ def get_report(time, report, rdesc, numbered):
     indent_2nd_line = len(output)
     for report_item in report_descriptor:
         size = report_item.size
-        array = not (report_item.type & (0x1 << 1))  # Variable
-        const = report_item.type & (0x1 << 0)
-        usage_page_name = ''
-        usage_page = report_item.usage_page >> 16
-        if usage_page in hid.inv_usage_pages:
-            usage_page_name = hid.inv_usage_pages[usage_page]
 
         # get the value and consumes bits
         values = report_item.get_values(report)
 
-        if const:
+        if report_item.const:
             output += f'{sep} # '
-        elif not array:
+        elif not report_item.array:
             value_format = "{:d}"
             if size > 1:
                 value_format = f'{{:{str(len(str(1 << size)) + 1)}d}}'
@@ -80,6 +73,7 @@ def get_report(time, report, rdesc, numbered):
                 usage = ""
             output += f'{sep}{usage} {value_format.format(values[0])} '
         else:
+            usage_page_name = report_item.usage_page_name
             if not usage_page_name:
                 usage_page_name = "Array"
             usages = []

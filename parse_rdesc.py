@@ -449,6 +449,21 @@ class HidInputItem(object):
     def get_values(self, report):
         return [self._get_value(report, i) for i in range(self.count)]
 
+    @property
+    def array(self):
+        return not (self.type & (0x1 << 1))  # Variable
+
+    @property
+    def const(self):
+        return self.type & (0x1 << 0)
+
+    @property
+    def usage_page_name(self):
+        usage_page_name = ''
+        usage_page = self.usage_page >> 16
+        if usage_page in hid.inv_usage_pages:
+            usage_page_name = hid.inv_usage_pages[usage_page]
+        return usage_page_name
 
     @classmethod
     def getHidInputItems(cls,
