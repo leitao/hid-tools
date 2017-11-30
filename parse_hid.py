@@ -23,6 +23,7 @@
 import sys
 import parse_rdesc
 import hid
+from parse import parse as _parse
 
 
 def get_usage(usage):
@@ -143,41 +144,20 @@ def get_report(time, report, rdesc, numbered):
     return output
 
 
-def build_rkey(reportID, length):
-    return f'{reportID}:{length}'
-
-
-def parse_event(line, rdesc, rdesc_dict, maybe_numbered):
+def parse_event(line, rdesc_object):
     e, time, size, report = line.split(' ', 3)
     report = [int(item, 16) for item in report.split(' ')]
-    numbered = True
-    key = build_rkey(report[0], size)
-    if key not in rdesc_dict and maybe_numbered:
-        # the report is maybe not numbered
-        numbered = False
-        key = build_rkey(-1, size)
-    if key not in rdesc_dict:
-        # mabe the report is larger than it should
-        size = int(size)
-        key = None
-        current_size = 0
-        for k in list(rdesc_dict.keys()):
-            id, id_size = k.split(":")
-            id = int(id)
-            id_size = int(id_size)
-            if id == report[0] and id_size < size and current_size < size:
-                current_size = id_size
-                key = k
-    if key in rdesc_dict:
-        return get_report(time, report, rdesc_dict[key], numbered)
+    rdesc, numbered = rdesc_object.get(report[0], int(size))
+    if rdesc is not None:
+        return get_report(time, report, rdesc, numbered)
     return None
 
 
-def dump_report(line, rdesc, rdesc_dict, maybe_numbered, f_out):
+def dump_report(line, rdesc_object, f_out):
     """
     Translate the given report to a human readable format.
     """
-    event = parse_event(line, rdesc, rdesc_dict, maybe_numbered)
+    event = parse_event(line, rdesc_object)
     if event:
         f_out.write(event)
         f_out.write("\n")
@@ -185,8 +165,7 @@ def dump_report(line, rdesc, rdesc_dict, maybe_numbered, f_out):
 
 def parse_hid(f_in, f_out):
     rdesc_dict = {}
-    rdesc = None
-    maybe_numbered = False
+    d = 0
     while True:
         try:
             line = f_in.readline()
@@ -194,18 +173,16 @@ def parse_hid(f_in, f_out):
             break
         if line.startswith("R:"):
             rdesc_object = parse_rdesc.parse_rdesc(line.lstrip("R: "), f_out)
-            rdesc = rdesc_object.reports
+            rdesc_dict[d] = rdesc_object
             win8 = rdesc_object.win8
-            for k in list(rdesc.keys()):
-                if len(rdesc[k][0]):
-                    if k == -1:
-                        maybe_numbered = True
-                    key = build_rkey(k, rdesc[k][1])
-                    rdesc_dict[key] = rdesc[k][0]
             if win8:
                 f_out.write("**** win 8 certified ****\n")
+        elif line.startswith("D:"):
+            r = _parse('D:{d:d}', line)
+            assert(r is not None)
+            d = r['d']
         elif line.startswith("E:"):
-            dump_report(line, rdesc, rdesc_dict, maybe_numbered, f_out)
+            dump_report(line, rdesc_dict[d], f_out)
         elif line == '':
             # End of file
             break

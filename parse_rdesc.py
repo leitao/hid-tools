@@ -436,6 +436,29 @@ class ReportDescriptor(object):
         self.report = []
         self.r_size = 0
 
+    def get(self, reportID, reportSize):
+        # check for numbered reports with correct size
+        for k, v in self.reports.items():
+            if k == reportID and reportSize == v[1]:
+                return v[0], True
+        if -1 in self.reports:
+            for k, v in self.reports.items():
+                if k == -1 and reportSize == v[1]:
+                    return v[0], False
+
+        # mabe the report is larger than it should
+        key = None
+        current_size = 0
+        for k, v in self.reports.items():
+            if k == reportID and v[1] < reportSize and current_size < reportSize:
+                current_size = v[1]
+                key = k
+
+        if key in self.reports:
+            return self.reports[key][0], True
+
+        return None, False
+
     def parse_item(self, rdesc_item):
         # store current usage_page in rdesc_item
         rdesc_item.usage_page = self.usage_page
