@@ -449,6 +449,40 @@ class HidInputItem(object):
     def get_values(self, report):
         return [self._get_value(report, i) for i in range(self.count)]
 
+    def _set_value(self, report, value, idx):
+        start_bit = self.start + self.size * idx
+        n = self.size
+
+        max = (1 << n) - 1
+        if value > max:
+            raise Exception(f'_set_value() called with too large value {value} for size {self.size}')
+
+        byte_idx = int(start_bit / 8)
+        bit_shift = start_bit % 8
+        bits_to_set = 8 - bit_shift
+
+        while n - bits_to_set >= 0:
+            report[byte_idx] &= ~(0xff << bit_shift)
+            report[byte_idx] |= value << bit_shift
+            value >>= bits_to_set
+            n -= bits_to_set
+            bits_to_set = 8
+            bit_shift = 0
+            byte_idx += 1
+
+        # last nibble
+        if n:
+            bit_mask = (1 << n) - 1
+            report[byte_idx] &= ~(bit_mask << bit_shift)
+            report[byte_idx] |= value << bit_shift
+
+    def set_values(self, report, data):
+        if len(data) != self.count:
+            raise Exception("-EINVAL")
+
+        for idx in range(self.count):
+            self._set_value(report, data[idx], idx)
+
     @property
     def array(self):
         return not (self.type & (0x1 << 1))  # Variable
