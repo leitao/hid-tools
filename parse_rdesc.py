@@ -48,7 +48,6 @@ class HidItem(object):
     def __init__(self, value):
         self.__parse(value)
         self.index_in_report = 0
-        self.data = None
 
     def __parse(self, value):
         self.r = r = value
@@ -383,6 +382,88 @@ class HidItem(object):
                 dump_file.write(f'                 {hid.inv_usages[usage]}\n')
 
 
+class HidInputItem(object):
+
+    def __init__(self,
+                 value,
+                 usage_page,
+                 usage,
+                 logical_min,
+                 logical_max,
+                 item_size,
+                 count):
+        self.type = value
+        self.usage_page = usage_page
+        self.usage = usage
+        self.usages = None
+        self.logical_min = logical_min
+        self.logical_max = logical_max
+        self.size = item_size
+        self.count = count
+
+    def copy(self):
+        return HidInputItem(self.type,
+                            self.usage_page,
+                            self.usage,
+                            self.logical_min,
+                            self.logical_max,
+                            self.size,
+                            self.count)
+
+    @classmethod
+    def getHidInputItems(cls,
+                         value,
+                         usage_page,
+                         usages,
+                         usage_min,
+                         usage_max,
+                         logical_min,
+                         logical_max,
+                         item_size,
+                         count):
+        usage = usage_min
+        if len(usages) > 0:
+            usage = usages[0]
+
+        item = HidInputItem(value,
+                            usage_page,
+                            usage,
+                            logical_min,
+                            logical_max,
+                            item_size,
+                            1)
+        items = []
+
+        if value & (0x1 << 0):  # Const item
+            item.size *= count
+            return [item]
+        elif value & (0x1 << 1):  # Variable item
+            if usage_min and usage_max:
+                usage = usage_min
+                for i in range(count):
+                    item = item.copy()
+                    item.usage = usage
+                    items.append(item)
+                    if usage < usage_max:
+                        usage += 1
+            else:
+                for i in range(count):
+                    if i < len(usages):
+                        usage = usages[i]
+                    else:
+                        usage = usages[-1]
+                    item = item.copy()
+                    item.usage = usage
+                    items.append(item)
+        else:  # Array item
+            if usage_min and usage_max:
+                usages = list(range(usage_min, usage_max + 1))
+            item.usages = usages
+            item.count = count
+            return [item]
+        return items
+
+
 class ReportDescriptor(object):
 
     def __init__(self):
@@ -390,7 +471,7 @@ class ReportDescriptor(object):
         self.index = 1  # 0 is the size
         self.usage_page = 0
         self.usage_page_list = []
-        self.usage = []
+        self.usages = []
         self.usage_min = 0
         self.usage_max = 0
         self.logical_min = 0
@@ -476,12 +557,12 @@ class ReportDescriptor(object):
         elif item == "Usage Page":
             self.usage_page = value << 16
             # reset the usage list
-            self.usage = []
+            self.usages = []
             self.usage_min = 0
             self.usage_max = 0
         elif item == "Collection":
             # reset the usage list
-            self.usage = []
+            self.usages = []
             self.usage_min = 0
             self.usage_max = 0
         elif item == "Usage Minimum":
@@ -495,66 +576,33 @@ class ReportDescriptor(object):
             self.logical_max = value
             self.logical_max_item = rdesc_item
         elif item == "Usage":
-            self.usage.append(value | self.usage_page)
+            self.usages.append(value | self.usage_page)
         elif item == "Report Count":
             self.count = value
         elif item == "Report Size":
             self.item_size = value
         elif item == "Input":
-            # if self.logical_min > self.logical_max:
-            #     self.logical_min = self.logical_min_item.twos_comp()
-            #     self.logical_max = self.logical_max_item.twos_comp()
-            item = {"type": value,
-                    "usage page": self.usage_page,
-                    "logical min": self.logical_min,
-                    "logical max": self.logical_max,
-                    "size": self.item_size,
-                    "count": self.count}
-            if value & (0x1 << 0):  # Const item
-                item["size"] = self.item_size * self.count
-                item["count"] = 1
-                self.report.append(item)
-                self.r_size += self.item_size * self.count
-            elif value & (0x1 << 1):  # Variable item
-                if self.usage_min and self.usage_max:
-                    usage = self.usage_min
-                    for i in range(self.count):
-                        item = item.copy()
-                        item["count"] = 1
-                        item["usage"] = usage
-                        self.report.append(item)
-                        self.r_size += self.item_size
-                        if usage < self.usage_max:
-                            usage += 1
-                else:
-                    for i in range(self.count):
-                        usage_ = 0
-                        if i < len(self.usage):
-                            usage_ = self.usage[i]
-                        else:
-                            usage_ = self.usage[-1]
-                        item = item.copy()
-                        item["count"] = 1
-                        item["usage"] = usage_
-                        self.report.append(item)
-                        self.r_size += self.item_size
-            else:  # Array item
-                if self.usage_min and self.usage_max:
-                    self.usage = list(
-                        range(self.usage_min, self.usage_max + 1))
-                item["usages"] = self.usage
-                self.report.append(item)
-                self.r_size += self.item_size * self.count
-            rdesc_item.data = item
-            self.usage = []
+            inputItems = HidInputItem.getHidInputItems(value,
+                                                       self.usage_page,
+                                                       self.usages,
+                                                       self.usage_min,
+                                                       self.usage_max,
+                                                       self.logical_min,
+                                                       self.logical_max,
+                                                       self.item_size,
+                                                       self.count)
+            self.report.extend(inputItems)
+            for inputItem in inputItems:
+                self.r_size += inputItem.size * inputItem.count
+            self.usages = []
             self.usage_min = 0
             self.usage_max = 0
         elif item == "Feature":
-            if len(self.usage) > 0 and self.usage[-1] == 0xff0000c5:
+            if len(self.usages) > 0 and self.usages[-1] == 0xff0000c5:
                 self.win8 = True
-            self.usage = []
+            self.usages = []
         elif item == "Output":
-            self.usage = []
+            self.usages = []
 
     def dump(self, dump_file):
         indent = 0

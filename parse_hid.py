@@ -75,19 +75,19 @@ def get_report(time, report, rdesc, numbered):
     usages_printed = {}
     indent_2nd_line = len(output)
     for report_item in report_descriptor:
-        size = report_item["size"]
-        array = not (report_item["type"] & (0x1 << 1))  # Variable
-        const = report_item["type"] & (0x1 << 0)
+        size = report_item.size
+        array = not (report_item.type & (0x1 << 1))  # Variable
+        const = report_item.type & (0x1 << 0)
         values = []
         usage_page_name = ''
-        usage_page = report_item["usage page"] >> 16
+        usage_page = report_item.usage_page >> 16
         if usage_page in hid.inv_usage_pages:
             usage_page_name = hid.inv_usage_pages[usage_page]
 
         # get the value and consumes bits
-        for i in range(report_item["count"]):
+        for i in range(report_item.count):
             value, total_bit_offset = get_value(
-                report, total_bit_offset, size, report_item["logical min"] < 0)
+                report, total_bit_offset, size, report_item.logical_min < 0)
             values.append(value)
 
         if const:
@@ -98,7 +98,7 @@ def get_report(time, report, rdesc, numbered):
                 value_format = f'{{:{str(len(str(1 << size)) + 1)}d}}'
             if isinstance(values[0], str):
                 value_format = "{}"
-            usage = f' {get_usage(report_item["usage"])}:'
+            usage = f' {get_usage(report_item.usage)}:'
 
             # if we don't get a key error this is a duplicate in
             # this report descriptor and we need a linebreak
@@ -112,8 +112,8 @@ def get_report(time, report, rdesc, numbered):
                 usages_printed[usage] = True
 
             if (prev and
-               prev["type"] == report_item["type"] and
-               prev["usage"] == report_item["usage"]):
+               prev.type == report_item.type and
+               prev.usage == report_item.usage):
                 sep = ","
                 usage = ""
             output += f'{sep}{usage} {value_format.format(values[0])} '
@@ -122,8 +122,8 @@ def get_report(time, report, rdesc, numbered):
                 usage_page_name = "Array"
             usages = []
             for v in values:
-                if (v < report_item["logical min"] or
-                   v > report_item["logical max"]):
+                if (v < report_item.logical_min or
+                   v > report_item.logical_max):
                     usages.append('')
                 else:
                     usage = ""
@@ -133,8 +133,8 @@ def get_report(time, report, rdesc, numbered):
                         usage = f'{v:02x}'
                     if ('vendor' not in usage_page_name.lower() and
                        v > 0 and
-                       v < len(report_item["usages"])):
-                        usage = get_usage(report_item["usages"][v])
+                       v < len(report_item.usages)):
+                        usage = get_usage(report_item.usages[v])
                         if "no event indicated" in usage.lower():
                             usage = ''
                     usages.append(usage)
