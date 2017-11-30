@@ -717,6 +717,7 @@ class ReportDescriptor(object):
             item = HidItem.from_human_descr(line, usage_page)
             usage_page = item.usage_page >> 16
             rdesc_object.append(item)
+            rdesc_object.parse_item(item)
 
         return rdesc_object
 
