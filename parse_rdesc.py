@@ -100,6 +100,162 @@ class HidItem(object):
             return r
         return f'{r} {" ".join(data)}'
 
+    def get_raw_values(self):
+        data = str(self)
+        # prefix each individual value by "0x" and insert "," in between
+        data = f'0x{data.replace(" ", ", 0x")},'
+        return data
+
+    def get_human_descr(self, indent):
+        item = self.item
+        value = self.value
+        up = self.usage_page
+        descr = item
+        if item in ("Report ID",
+                    "Usage Minimum",
+                    "Usage Maximum",
+                    "Logical Minimum",
+                    "Physical Minimum",
+                    "Logical Maximum",
+                    "Physical Maximum",
+                    "Report Size",
+                    "Report Count",
+                    "Unit Exponent"):
+            descr += f' ({str(value)})'
+        elif item == "Collection":
+            descr += f' ({hid.inv_collections[value].capitalize()})'
+            indent += 1
+        elif item == "End Collection":
+            indent -= 1
+        elif item == "Usage Page":
+            if value in hid.inv_usage_pages:
+                descr += f' ({hid.inv_usage_pages[value]})'
+            else:
+                descr += f' (Vendor Usage Page 0x{value:02x})'
+        elif item == "Usage":
+            usage = value | up
+            if usage in hid.inv_usages:
+                descr += f' ({hid.inv_usages[usage]})'
+            elif up == hid.usage_pages['Sensor'] << 16:
+                mod = (usage & 0xF000) >> 8
+                usage &= ~0xF000
+                mod_descr = hid.sensor_mods[mod]
+                try:
+                    descr += f' ({hid.inv_usages[usage]}  | {mod_descr})'
+                except:
+                    descr += f' (Unknown Usage 0x{value:02x})'
+            else:
+                descr += f' (Vendor Usage 0x{value:02x})'
+        elif item == "Input" \
+                or item == "Output" \
+                or item == "Feature":
+            descr += " ("
+            if value & (0x1 << 0):
+                descr += "Cnst,"
+            else:
+                descr += "Data,"
+            if value & (0x1 << 1):
+                descr += "Var,"
+            else:
+                descr += "Arr,"
+            if value & (0x1 << 2):
+                descr += "Rel"
+            else:
+                descr += "Abs"
+            if value & (0x1 << 3):
+                descr += ",Wrap"
+            if value & (0x1 << 4):
+                descr += ",NonLin"
+            if value & (0x1 << 5):
+                descr += ",NoPref"
+            if value & (0x1 << 6):
+                descr += ",Null"
+            if value & (0x1 << 7):
+                descr += ",Vol"
+            if value & (0x1 << 8):
+                descr += ",Buff"
+            descr += ")"
+        elif item == "Unit":
+            systems = ("None", "SILinear", "SIRotation",
+                       "EngLinear", "EngRotation")
+            lengths = ("None", "Centimeter", "Radians", "Inch", "Degrees")
+            masses = ("None", "Gram", "Gram", "Slug", "Slug")
+            times = ("Seconds", "Seconds", "Seconds", "Seconds")
+            temperatures = ("None", "Kelvin", "Kelvin", "Fahrenheit", "Fahrenheit")
+            currents = ("Ampere", "Ampere", "Ampere", "Ampere")
+            luminous_intensisties = ("Candela", "Candela", "Candela", "Candela")
+            units = (lengths, masses, times, temperatures,
+                     currents, luminous_intensisties)
+
+            system = value & 0xf
+
+            descr += " ("
+            for i in range(len(units), 0, -1):
+                v = (value >> i * 4) & 0xf
+                v = twos_comp(v, 4)
+                if v:
+                    descr += units[i - 1][system]
+                    if v != 1:
+                        descr += '^' + str(v)
+                    descr += ","
+            descr += systems[system] + ')'
+        elif item == "Push":
+            pass
+        elif item == "Pop":
+            pass
+        eff_indent = indent
+        if item == "Collection":
+            eff_indent -= 1
+        return ' ' * eff_indent + descr, indent
+
+    def dump_rdesc_kernel(self, indent, dump_file):
+        """
+        Format the hid item in a C-style format.
+        """
+        # offset = self.index_in_report - 1
+        line = self.get_raw_values()
+        line += "\t" * (int((40 - len(line)) / 8))
+
+        descr, indent = self.get_human_descr(indent)
+
+        descr += "\t" * (int((52 - len(descr)) / 8))
+        # dump_file.write(f'{line}/* {descr} {str(offset)} */\n')
+        dump_file.write(f'\t{line}/* {descr}*/\n')
+        return indent
+
+    def dump_rdesc_array(self, indent, dump_file):
+        """
+        Format the hid item in a C-style format.
+        """
+        offset = self.index_in_report - 1
+        line = self.get_raw_values()
+        line += " " * (30 - len(line))
+
+        descr, indent = self.get_human_descr(indent)
+
+        descr += " " * (35 - len(descr))
+        dump_file.write(f'{line} // {descr} {str(offset)}\n')
+        return indent
+
+    def dump_rdesc_lsusb(self, indent, dump_file):
+        """
+        Format the hid item in a lsusb -v format.
+        """
+        item = self.item()
+        up = self.usage_page
+        value = self.value
+        data = "none"
+        if item != "End Collection":
+            data = " ["
+            for v in self.raw_value:
+                data += f' 0x{v & 0xff:02x}'
+            data += f' ] {value}'
+        dump_file.write(f'            Item({hid.hid_type[item]:6s}): {item}, data={data}\n')
+        if item == "Usage":
+            usage = up | value
+            if usage in list(hid.inv_usages.keys()):
+                dump_file.write(f'                 {hid.inv_usages[usage]}\n')
+
 
 class ReportDescriptor(object):
 
@@ -251,9 +407,9 @@ class ReportDescriptor(object):
         indent = 0
         for rdesc_item in self.rdesc_items:
             if type_output == "default":
-                indent = dump_rdesc_array(rdesc_item, indent, dump_file)
+                indent = rdesc_item.dump_rdesc_array(indent, dump_file)
             else:
-                indent = dump_rdesc_kernel(rdesc_item, indent, dump_file)
+                indent = rdesc_item.dump_rdesc_kernel(indent, dump_file)
 
     def dump_raw(self, dumpfile):
         dumpfile.write(self.data_txt())
@@ -272,188 +428,37 @@ class ReportDescriptor(object):
     def data_txt(self):
         return " ".join([str(i) for i in self.rdesc_items])
 
+    @classmethod
+    def parse_rdesc(cls, rdesc):
+        """
+        Parse the given report descriptor.
+        Returns:
+         - a ReportDescriptor object
+        """
 
-def dump_rdesc(rdesc_item, indent, dump_file):
-    """
-    Format the hid item in a lsusb -v format.
-    """
-    item = rdesc_item.item()
-    up = rdesc_item.usage_page
-    value = rdesc_item.value
-    data = "none"
-    if item != "End Collection":
-        data = " ["
-        for v in rdesc_item.raw_value:
-            data += f' 0x{v & 0xff:02x}'
-        data += f' ] {value}'
-    dump_file.write(f'            Item({hid.hid_type[item]:6s}): {item}, data={data}\n')
-    if item == "Usage":
-        usage = up | value
-        if usage in list(hid.inv_usages.keys()):
-            dump_file.write(f'                 {hid.inv_usages[usage]}\n')
+        if isinstance(rdesc, str):
+            rdesc = [int(r, 16) for r in rdesc.split()[1:]]
 
+        rdesc_object = ReportDescriptor()
+        for i, v in enumerate(rdesc):
+            if i == len(rdesc) - 1 and v == 0:
+                # some device present a trailing 0, skipping it
+                break
+            rdesc_object.consume(v, i + 1)
 
-def get_raw_values(rdesc_item):
-    data = str(rdesc_item)
-    # prefix each individual value by "0x" and insert "," in between
-    data = f'0x{data.replace(" ", ", 0x")},'
-    return data
+        rdesc_object.close_rdesc()
 
-
-def get_human_descr(rdesc_item, indent):
-    item = rdesc_item.item
-    value = rdesc_item.value
-    up = rdesc_item.usage_page
-    descr = item
-    if item in ("Report ID",
-                "Usage Minimum",
-                "Usage Maximum",
-                "Logical Minimum",
-                "Physical Minimum",
-                "Logical Maximum",
-                "Physical Maximum",
-                "Report Size",
-                "Report Count",
-                "Unit Exponent"):
-        descr += f' ({str(value)})'
-    elif item == "Collection":
-        descr += f' ({hid.inv_collections[value].capitalize()})'
-        indent += 1
-    elif item == "End Collection":
-        indent -= 1
-    elif item == "Usage Page":
-        if value in hid.inv_usage_pages:
-            descr += f' ({hid.inv_usage_pages[value]})'
-        else:
-            descr += f' (Vendor Usage Page 0x{value:02x})'
-    elif item == "Usage":
-        usage = value | up
-        if usage in hid.inv_usages:
-            descr += f' ({hid.inv_usages[usage]})'
-        elif up == hid.usage_pages['Sensor'] << 16:
-            mod = (usage & 0xF000) >> 8
-            usage &= ~0xF000
-            mod_descr = hid.sensor_mods[mod]
-            try:
-                descr += f' ({hid.inv_usages[usage]}  | {mod_descr})'
-            except:
-                descr += f' (Unknown Usage 0x{value:02x})'
-        else:
-            descr += f' (Vendor Usage 0x{value:02x})'
-    elif item == "Input" \
-            or item == "Output" \
-            or item == "Feature":
-        descr += " ("
-        if value & (0x1 << 0):
-            descr += "Cnst,"
-        else:
-            descr += "Data,"
-        if value & (0x1 << 1):
-            descr += "Var,"
-        else:
-            descr += "Arr,"
-        if value & (0x1 << 2):
-            descr += "Rel"
-        else:
-            descr += "Abs"
-        if value & (0x1 << 3):
-            descr += ",Wrap"
-        if value & (0x1 << 4):
-            descr += ",NonLin"
-        if value & (0x1 << 5):
-            descr += ",NoPref"
-        if value & (0x1 << 6):
-            descr += ",Null"
-        if value & (0x1 << 7):
-            descr += ",Vol"
-        if value & (0x1 << 8):
-            descr += ",Buff"
-        descr += ")"
-    elif item == "Unit":
-        systems = ("None", "SILinear", "SIRotation",
-                   "EngLinear", "EngRotation")
-        lengths = ("None", "Centimeter", "Radians", "Inch", "Degrees")
-        masses = ("None", "Gram", "Gram", "Slug", "Slug")
-        times = ("Seconds", "Seconds", "Seconds", "Seconds")
-        temperatures = ("None", "Kelvin", "Kelvin", "Fahrenheit", "Fahrenheit")
-        currents = ("Ampere", "Ampere", "Ampere", "Ampere")
-        luminous_intensisties = ("Candela", "Candela", "Candela", "Candela")
-        units = (lengths, masses, times, temperatures,
-                 currents, luminous_intensisties)
-
-        system = value & 0xf
-
-        descr += " ("
-        for i in range(len(units), 0, -1):
-            v = (value >> i * 4) & 0xf
-            v = twos_comp(v, 4)
-            if v:
-                descr += units[i - 1][system]
-                if v != 1:
-                    descr += '^' + str(v)
-                descr += ","
-        descr += systems[system] + ')'
-    elif item == "Push":
-        pass
-    elif item == "Pop":
-        pass
-    eff_indent = indent
-    if item == "Collection":
-        eff_indent -= 1
-    return ' ' * eff_indent + descr, indent
-
-
-def dump_rdesc_kernel(rdesc_item, indent, dump_file):
-    """
-    Format the hid item in a C-style format.
-    """
-    # offset = rdesc_item.index_in_report - 1
-    line = get_raw_values(rdesc_item)
-    line += "\t" * (int((40 - len(line)) / 8))
-
-    descr, indent = get_human_descr(rdesc_item, indent)
-
-    descr += "\t" * (int((52 - len(descr)) / 8))
-    # dump_file.write(f'{line}/* {descr} {str(offset)} */\n')
-    dump_file.write(f'\t{line}/* {descr}*/\n')
-    return indent
-
-
-def dump_rdesc_array(rdesc_item, indent, dump_file):
-    """
-    Format the hid item in a C-style format.
-    """
-    offset = rdesc_item.index_in_report - 1
-    line = get_raw_values(rdesc_item)
-    line += " " * (30 - len(line))
-
-    descr, indent = get_human_descr(rdesc_item, indent)
-
-    descr += " " * (35 - len(descr))
-    dump_file.write(f'{line} // {descr} {str(offset)}\n')
-    return indent
+        return rdesc_object
 
 
 def parse_rdesc(rdesc, dump_file=None):
     """
     Parse the given report descriptor and outputs it to stdout if show is True.
     Returns:
-     - a parsed dict of each report indexed by their report ID
-     - the id of the multitouch collection, or -1
-     - if the multitouch device has been Win 8 certified
+         - a ReportDescriptor object
     """
 
-    if isinstance(rdesc, str):
-        rdesc = [int(r, 16) for r in rdesc.split()[1:]]
-
-    rdesc_object = ReportDescriptor()
-    for i, v in enumerate(rdesc):
-        if i == len(rdesc) - 1 and v == 0:
-            # some device present a trailing 0, skipping it
-            break
-        rdesc_object.consume(v, i + 1)
-
-    rdesc_object.close_rdesc()
+    rdesc_object = ReportDescriptor.parse_rdesc(rdesc)
 
     if dump_file:
         rdesc_object.dump(dump_file)
