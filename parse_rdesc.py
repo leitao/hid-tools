@@ -22,6 +22,7 @@
 
 import sys
 import hid
+from parse import parse as _parse
 
 
 def twos_comp(val, bits):
@@ -29,6 +30,10 @@ def twos_comp(val, bits):
     if (val & (1 << (bits - 1))) != 0:
         val = val - (1 << bits)
     return val
+
+
+def to_twos_comp(val, bits):
+    return val & ((1 << bits) - 1)
 
 
 type_output = "default"
@@ -207,6 +212,127 @@ class HidItem(object):
         if item == "Collection":
             eff_indent -= 1
         return ' ' * eff_indent + descr, indent
+
+    @classmethod
+    def from_human_descr(cls, line, usage_page):
+        data = None
+        if '(' in line:
+            r = _parse('{ws:s}{name} ({data})', line)
+            assert(r is not None)
+            name = r['name']
+            data = r['data']
+            if data.lower().startswith('0x'):
+                try:
+                    data = int(data[2:], 16)
+                except ValueError:
+                    pass
+            else:
+                try:
+                    data = int(data)
+                except ValueError:
+                    pass
+        else:
+            name = line.strip()
+
+        value = None
+
+        if isinstance(data, str):
+            if name == "Usage Page":
+                value = hid.usage_pages[data]
+                usage_page = value
+            elif name == "Usage":
+                value = hid.usages[usage_page][3][data]
+            elif name == "Collection":
+                value = hid.collections[data.upper()]
+            elif name in 'Input Output Feature':
+                value = 0
+                possible_types = (
+                    'Cnst',
+                    'Var',
+                    'Rel',
+                    'Wrap',
+                    'NonLin',
+                    'NoPref',
+                    'Null',
+                    'Vol',
+                    'Buff',
+                )
+                for i, v in enumerate(possible_types):
+                    if v in data:
+                        value |= (0x1 << i)
+            elif name == 'Unit':
+                systems = ("None", "SILinear", "SIRotation", "EngLinear", "EngRotation")
+                lengths = ("None", "Centimeter", "Radians", "Inch", "Degrees")
+                masses = ("None", "Gram", "Gram", "Slug", "Slug")
+                times = ("Seconds", "Seconds", "Seconds", "Seconds")
+                temperatures = ("None", "Kelvin", "Kelvin", "Fahrenheit", "Fahrenheit")
+                currents = ("Ampere", "Ampere", "Ampere", "Ampere")
+                luminous_intensisties = ("Candela", "Candela", "Candela", "Candela")
+                units = (lengths, masses, times, temperatures,
+                         currents, luminous_intensisties)
+
+                r = None
+                if '^' in data:
+                    r = _parse('{unit}^{exp:d},{system}', data)
+                    assert(r is not None)
+                else:
+                    r = _parse('{unit},{system}', data)
+                    assert(r is not None)
+                unit = r['unit']
+                try:
+                    exp = r['exp']
+                except KeyError:
+                    exp = 1
+                system = r['system']
+
+                system = systems.index(system)
+
+                for i, u in enumerate(units):
+                    if unit in u:
+                        unit = i + 1
+                        break
+
+                unit_value = to_twos_comp(exp, 4)
+                unit_value <<= unit * 4
+
+                value = unit_value | system
+        else:  # data has been converted to an int already
+            if name == "Usage Page":
+                usage_page = data
+            value = data
+
+        size = 0
+        bit_size = 0
+        if value is not None:
+            bit_size = len(f'{value + 1:x}') * 4
+        else:
+            value = 0
+        tag = hid.hid_items[hid.hid_type[name]][name]
+        size = 0
+        v_count = 0
+        if bit_size == 0:
+            pass
+        elif bit_size <= 8:
+            size = 1
+            v_count = 1
+        elif bit_size <= 16:
+            size = 2
+            v_count = 2
+        else:
+            size = 3
+            v_count = 4
+
+        if name == "Unit Exponent" and value < 0:
+            value += 16
+            value = to_twos_comp(value, v_count * 8)
+
+        item = HidItem(tag | size, 0)
+        item.usage_page = usage_page << 16
+
+        for i in range(v_count):
+            item.feed((value >> (i * 8)) & 0xff)
+
+        return item
 
     def dump_rdesc_kernel(self, indent, dump_file):
         """
@@ -447,6 +573,19 @@ class ReportDescriptor(object):
             rdesc_object.consume(v, i + 1)
 
         rdesc_object.close_rdesc()
+
+        return rdesc_object
+
+    @classmethod
+    def from_rdesc_str(cls, rdesc_str):
+        usage_page = 0
+        rdesc_object = ReportDescriptor()
+        for line in rdesc_str.splitlines():
+            if line.strip() == '':
+                continue
+            item = HidItem.from_human_descr(line, usage_page)
+            usage_page = item.usage_page >> 16
+            rdesc_object.rdesc_items.append(item)
 
         return rdesc_object
 
