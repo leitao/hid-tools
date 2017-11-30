@@ -410,6 +410,24 @@ class HidInputItem(object):
                             self.size,
                             self.count)
 
+    def _usage_name(self, usage):
+        usage_page = usage >> 16
+        if usage_page in hid.inv_usage_pages and \
+                hid.inv_usage_pages[usage_page] == "Button":
+            usage = f'B{str(usage & 0xFF)}'
+        elif usage in hid.inv_usages:
+            usage = hid.inv_usages[usage]
+        else:
+            usage = f'0x{usage:04x}'
+        return usage
+
+    @property
+    def usage_name(self):
+        return self._usage_name(self.usage)
+
+    def get_usage_name(self, index):
+        return self._usage_name(self.usages[index])
+
     @classmethod
     def getHidInputItems(cls,
                          value,

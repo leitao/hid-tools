@@ -26,18 +26,6 @@ import hid
 from parse import parse as _parse
 
 
-def get_usage(usage):
-    usage_page = usage >> 16
-    if usage_page in hid.inv_usage_pages and \
-            hid.inv_usage_pages[usage_page] == "Button":
-        usage = f'B{str(usage & 0xFF)}'
-    elif usage in hid.inv_usages:
-        usage = hid.inv_usages[usage]
-    else:
-        usage = f'0x{usage:04x}'
-    return usage
-
-
 def get_value(report, start, size, twos_comp):
     value = 0
     start_bit = start
@@ -98,7 +86,7 @@ def get_report(time, report, rdesc, numbered):
                 value_format = f'{{:{str(len(str(1 << size)) + 1)}d}}'
             if isinstance(values[0], str):
                 value_format = "{}"
-            usage = f' {get_usage(report_item.usage)}:'
+            usage = f' {report_item.usage_name}:'
 
             # if we don't get a key error this is a duplicate in
             # this report descriptor and we need a linebreak
@@ -134,7 +122,7 @@ def get_report(time, report, rdesc, numbered):
                     if ('vendor' not in usage_page_name.lower() and
                        v > 0 and
                        v < len(report_item.usages)):
-                        usage = get_usage(report_item.usages[v])
+                        usage = report_item.get_usage_name(v)
                         if "no event indicated" in usage.lower():
                             usage = ''
                     usages.append(usage)
