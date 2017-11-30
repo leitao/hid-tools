@@ -322,48 +322,49 @@ class MinWin8TSParallel(Digitizer):
                                                 (4095, 4095))
 
 
-class _TestMultitouch(unittest.TestCase):
-    def __init__(self, methodName='runTest'):
-        super(_TestMultitouch, self).__init__(methodName)
-        self.__create_device = self._create_device
+class BaseTest:
+    class TestMultitouch(unittest.TestCase):
+        def __init__(self, methodName='runTest'):
+            super(BaseTest.TestMultitouch, self).__init__(methodName)
+            self.__create_device = self._create_device
 
-    def _create_device(self):
-        raise Exception("please reimplement me in subclasses")
+        def _create_device(self):
+            raise Exception("please reimplement me in subclasses")
 
-    def test_mt_creation(self):
-        with self.__create_device() as uhdev:
-            while not uhdev.opened:
-                uhdev.process_one_event(100)
-            self.assertIsNotNone(uhdev.evdev)
-            self.assertEqual(uhdev.evdev.name, uhdev.name)
-            self.assertEqual(len(uhdev.next_sync_events()), 0)
-            uhdev.destroy()
-            while uhdev.opened:
-                if uhdev.process_one_event(100) == 0:
-                    break
-            with self.assertRaises(OSError):
-                uhdev.evdev.fd.read()
+        def test_mt_creation(self):
+            with self.__create_device() as uhdev:
+                while not uhdev.opened:
+                    uhdev.process_one_event(100)
+                self.assertIsNotNone(uhdev.evdev)
+                self.assertEqual(uhdev.evdev.name, uhdev.name)
+                self.assertEqual(len(uhdev.next_sync_events()), 0)
+                uhdev.destroy()
+                while uhdev.opened:
+                    if uhdev.process_one_event(100) == 0:
+                        break
+                with self.assertRaises(OSError):
+                    uhdev.evdev.fd.read()
 
-    def test_mt_single_touch(self):
-        with self.__create_device() as uhdev:
-            while not uhdev.opened:
-                uhdev.process_one_event(100)
-            t0 = Touch(1, 5, 5)
-            t0.tipswitch = 1
-            print()
-            r = uhdev.event([t0])
-            print('r is', r)
-            events = uhdev.next_sync_events()
-            print([(e.type_name, e.code_name, e.value) for e in events])
-            t0.tipswitch = 0
-            r = uhdev.event([t0])
-            print('r is', r)
-            events = uhdev.next_sync_events()
-            print([(e.type_name, e.code_name, e.value) for e in events])
-            uhdev.destroy()
+        def test_mt_single_touch(self):
+            with self.__create_device() as uhdev:
+                while not uhdev.opened:
+                    uhdev.process_one_event(100)
+                t0 = Touch(1, 5, 5)
+                t0.tipswitch = 1
+                print()
+                r = uhdev.event([t0])
+                print('r is', r)
+                events = uhdev.next_sync_events()
+                print([(e.type_name, e.code_name, e.value) for e in events])
+                t0.tipswitch = 0
+                r = uhdev.event([t0])
+                print('r is', r)
+                events = uhdev.next_sync_events()
+                print([(e.type_name, e.code_name, e.value) for e in events])
+                uhdev.destroy()
 
 
-class TestMinWin8TSParallel(_TestMultitouch):
+class TestMinWin8TSParallel(BaseTest.TestMultitouch):
     def _create_device(self):
         return MinWin8TSParallel()
 
