@@ -86,7 +86,7 @@ sensor_mods = {
 }
 
 inv_hid = {}  # e.g 0b10000000 : "Input"
-hid_type = {}  # e.g. 0b10000000 : "Main"
+hid_type = {}  # e.g. "Input" : "Main"
 for type, items in hid_items.items():
     for k, v in items.items():
         inv_hid[v] = k
