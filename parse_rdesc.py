@@ -428,6 +428,28 @@ class HidInputItem(object):
     def get_usage_name(self, index):
         return self._usage_name(self.usages[index])
 
+    def _get_value(self, report, idx):
+        value = 0
+        start_bit = self.start + self.size * idx
+        end_bit = start_bit + self.size * (idx + 1)
+        data = report[int(start_bit / 8): int(end_bit / 8 + 1)]
+        if len(data) == 0:
+            return ["<.>"]
+        for d in range(len(data)):
+            value |= data[d] << (8 * d)
+
+        bit_offset = start_bit % 8
+        value = value >> bit_offset
+        garbage = (value >> self.size) << self.size
+        value = value - garbage
+        if self.logical_min < 0 and self.size > 1:
+            value = twos_comp(value, self.size)
+        return value
+
+    def get_values(self, report):
+        return [self._get_value(report, i) for i in range(self.count)]
+
+
     @classmethod
     def getHidInputItems(cls,
                          value,
@@ -611,6 +633,7 @@ class ReportDescriptor(object):
                                                        self.count)
             self.report.extend(inputItems)
             for inputItem in inputItems:
+                inputItem.start = self.r_size
                 self.r_size += inputItem.size * inputItem.count
             self.usages = []
             self.usage_min = 0

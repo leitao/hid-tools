@@ -26,30 +26,10 @@ import hid
 from parse import parse as _parse
 
 
-def get_value(report, start, size, twos_comp):
-    value = 0
-    start_bit = start
-    end_bit = start_bit + size
-    data = report[int(start_bit / 8): int(end_bit / 8 + 1)]
-    if len(data) == 0:
-        return "<.>", end_bit
-    for d in range(len(data)):
-        value |= data[d] << (8 * d)
-
-    bit_offset = start % 8
-    value = value >> bit_offset
-    garbage = (value >> size) << size
-    value = value - garbage
-    if twos_comp and size > 1:
-        value = parse_rdesc.twos_comp(value, size)
-    return value, end_bit
-
-
 def get_report(time, report, rdesc, numbered):
     """
     Translate the given report to a human readable format.
     """
-    total_bit_offset = 0
 
     output = f'{time:>10s} '
     sep = ''
@@ -57,8 +37,6 @@ def get_report(time, report, rdesc, numbered):
     if numbered:
         output += f'ReportID: {report[0]} '
         sep = '/'
-        # first byte is report ID, actual data starts at 8
-        total_bit_offset = 8
     prev = None
     usages_printed = {}
     indent_2nd_line = len(output)
@@ -66,17 +44,13 @@ def get_report(time, report, rdesc, numbered):
         size = report_item.size
         array = not (report_item.type & (0x1 << 1))  # Variable
         const = report_item.type & (0x1 << 0)
-        values = []
         usage_page_name = ''
         usage_page = report_item.usage_page >> 16
         if usage_page in hid.inv_usage_pages:
             usage_page_name = hid.inv_usage_pages[usage_page]
 
         # get the value and consumes bits
-        for i in range(report_item.count):
-            value, total_bit_offset = get_value(
-                report, total_bit_offset, size, report_item.logical_min < 0)
-            values.append(value)
+        values = report_item.get_values(report)
 
         if const:
             output += f'{sep} # '
