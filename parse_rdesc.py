@@ -38,7 +38,7 @@ class ParseError(Exception):
     pass
 
 
-class raw_item(object):
+class HidItem(object):
 
     def __init__(self, value, index):
         self.__parse(value)
@@ -128,7 +128,7 @@ class ReportDescriptor(object):
         """ item is an int8 """
         if not self.current_item:
             # initial state
-            self.current_item = raw_item(value, index)
+            self.current_item = HidItem(value, index)
         else:
             # try to feed the value to the current item
             self.current_item.feed(value)
