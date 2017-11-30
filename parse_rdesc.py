@@ -45,9 +45,9 @@ class ParseError(Exception):
 
 class HidItem(object):
 
-    def __init__(self, value, index):
+    def __init__(self, value):
         self.__parse(value)
-        self.index_in_report = index
+        self.index_in_report = 0
         self.data = None
 
     def __parse(self, value):
@@ -326,7 +326,7 @@ class HidItem(object):
             value += 16
             value = to_twos_comp(value, v_count * 8)
 
-        item = HidItem(tag | size, 0)
+        item = HidItem(tag | size)
         item.usage_page = usage_page << 16
 
         for i in range(v_count):
@@ -338,7 +338,7 @@ class HidItem(object):
         """
         Format the hid item in a C-style format.
         """
-        # offset = self.index_in_report - 1
+        # offset = self.index_in_report
         line = self.get_raw_values()
         line += "\t" * (int((40 - len(line)) / 8))
 
@@ -353,7 +353,7 @@ class HidItem(object):
         """
         Format the hid item in a C-style format.
         """
-        offset = self.index_in_report - 1
+        offset = self.index_in_report
         line = self.get_raw_values()
         line += " " * (30 - len(line))
 
@@ -403,20 +403,26 @@ class ReportDescriptor(object):
         self.report_ID = -1
         self.win8 = False
         self.rdesc_items = []
+        self.rdesc_size = 0
         self.r_size = 0
         self.current_item = None
 
-    def consume(self, value, index):
+    def append(self, item):
+        self.rdesc_items.append(item)
+        item.index_in_report = self.rdesc_size
+        self.rdesc_size += item.size()
+
+    def consume(self, value):
         """ item is an int8 """
         if not self.current_item:
             # initial state
-            self.current_item = HidItem(value, index)
+            self.current_item = HidItem(value)
         else:
             # try to feed the value to the current item
             self.current_item.feed(value)
         if self.current_item.completed():
             rdesc_item = self.current_item
-            self.rdesc_items.append(rdesc_item)
+            self.append(rdesc_item)
 
             self.parse_item(rdesc_item)
             self.current_item = None
@@ -570,7 +576,7 @@ class ReportDescriptor(object):
             if i == len(rdesc) - 1 and v == 0:
                 # some device present a trailing 0, skipping it
                 break
-            rdesc_object.consume(v, i + 1)
+            rdesc_object.consume(v)
 
         rdesc_object.close_rdesc()
 
@@ -585,7 +591,7 @@ class ReportDescriptor(object):
                 continue
             item = HidItem.from_human_descr(line, usage_page)
             usage_page = item.usage_page >> 16
-            rdesc_object.rdesc_items.append(item)
+            rdesc_object.append(item)
 
         return rdesc_object
 
