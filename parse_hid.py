@@ -158,6 +158,7 @@ def parse_event(line, rdesc, rdesc_dict, maybe_numbered):
         key = build_rkey(-1, size)
     if key not in rdesc_dict:
         # mabe the report is larger than it should
+        size = int(size)
         key = None
         current_size = 0
         for k in list(rdesc_dict.keys()):
