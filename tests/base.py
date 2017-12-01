@@ -94,6 +94,9 @@ class UHIDTest(UHIDDevice):
     def get_report(self, req, rnum, rtype):
         self.call_get_report(req, [], 1)
 
+    def set_report(self, req, rnum, rtype, size, data):
+        self.call_set_report(req, 1)
+
     def next_sync_events(self):
         events = []
         e = self.evdev.next_event()
