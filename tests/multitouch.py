@@ -21,6 +21,7 @@
 #
 
 import base
+import libevdev
 import sys
 import unittest
 from base import main, setUpModule, tearDownModule  # noqa
@@ -157,10 +158,19 @@ class ElanXPS9360(Digitizer):
 
 
 class BaseTest:
-    class TestMultitouch(unittest.TestCase):
+    class TestMultitouch(base.BaseTestCase.TestUhid):
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestMultitouch, self).__init__(methodName)
             self.__create_device = self._create_device
+
+        @classmethod
+        def _debug_reports(cls, reports):
+            if len(reports) == 1:
+                print(f'sending 1 report: {reports[0]}')
+            else:
+                print(f'sending {len(reports)} reports:')
+                for report in reports:
+                    print('\t', report)
 
         def _create_device(self):
             raise Exception("please reimplement me in subclasses")
@@ -187,6 +197,7 @@ class BaseTest:
                 t0 = Touch(1, 5, 10)
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 1), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
@@ -194,6 +205,7 @@ class BaseTest:
                 t0.tipswitch = False
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
 
                 uhdev.destroy()
@@ -207,6 +219,8 @@ class BaseTest:
                 t1 = Touch(2, 15, 20)
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 1), events)
+                self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_TOUCH"), 1)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
@@ -214,12 +228,26 @@ class BaseTest:
 
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
-                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+                self.assertNotIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
+                self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_TOUCH"), 1)
+                self.assertNotIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_POSITION_X', 5), events)
+                self.assertNotIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_POSITION_Y', 10), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
                 self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), 1)
                 self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_X'), 15)
                 self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_Y'), 20)
 
                 t0.tipswitch = False
+                r = uhdev.event([t0, t1])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), 1)
+                self.assertNotIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_POSITION_X'), events)
+                self.assertNotIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_POSITION_Y'), events)
+
+                t1.tipswitch = False
                 r = uhdev.event([t1])
                 events = uhdev.next_sync_events()
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
