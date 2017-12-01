@@ -181,20 +181,51 @@ class BaseTest:
             with self.__create_device() as uhdev:
                 while not uhdev.opened:
                     uhdev.process_one_event(100)
-                print()
 
-                t0 = Touch(1, 5, 5)
+                t0 = Touch(1, 5, 10)
                 t0.tipswitch = 1
                 r = uhdev.event([t0])
-                print('r is', r)
                 events = uhdev.next_sync_events()
-                print([(e.type_name, e.code_name, e.value) for e in events])
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
 
                 t0.tipswitch = 0
                 r = uhdev.event([t0])
-                print('r is', r)
                 events = uhdev.next_sync_events()
-                print([(e.type_name, e.code_name, e.value) for e in events])
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+
+                uhdev.destroy()
+
+        def test_mt_dual_touch(self):
+            with self.__create_device() as uhdev:
+                while not uhdev.opened:
+                    uhdev.process_one_event(100)
+
+                t0 = Touch(1, 5, 10)
+                t1 = Touch(2, 15, 20)
+                t0.tipswitch = 1
+                t1.tipswitch = 1
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), -1)
+
+                t0.tipswitch = 0
+                r = uhdev.event([t0, t1])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), 1)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_X'), 15)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_Y'), 20)
+
+                t1.tipswitch = 0
+                r = uhdev.event([t1])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), -1)
 
                 uhdev.destroy()
 
