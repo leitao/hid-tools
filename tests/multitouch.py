@@ -22,6 +22,7 @@
 
 import base
 import libevdev
+import parse
 import sys
 import unittest
 from base import main, setUpModule, tearDownModule  # noqa
@@ -72,30 +73,49 @@ class Digitizer(base.UHIDTest):
         End Collection
     '''
 
-    def __init__(self, name, rdesc_str=None, rdesc=None):
+    def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen'):
         super(Digitizer, self).__init__("uhid test simple", rdesc_str, rdesc)
         self.info = 3, 1, 2
         self.scantime = 0
         self.max_contacts = 1
-        self.mt_report_id = -1
+        self.report_ids = {}
+        self.application = application
+        usage = None
+        application = None
         logical_max = 0
-        contact_max_found = False
-        reportID = -1
+        report_ids = {}
+
+        # retrieve some info from the devices:
+        # - the applications associated to each input report
+        # - the contact max
         for item in self.parsed_rdesc.rdesc_items:
             descr = item.get_human_descr(0)[0]
-            if 'Report ID' in descr:
-                reportID = item.value
-            elif 'Contact Id' in descr:
-                self.mt_report_id = reportID
-            elif 'Contact Max' in descr:
-                contact_max_found = True
+            if 'Usage (' in descr:
+                r = parse.parse('Usage ({usage})', descr)
+                assert(r is not None)
+                usage = r['usage']
+            elif 'Collection (Application)' in descr:
+                application = usage
+            elif 'Report ID' in descr:
+                try:
+                    report_ids[application].append(item.value)
+                except KeyError:
+                    report_ids[application] = [item.value]
             elif 'Logical Maximum' in descr:
                 logical_max = item.value
-            elif 'Feature' in descr and contact_max_found:
+            elif 'Feature' in descr and usage == 'Contact Max':
                 self.max_contacts = logical_max
                 if self.max_contacts > 200:
                     self.max_contacts = 10
-                break
+
+        # we have alist of possible report ID per application,
+        # now filter out the ones associated with the input reports
+        for application in report_ids:
+            for id in report_ids[application]:
+                if id in self.parsed_rdesc.reports:
+                    self.report_ids[application] = id
+                    break
+
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
 
@@ -107,7 +127,7 @@ class Digitizer(base.UHIDTest):
         self.contactcount = len(slots)
 
         while len(slots):
-            r = self.format_report(reportID=self.mt_report_id, data=slots)
+            r = self.format_report(reportID=self.report_ids[self.application], data=slots)
             self.call_input_event(r)
             rs.append(r)
             self.contactcount = 0
