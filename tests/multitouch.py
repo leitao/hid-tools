@@ -33,13 +33,13 @@ class Touch(object):
         self.y = y
         self.cx = x
         self.cy = y
-        self.tipswitch = False
-        self.confidence = False
-        self.pressure = 0
+        self.tipswitch = True
+        self.confidence = True
+        self.pressure = 100
         self.azimuth = 0
-        self.inrange = False
-        self.width = 0
-        self.height = 0
+        self.inrange = True
+        self.width = 10
+        self.height = 10
 
 
 class Pen(Touch):
@@ -185,14 +185,13 @@ class BaseTest:
                     uhdev.process_one_event(100)
 
                 t0 = Touch(1, 5, 10)
-                t0.tipswitch = 1
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
 
-                t0.tipswitch = 0
+                t0.tipswitch = False
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
@@ -206,8 +205,6 @@ class BaseTest:
 
                 t0 = Touch(1, 5, 10)
                 t1 = Touch(2, 15, 20)
-                t0.tipswitch = 1
-                t1.tipswitch = 1
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
@@ -215,7 +212,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
                 self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), -1)
 
-                t0.tipswitch = 0
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
@@ -223,7 +219,7 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_X'), 15)
                 self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_Y'), 20)
 
-                t1.tipswitch = 0
+                t0.tipswitch = False
                 r = uhdev.event([t1])
                 events = uhdev.next_sync_events()
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
