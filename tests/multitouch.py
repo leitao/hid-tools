@@ -93,10 +93,17 @@ class Digitizer(base.UHIDTest):
 
     def event(self, slots):
         self.scantime += 1
+        rs = []
+        # make sure we have only the required number of available slots
+        slots = slots[:self.max_contacts]
         self.contactcount = len(slots)
-        r = self.format_report(reportID=1, data=slots)
-        self.call_input_event(r)
-        return r
+
+        while len(slots):
+            r = self.format_report(reportID=1, data=slots)
+            self.call_input_event(r)
+            rs.append(r)
+            self.contactcount = 0
+        return rs
 
 
 class MinWin8TSParallel(Digitizer):
@@ -160,6 +167,69 @@ class MinWin8TSParallel(Digitizer):
 '''
         super(MinWin8TSParallel, self).__init__(f"uhid test parallel {self.max_slots}",
                                                 rdesc_str)
+
+
+class MinWin8TSHybrid(Digitizer):
+    def __init__(self):
+        self.max_slots = 10
+        self.phys_max = 120, 90
+        rdesc_finger_str = f'''
+            Usage Page (Digitizers)
+            Usage (Finger)
+            Collection (Logical)
+             Report Size (1)
+             Report Count (1)
+             Logical Minimum (0)
+             Logical Maximum (1)
+             Usage (Tip Switch)
+             Input (Data,Var,Abs)
+             Report Size (7)
+             Logical Maximum (127)
+             Input (Cnst,Var,Abs)
+             Report Size (8)
+             Logical Maximum (255)
+             Usage (Contact Id)
+             Input (Data,Var,Abs)
+             Report Size (16)
+             Unit Exponent (-1)
+             Unit (Centimeter,SILinear)
+             Logical Maximum (4095)
+             Physical Minimum (0)
+             Physical Maximum ({self.phys_max[0]})
+             Usage Page (Generic Desktop)
+             Usage (X)
+             Input (Data,Var,Abs)
+             Physical Maximum ({self.phys_max[1]})
+             Usage (Y)
+             Input (Data,Var,Abs)
+            End Collection
+'''
+        rdesc_str = f'''
+           Usage Page (Digitizers)
+           Usage (Touch Screen)
+           Collection (Application)
+            Report ID (1)
+            {rdesc_finger_str * 2}
+            Unit Exponent (-4)
+            Unit (Seconds,SILinear)
+            Logical Maximum (65535)
+            Physical Maximum (65535)
+            Usage Page (Digitizers)
+            Usage (Scan Time)
+            Input (Data,Var,Abs)
+            Report Size (8)
+            Logical Maximum (255)
+            Usage (Contact Count)
+            Input (Data,Var,Abs)
+            Report ID (2)
+            Logical Maximum ({self.max_slots})
+            Usage (Contact Max)
+            Feature (Data,Var,Abs)
+          End Collection
+          {Digitizer.msCertificationBlob(68)}
+'''
+        super(MinWin8TSHybrid, self).__init__("uhid test hybrid",
+                                              rdesc_str)
 
 
 class ElanXPS9360(Digitizer):
@@ -311,6 +381,10 @@ class TestMinWin8TSParallelDual(BaseTest.TestMultitouch):
 class TestMinWin8TSParallel(BaseTest.TestMultitouch):
     def _create_device(self):
         return MinWin8TSParallel(10)
+
+class TestMinWin8TSHybrid(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return MinWin8TSHybrid()
 
 class TestElanXPS9360(BaseTest.TestMultitouch):
     def _create_device(self):
