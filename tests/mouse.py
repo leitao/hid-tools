@@ -26,14 +26,13 @@ import unittest
 from base import main, setUpModule, tearDownModule  # noqa
 
 
+class MouseData(object):
+    pass
+
+
 class Mouse(base.UHIDTest):
     def __init__(self):
-        super(Mouse, self).__init__("uhid test simple")
-        self.info = 3, 1, 2
-        self.left = False
-        self.right = False
-        self.middle = False
-        self.rdesc = [
+        rdesc = [
             0x05, 0x01,  # .Usage Page (Generic Desktop)        0
             0x09, 0x02,  # .Usage (Mouse)                       2
             0xa1, 0x01,  # .Collection (Application)            4
@@ -64,9 +63,14 @@ class Mouse(base.UHIDTest):
             0xc0,        # ..End Collection                     53
             0xc0,        # .End Collection                      54
         ]
+        super(Mouse, self).__init__("uhid test simple", rdesc=rdesc)
+        self.info = 3, 1, 2
+        self.left = False
+        self.right = False
+        self.middle = False
         self.create_kernel_device()
 
-    def event(self, x, y, buttons=None):
+    def format_report(self, x, y, buttons=None, use_rdesc=True):
         if buttons is not None:
             l, r, m = buttons
             if l is not None:
@@ -78,12 +82,25 @@ class Mouse(base.UHIDTest):
         l = self.left
         r = self.right
         m = self.middle
-        button_mask = sum(1 << i for i, b in enumerate([l, r, m]) if b)
         x = max(-127, min(127, x))
         y = max(-127, min(127, y))
+        if use_rdesc:
+            mouse = MouseData()
+            mouse.b1 = int(l)
+            mouse.b2 = int(r)
+            mouse.b3 = int(m)
+            mouse.x = x
+            mouse.y = y
+            return super(Mouse, self).format_report(None, mouse)
+
+        button_mask = sum(1 << i for i, b in enumerate([l, r, m]) if b)
         x = base.to_twos_comp(x, 8)
         y = base.to_twos_comp(y, 8)
-        self.call_input_event([button_mask, x, y])
+        return [button_mask, x, y]
+
+    def event(self, x, y, buttons=None):
+        r = self.format_report(x, y, buttons)
+        self.call_input_event(r)
 
 
 class TestMouse(unittest.TestCase):
@@ -101,10 +118,45 @@ class TestMouse(unittest.TestCase):
             with self.assertRaises(OSError):
                 uhdev.evdev.fd.read()
 
+    def test_rdesc(self):
+        with Mouse() as uhdev:
+            event = (0, 0, (None, None, None))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (0, 0, (None, True, None))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (0, 0, (True, True, None))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (0, 0, (False, False, False))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (1, 0, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (-1, 0, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (-5, 5, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (0, -128, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
     def test_buttons(self):
         with Mouse() as uhdev:
             while not uhdev.opened:
                 uhdev.process_one_event(100)
+
             uhdev.event(0, 0, (None, True, None))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -113,6 +165,7 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(btn_events[0].value, 1)
             rel_events = [e for e in events if e.matches("EV_REL")]
             self.assertEqual(len(rel_events), 0)
+
             uhdev.event(0, 0, (None, False, None))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -121,6 +174,7 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(btn_events[0].value, 0)
             rel_events = [e for e in events if e.matches("EV_REL")]
             self.assertEqual(len(rel_events), 0)
+
             uhdev.event(0, 0, (None, None, True))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -129,6 +183,7 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(btn_events[0].value, 1)
             rel_events = [e for e in events if e.matches("EV_REL")]
             self.assertEqual(len(rel_events), 0)
+
             uhdev.event(0, 0, (None, None, False))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -137,6 +192,7 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(btn_events[0].value, 0)
             rel_events = [e for e in events if e.matches("EV_REL")]
             self.assertEqual(len(rel_events), 0)
+
             uhdev.event(0, 0, (True, None, None))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -145,6 +201,7 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(btn_events[0].value, 1)
             rel_events = [e for e in events if e.matches("EV_REL")]
             self.assertEqual(len(rel_events), 0)
+
             uhdev.event(0, 0, (False, None, None))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -153,12 +210,14 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(btn_events[0].value, 0)
             rel_events = [e for e in events if e.matches("EV_REL")]
             self.assertEqual(len(rel_events), 0)
+
             uhdev.destroy()
 
     def test_relative(self):
         with Mouse() as uhdev:
             while not uhdev.opened:
                 uhdev.process_one_event(100)
+
             uhdev.event(0, -1, (None, None, None))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -167,6 +226,7 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(len(rel_events), 1)
             self.assertTrue(rel_events[0].matches("EV_REL", "REL_Y"))
             self.assertTrue(rel_events[0].value, -1)
+
             uhdev.event(1, 0, (None, None, None))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -175,6 +235,7 @@ class TestMouse(unittest.TestCase):
             self.assertEqual(len(rel_events), 1)
             self.assertTrue(rel_events[0].matches("EV_REL", "REL_X"))
             self.assertTrue(rel_events[0].value, 1)
+
             uhdev.event(-1, 2, (None, None, None))
             events = uhdev.next_sync_events()
             btn_events = [e for e in events if e.matches("EV_KEY")]
@@ -185,6 +246,7 @@ class TestMouse(unittest.TestCase):
             self.assertTrue(rel_events[0].value, -1)
             self.assertTrue(rel_events[1].matches("EV_REL", "REL_Y"))
             self.assertTrue(rel_events[1].value, 2)
+
             uhdev.destroy()
 
 

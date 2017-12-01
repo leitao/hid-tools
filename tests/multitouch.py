@@ -21,7 +21,6 @@
 #
 
 import base
-import parse_rdesc
 import sys
 import unittest
 from base import main, setUpModule, tearDownModule  # noqa
@@ -43,7 +42,7 @@ class Touch(object):
 
 class Pen(Touch):
     def __init__(self, x, y):
-        super(Pen, self).__init__(x, y)
+        super(Pen, self).__init__(0, x, y)
         self.barrel = False
         self.invert = False
         self.eraser = False
@@ -71,52 +70,16 @@ class Digitizer(base.UHIDTest):
     '''
 
     def __init__(self, name, rdesc_str=None, rdesc=None):
-        if rdesc_str is None and rdesc is None:
-            raise Exception('Please provide at least a rdesc or rdesc_str')
-        super(Digitizer, self).__init__("uhid test simple")
+        super(Digitizer, self).__init__("uhid test simple", rdesc_str, rdesc)
         self.info = 3, 1, 2
         self.scantime = 0
-        if rdesc is None:
-            self.parsed_rdesc = parse_rdesc.ReportDescriptor.from_rdesc_str(rdesc_str)
-        else:
-            self.parsed_rdesc = parse_rdesc.parse_rdesc(rdesc)
-        self.rdesc = self.parsed_rdesc.data()
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
 
-    def process_event(self, slots, hidInputItem, r):
-        if hidInputItem.const:
-            return
-
-        # FIXME: arrays?
-        usage = hidInputItem.usage_name
-
-        if usage in self.prev_seen_usages:
-            if len(slots) > 0:
-                slots.pop(0)
-            self.prev_seen_usages.clear()
-
-        value = 0
-        field = usage.replace(' ', '').lower()
-        if field in 'contactid x y tipswitch confidence pressure azimuth inrange width height':
-            if len(slots) > 0:
-                value = getattr(slots[0], field)
-        else:
-            value = getattr(self, field)
-        hidInputItem.set_values(r, [value])
-        self.prev_seen_usages.append(usage)
-        return
-
     def event(self, slots):
         self.scantime += 1
-        reportID = 1
-        self.prev_seen_usages = []
         self.contactcount = len(slots)
-        rdesc, size = self.parsed_rdesc.reports[reportID]
-        r = [0 for i in range(size)]
-        r[0] = reportID
-        for item in rdesc:
-            self.process_event(slots, item, r)
+        r = self.format_report(reportID=1, data=slots)
         self.call_input_event(r)
         return r
 

@@ -21,6 +21,7 @@
 #
 
 import os
+import parse_rdesc
 import pyudev
 import select
 import struct
@@ -64,6 +65,7 @@ class UHIDDevice(object):
         self._name = None
         self._phys = ''
         self._rdesc = None
+        self.parsed_rdesc = None
         self._info = None
         self._fd = os.open('/dev/uhid', os.O_RDWR)
         self._start = self.start
@@ -95,7 +97,11 @@ class UHIDDevice(object):
 
     @rdesc.setter
     def rdesc(self, rdesc):
-        self._rdesc = rdesc
+        parsed_rdesc = rdesc
+        if not isinstance(rdesc, parse_rdesc.ReportDescriptor):
+            parsed_rdesc = parse_rdesc.ReportDescriptor.parse_rdesc(rdesc)
+        self.parsed_rdesc = parsed_rdesc
+        self._rdesc = parsed_rdesc.data()
 
     @property
     def phys(self):
@@ -243,3 +249,48 @@ class UHIDDevice(object):
         elif evtype == UHIDDevice.UHID_OUTPUT:
             ev, data, size, rtype = struct.unpack_from('< L 4096s H B', buf)
             self._output_report(data, size, rtype)
+
+    def _format_one_event(self, data, hidInputItem, r):
+        if hidInputItem.const:
+            return
+
+        # FIXME: arrays?
+        usage = hidInputItem.usage_name
+
+        if usage in self.prev_seen_usages:
+            if len(data) > 0:
+                data.pop(0)
+            self.prev_seen_usages.clear()
+
+        value = 0
+        field = usage.replace(' ', '').lower()
+        if len(data) > 0 and hasattr(data[0], field):
+            value = getattr(data[0], field)
+        elif hasattr(self, field):
+            value = getattr(self, field)
+
+        hidInputItem.set_values(r, [value])
+        self.prev_seen_usages.append(usage)
+        return
+
+    def format_report(self, reportID, data):
+        # make sure the data is iterable
+        try:
+            iter(data)
+        except TypeError:
+            data = [data]
+
+        self.prev_seen_usages = []
+        if reportID is None:
+            reportID = -1
+        rdesc, size = self.parsed_rdesc.reports[reportID]
+        r = [0 for i in range(size)]
+        if reportID >= 0:
+            r[0] = reportID
+        for item in rdesc:
+            self._format_one_event(data, item, r)
+
+        if len(data) > 0:
+            # remove the last item we just processed
+            data.pop(0)
+        return r

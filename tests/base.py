@@ -32,6 +32,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/..')
 
 from uhid import UHIDDevice  # noqa
+from parse_rdesc import ReportDescriptor  # noqa
 
 
 def twos_comp(val, bits):
@@ -46,11 +47,17 @@ def to_twos_comp(val, bits):
 
 
 class UHIDTest(UHIDDevice):
-    def __init__(self, name):
+    def __init__(self, name, rdesc_str=None, rdesc=None):
+        if rdesc_str is None and rdesc is None:
+            raise Exception('Please provide at least a rdesc or rdesc_str')
         super(UHIDTest, self).__init__()
         self.name = name
         self.opened = False
         self.evdev = None
+        if rdesc is None:
+            self.rdesc = ReportDescriptor.from_rdesc_str(rdesc_str)
+        else:
+            self.rdesc = rdesc
 
     def open(self):
         self.opened = True
