@@ -481,7 +481,10 @@ class HidInputItem(object):
             raise Exception("-EINVAL")
 
         for idx in range(self.count):
-            self._set_value(report, data[idx], idx)
+            v = data[idx]
+            if self.logical_min < 0:
+                v = to_twos_comp(v, self.size)
+            self._set_value(report, v, idx)
 
     @property
     def array(self):
