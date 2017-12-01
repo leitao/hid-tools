@@ -77,16 +77,24 @@ class Digitizer(base.UHIDTest):
         self.info = 3, 1, 2
         self.scantime = 0
         self.max_contacts = 1
+        self.mt_report_id = -1
         logical_max = 0
         contact_max_found = False
+        reportID = -1
         for item in self.parsed_rdesc.rdesc_items:
             descr = item.get_human_descr(0)[0]
-            if 'Contact Max' in descr:
+            if 'Report ID' in descr:
+                reportID = item.value
+            elif 'Contact Id' in descr:
+                self.mt_report_id = reportID
+            elif 'Contact Max' in descr:
                 contact_max_found = True
             elif 'Logical Maximum' in descr:
                 logical_max = item.value
             elif 'Feature' in descr and contact_max_found:
                 self.max_contacts = logical_max
+                if self.max_contacts > 200:
+                    self.max_contacts = 10
                 break
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
@@ -99,7 +107,7 @@ class Digitizer(base.UHIDTest):
         self.contactcount = len(slots)
 
         while len(slots):
-            r = self.format_report(reportID=1, data=slots)
+            r = self.format_report(reportID=self.mt_report_id, data=slots)
             self.call_input_event(r)
             rs.append(r)
             self.contactcount = 0
