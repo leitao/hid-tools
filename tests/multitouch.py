@@ -76,6 +76,18 @@ class Digitizer(base.UHIDTest):
         super(Digitizer, self).__init__("uhid test simple", rdesc_str, rdesc)
         self.info = 3, 1, 2
         self.scantime = 0
+        self.max_contacts = 1
+        logical_max = 0
+        contact_max_found = False
+        for item in self.parsed_rdesc.rdesc_items:
+            descr = item.get_human_descr(0)[0]
+            if 'Contact Max' in descr:
+                contact_max_found = True
+            elif 'Logical Maximum' in descr:
+                logical_max = item.value
+            elif 'Feature' in descr and contact_max_found:
+                self.max_contacts = logical_max
+                break
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
 
@@ -88,8 +100,8 @@ class Digitizer(base.UHIDTest):
 
 
 class MinWin8TSParallel(Digitizer):
-    def __init__(self):
-        self.max_slots = 2
+    def __init__(self, max_slots):
+        self.max_slots = max_slots
         self.phys_max = 120, 90
         rdesc_finger_str = f'''
             Usage Page (Digitizers)
@@ -181,7 +193,9 @@ class BaseTest:
                     uhdev.process_one_event(100)
                 self.assertIsNotNone(uhdev.evdev)
                 self.assertEqual(uhdev.evdev.name, uhdev.name)
+                self.assertEqual(uhdev.evdev.num_slots, uhdev.max_contacts)
                 self.assertEqual(len(uhdev.next_sync_events()), 0)
+
                 uhdev.destroy()
                 while uhdev.opened:
                     if uhdev.process_one_event(100) == 0:
@@ -256,10 +270,13 @@ class BaseTest:
                 uhdev.destroy()
 
 
+class TestMinWin8TSParallelDual(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return MinWin8TSParallel(2)
+
 class TestMinWin8TSParallel(BaseTest.TestMultitouch):
     def _create_device(self):
-        return MinWin8TSParallel()
-
+        return MinWin8TSParallel(10)
 
 class TestElanXPS9360(BaseTest.TestMultitouch):
     def _create_device(self):
