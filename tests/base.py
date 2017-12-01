@@ -69,8 +69,8 @@ class UHIDTest(UHIDDevice):
                 continue
             devname = c.properties['DEVNAME']
             if devname.startswith('/dev/input/event'):
-                self.evdev = libevdev.Libevdev()
-                self.evdev.fd = open(devname, 'rb')
+                event_node = open(devname, 'rb')
+                self.evdev = libevdev.Device(event_node)
                 fd = self.evdev.fd.fileno()
                 flag = fcntl.fcntl(fd, fcntl.F_GETFD)
                 fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
@@ -103,6 +103,26 @@ class UHIDTest(UHIDDevice):
                 break
             e = self.evdev.next_event()
         return events
+
+
+class BaseTestCase:
+    class TestUhid(unittest.TestCase):
+        syn_event = libevdev.InputEvent('EV_SYN', 'SYN_REPORT', 0)
+        key_event = libevdev.InputEvent("EV_KEY")
+        abs_event = libevdev.InputEvent("EV_ABS")
+        rel_event = libevdev.InputEvent("EV_REL")
+        msc_event = libevdev.InputEvent("EV_MSC", "MSC_SCAN")
+
+        def assertInputEventsIn(self, expected_events, effective_events):
+            effective_events = effective_events.copy()
+            for ev in expected_events:
+                self.assertIn(ev, effective_events)
+                effective_events.remove(ev)
+            return effective_events
+
+        def assertInputEvents(self, expected_events, effective_events):
+            r = self.assertInputEventsIn(expected_events, effective_events)
+            self.assertEqual(len(r), 0)
 
 
 def setUpModule():

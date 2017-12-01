@@ -21,6 +21,7 @@
 #
 
 import base
+import libevdev
 import sys
 import unittest
 from base import main, setUpModule, tearDownModule  # noqa
@@ -103,7 +104,7 @@ class Mouse(base.UHIDTest):
         self.call_input_event(r)
 
 
-class TestMouse(unittest.TestCase):
+class TestMouse(base.BaseTestCase.TestUhid):
     def test_creation(self):
         with Mouse() as uhdev:
             while not uhdev.opened:
@@ -157,59 +158,58 @@ class TestMouse(unittest.TestCase):
             while not uhdev.opened:
                 uhdev.process_one_event(100)
 
+            syn_event = self.syn_event
+            key_event = self.key_event
+            abs_event = self.abs_event
+            rel_event = self.rel_event
+            msc_event = self.msc_event
+
             uhdev.event(0, 0, (None, True, None))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_RIGHT", 1)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertEqual(len(btn_events), 1)
-            self.assertTrue(btn_events[0].matches("EV_KEY", "BTN_RIGHT"))
-            self.assertEqual(btn_events[0].value, 1)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 0)
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
 
             uhdev.event(0, 0, (None, False, None))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_RIGHT", 0)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertTrue(btn_events[0].matches("EV_KEY", "BTN_RIGHT"))
-            self.assertEqual(len(btn_events), 1)
-            self.assertEqual(btn_events[0].value, 0)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 0)
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
 
             uhdev.event(0, 0, (None, None, True))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_MIDDLE", 1)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertEqual(len(btn_events), 1)
-            self.assertTrue(btn_events[0].matches("EV_KEY", "BTN_MIDDLE"))
-            self.assertEqual(btn_events[0].value, 1)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 0)
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
 
             uhdev.event(0, 0, (None, None, False))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_MIDDLE", 0)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertTrue(btn_events[0].matches("EV_KEY", "BTN_MIDDLE"))
-            self.assertEqual(len(btn_events), 1)
-            self.assertEqual(btn_events[0].value, 0)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 0)
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
 
             uhdev.event(0, 0, (True, None, None))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_LEFT", 1)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertEqual(len(btn_events), 1)
-            self.assertTrue(btn_events[0].matches("EV_KEY", "BTN_LEFT"))
-            self.assertEqual(btn_events[0].value, 1)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 0)
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
 
             uhdev.event(0, 0, (False, None, None))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_LEFT", 0)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertTrue(btn_events[0].matches("EV_KEY", "BTN_LEFT"))
-            self.assertEqual(len(btn_events), 1)
-            self.assertEqual(btn_events[0].value, 0)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 0)
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
+
+            uhdev.event(0, 0, (True, True, None))
+            expected_event0 = libevdev.InputEvent("EV_KEY", "BTN_LEFT", 1)
+            expected_event1 = libevdev.InputEvent("EV_KEY", "BTN_RIGHT", 1)
+            events = uhdev.next_sync_events()
+            self.assertInputEvents((syn_event, msc_event, expected_event0,
+                                               msc_event, expected_event1), events)
+
+            uhdev.event(0, 0, (False, None, None))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_LEFT", 0)
+            events = uhdev.next_sync_events()
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
+
+            uhdev.event(0, 0, (None, False, None))
+            expected_event = libevdev.InputEvent("EV_KEY", "BTN_RIGHT", 0)
+            events = uhdev.next_sync_events()
+            self.assertInputEvents((syn_event, msc_event, expected_event), events)
 
             uhdev.destroy()
 
@@ -218,34 +218,27 @@ class TestMouse(unittest.TestCase):
             while not uhdev.opened:
                 uhdev.process_one_event(100)
 
+            syn_event = self.syn_event
+            key_event = self.key_event
+            abs_event = self.abs_event
+            rel_event = self.rel_event
+            msc_event = self.msc_event
+
             uhdev.event(0, -1, (None, None, None))
+            expected_event = libevdev.InputEvent("EV_REL", "REL_Y", -1)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertEqual(len(btn_events), 0)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 1)
-            self.assertTrue(rel_events[0].matches("EV_REL", "REL_Y"))
-            self.assertTrue(rel_events[0].value, -1)
+            self.assertInputEvents((syn_event, expected_event), events)
 
             uhdev.event(1, 0, (None, None, None))
+            expected_event = libevdev.InputEvent("EV_REL", "REL_X", 1)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertEqual(len(btn_events), 0)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 1)
-            self.assertTrue(rel_events[0].matches("EV_REL", "REL_X"))
-            self.assertTrue(rel_events[0].value, 1)
+            self.assertInputEvents((syn_event, expected_event), events)
 
             uhdev.event(-1, 2, (None, None, None))
+            expected_event0 = libevdev.InputEvent("EV_REL", "REL_X", -1)
+            expected_event1 = libevdev.InputEvent("EV_REL", "REL_Y", 2)
             events = uhdev.next_sync_events()
-            btn_events = [e for e in events if e.matches("EV_KEY")]
-            self.assertEqual(len(btn_events), 0)
-            rel_events = [e for e in events if e.matches("EV_REL")]
-            self.assertEqual(len(rel_events), 2)
-            self.assertTrue(rel_events[0].matches("EV_REL", "REL_X"))
-            self.assertTrue(rel_events[0].value, -1)
-            self.assertTrue(rel_events[1].matches("EV_REL", "REL_Y"))
-            self.assertTrue(rel_events[1].value, 2)
+            self.assertInputEvents((syn_event, expected_event0, expected_event1), events)
 
             uhdev.destroy()
 
