@@ -373,6 +373,27 @@ class BaseTest:
 
                 uhdev.destroy()
 
+        def test_mt_max_contact(self):
+            with self.__create_device() as uhdev:
+                while not uhdev.opened:
+                    uhdev.process_one_event(100)
+
+                touches = [Touch(i, i * 10, i * 10 + 5) for i in range(uhdev.max_contacts)]
+                r = uhdev.event(touches)
+                events = uhdev.next_sync_events()
+                for i, t in enumerate(touches):
+                    self.assertEqual(uhdev.evdev.slot_value(i, 'ABS_MT_TRACKING_ID'), i)
+                    self.assertEqual(uhdev.evdev.slot_value(i, 'ABS_MT_POSITION_X'), t.x)
+                    self.assertEqual(uhdev.evdev.slot_value(i, 'ABS_MT_POSITION_Y'), t.y)
+
+                for t in touches:
+                    t.tipswitch = False
+
+                r = uhdev.event(touches)
+                events = uhdev.next_sync_events()
+                for i, t in enumerate(touches):
+                    self.assertEqual(uhdev.evdev.slot_value(i, 'ABS_MT_TRACKING_ID'), -1)
+
 
 class TestMinWin8TSParallelDual(BaseTest.TestMultitouch):
     def _create_device(self):
