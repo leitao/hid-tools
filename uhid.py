@@ -275,7 +275,7 @@ class UHIDDevice(object):
 
         usage = self._fix_xy_usage_for_mt_devices(usage)
 
-        if usage in self.prev_seen_usages:
+        if usage in self.prev_seen_usages and not 'Vendor' in usage:
             if len(data) > 0:
                 data.pop(0)
             self.prev_seen_usages.clear()
