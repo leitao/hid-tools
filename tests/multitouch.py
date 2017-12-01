@@ -31,6 +31,8 @@ class Touch(object):
         self.contactid = id
         self.x = x
         self.y = y
+        self.cx = x
+        self.cy = y
         self.tipswitch = False
         self.confidence = False
         self.pressure = 0

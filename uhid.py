@@ -250,12 +250,30 @@ class UHIDDevice(object):
             ev, data, size, rtype = struct.unpack_from('< L 4096s H B', buf)
             self._output_report(data, size, rtype)
 
+    def _fix_xy_usage_for_mt_devices(self, usage):
+        if usage not in self.prev_seen_usages:
+            return usage
+
+        # multitouch devices might have 2 X for CX, TX
+        if usage == 'X' and ('Y' not in self.prev_seen_usages or
+                             'CY' in self.prev_seen_usages):
+            usage = 'CX'
+
+        # multitouch devices might have 2 Y for CY, TY
+        if usage == 'Y' and ('X' not in self.prev_seen_usages or
+                             'CX' in self.prev_seen_usages):
+            usage = 'CY'
+
+        return usage
+
     def _format_one_event(self, data, hidInputItem, r):
         if hidInputItem.const:
             return
 
         # FIXME: arrays?
         usage = hidInputItem.usage_name
+
+        usage = self._fix_xy_usage_for_mt_devices(usage)
 
         if usage in self.prev_seen_usages:
             if len(data) > 0:
