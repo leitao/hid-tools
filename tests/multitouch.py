@@ -158,7 +158,7 @@ class MinWin8TSParallel(Digitizer):
           End Collection
           {Digitizer.msCertificationBlob(68)}
 '''
-        super(MinWin8TSParallel, self).__init__("uhid test simple",
+        super(MinWin8TSParallel, self).__init__(f"uhid test parallel {self.max_slots}",
                                                 rdesc_str)
 
 
@@ -242,7 +242,7 @@ class BaseTest:
 
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
-                self.assertNotIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
+                self.assertNotIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH'), events)
                 self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_TOUCH"), 1)
                 self.assertNotIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_POSITION_X', 5), events)
                 self.assertNotIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_POSITION_Y', 10), events)
@@ -266,6 +266,40 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
                 self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), -1)
+
+                uhdev.destroy()
+
+        def test_mt_triple_tap(self):
+            with self.__create_device() as uhdev:
+                if uhdev.max_contacts <= 2:
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible')
+                while not uhdev.opened:
+                    uhdev.process_one_event(100)
+
+                t0 = Touch(1, 5, 10)
+                t1 = Touch(2, 15, 20)
+                t2 = Touch(3, 25, 30)
+                r = uhdev.event([t0, t1, t2])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), 1)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_X'), 15)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_Y'), 20)
+                self.assertEqual(uhdev.evdev.slot_value(2, 'ABS_MT_TRACKING_ID'), 2)
+                self.assertEqual(uhdev.evdev.slot_value(2, 'ABS_MT_POSITION_X'), 25)
+                self.assertEqual(uhdev.evdev.slot_value(2, 'ABS_MT_POSITION_Y'), 30)
+
+                t0.tipswitch = False
+                t1.tipswitch = False
+                t2.tipswitch = False
+                r = uhdev.event([t0, t1, t2])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), -1)
+                self.assertEqual(uhdev.evdev.slot_value(2, 'ABS_MT_TRACKING_ID'), -1)
 
                 uhdev.destroy()
 
