@@ -123,7 +123,7 @@ class ParseError(Exception):
     pass
 
 
-class HidItem(object):
+class HidRDescItem(object):
 
     def __init__(self, value):
         self.__parse(value)
@@ -405,7 +405,7 @@ class HidItem(object):
             value += 16
             value = to_twos_comp(value, v_count * 8)
 
-        item = HidItem(tag | size)
+        item = HidRDescItem(tag | size)
         item.usage_page = usage_page << 16
 
         for i in range(v_count):
@@ -462,7 +462,7 @@ class HidItem(object):
                 dump_file.write(f'                 {inv_usages[usage]}\n')
 
 
-class HidInputItem(object):
+class HidField(object):
 
     def __init__(self,
                  value,
@@ -482,13 +482,13 @@ class HidInputItem(object):
         self.count = count
 
     def copy(self):
-        return HidInputItem(self.type,
-                            self.usage_page,
-                            self.usage,
-                            self.logical_min,
-                            self.logical_max,
-                            self.size,
-                            self.count)
+        return HidField(self.type,
+                        self.usage_page,
+                        self.usage,
+                        self.logical_min,
+                        self.logical_max,
+                        self.size,
+                        self.count)
 
     def _usage_name(self, usage):
         usage_page = usage >> 16
@@ -583,27 +583,27 @@ class HidInputItem(object):
         return usage_page_name
 
     @classmethod
-    def getHidInputItems(cls,
-                         value,
-                         usage_page,
-                         usages,
-                         usage_min,
-                         usage_max,
-                         logical_min,
-                         logical_max,
-                         item_size,
-                         count):
+    def getHidFields(cls,
+                     value,
+                     usage_page,
+                     usages,
+                     usage_min,
+                     usage_max,
+                     logical_min,
+                     logical_max,
+                     item_size,
+                     count):
         usage = usage_min
         if len(usages) > 0:
             usage = usages[0]
 
-        item = HidInputItem(value,
-                            usage_page,
-                            usage,
-                            logical_min,
-                            logical_max,
-                            item_size,
-                            1)
+        item = HidField(value,
+                        usage_page,
+                        usage,
+                        logical_min,
+                        logical_max,
+                        item_size,
+                        1)
         items = []
 
         if value & (0x1 << 0):  # Const item
@@ -669,7 +669,7 @@ class ReportDescriptor(object):
         """ item is an int8 """
         if not self.current_item:
             # initial state
-            self.current_item = HidItem(value)
+            self.current_item = HidRDescItem(value)
         else:
             # try to feed the value to the current item
             self.current_item.feed(value)
@@ -754,15 +754,15 @@ class ReportDescriptor(object):
         elif item == "Report Size":
             self.item_size = value
         elif item == "Input":
-            inputItems = HidInputItem.getHidInputItems(value,
-                                                       self.usage_page,
-                                                       self.usages,
-                                                       self.usage_min,
-                                                       self.usage_max,
-                                                       self.logical_min,
-                                                       self.logical_max,
-                                                       self.item_size,
-                                                       self.count)
+            inputItems = HidField.getHidFields(value,
+                                               self.usage_page,
+                                               self.usages,
+                                               self.usage_min,
+                                               self.usage_max,
+                                               self.logical_min,
+                                               self.logical_max,
+                                               self.item_size,
+                                               self.count)
             self.report.extend(inputItems)
             for inputItem in inputItems:
                 inputItem.start = self.r_size
@@ -831,7 +831,7 @@ class ReportDescriptor(object):
         for line in rdesc_str.splitlines():
             if line.strip() == '':
                 continue
-            item = HidItem.from_human_descr(line, usage_page)
+            item = HidRDescItem.from_human_descr(line, usage_page)
             usage_page = item.usage_page >> 16
             rdesc_object.append(item)
             rdesc_object.parse_item(item)
