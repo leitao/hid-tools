@@ -98,14 +98,7 @@ class UHIDTest(UHIDDevice):
         self.call_set_report(req, 1)
 
     def next_sync_events(self):
-        events = []
-        e = self.evdev.next_event()
-        while e is not None:
-            events.append(e)
-            if e.matches("EV_SYN", "SYN_REPORT"):
-                break
-            e = self.evdev.next_event()
-        return events
+        return list(self.evdev.events())
 
 
 class BaseTestCase:
