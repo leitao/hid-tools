@@ -20,8 +20,8 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import hid
 import os
-import parse_rdesc
 import pyudev
 import select
 import struct
@@ -98,8 +98,8 @@ class UHIDDevice(object):
     @rdesc.setter
     def rdesc(self, rdesc):
         parsed_rdesc = rdesc
-        if not isinstance(rdesc, parse_rdesc.ReportDescriptor):
-            parsed_rdesc = parse_rdesc.ReportDescriptor.parse_rdesc(rdesc)
+        if not isinstance(rdesc, hid.ReportDescriptor):
+            parsed_rdesc = hid.ReportDescriptor.parse_rdesc(rdesc)
         self.parsed_rdesc = parsed_rdesc
         self._rdesc = parsed_rdesc.data()
 

@@ -31,8 +31,8 @@ import unittest
 # FIXME: this is really wrong :)
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/..')
 
+import hid  # noqa
 from uhid import UHIDDevice  # noqa
-from parse_rdesc import ReportDescriptor  # noqa
 
 
 def twos_comp(val, bits):
@@ -55,7 +55,7 @@ class UHIDTest(UHIDDevice):
         self.opened = False
         self.evdev = None
         if rdesc is None:
-            self.rdesc = ReportDescriptor.from_rdesc_str(rdesc_str)
+            self.rdesc = hid.ReportDescriptor.from_rdesc_str(rdesc_str)
         else:
             self.rdesc = rdesc
 

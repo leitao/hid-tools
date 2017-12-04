@@ -21,7 +21,7 @@
 #
 
 import sys
-import parse_rdesc
+import hid
 from parse import parse as _parse
 
 
@@ -128,8 +128,11 @@ def parse_hid(f_in, f_out):
         except KeyboardInterrupt:
             break
         if line.startswith("R:"):
-            rdesc_object = parse_rdesc.parse_rdesc(line.lstrip("R: "), f_out)
+            rdesc_object = hid.ReportDescriptor.parse_rdesc(line.lstrip("R: "))
+            rdesc_object.dump(f_out)
+
             rdesc_dict[d] = rdesc_object
+
             win8 = rdesc_object.win8
             if win8:
                 f_out.write("**** win 8 certified ****\n")
