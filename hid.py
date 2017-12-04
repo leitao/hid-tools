@@ -702,7 +702,7 @@ class HidReport(object):
     @property
     def has_been_populated(self):
         if self.report_ID >= 0:
-            return self.size > 8
+            return self.bitsize > 8
         return self.size > 0
 
     def __iter__(self):
@@ -770,7 +770,9 @@ class HidReport(object):
 class ReportDescriptor(object):
 
     def __init__(self):
-        self.reports = {}
+        self.input_reports = {}
+        self.feature_reports = {}
+        self.output_reports = {}
         self.index = 1  # 0 is the size
         self.usage_page = 0
         self.usage_page_list = []
@@ -787,6 +789,8 @@ class ReportDescriptor(object):
         self.count = 0
         self.item_size = 0
         self.current_input_report = HidReport(-1, None)
+        self.current_feature_report = HidReport(-1, None)
+        self.current_output_report = HidReport(-1, None)
         self.report_ID = -1
         self.win8 = False
         self.rdesc_items = []
@@ -817,17 +821,21 @@ class ReportDescriptor(object):
         return None
 
     def close_rdesc(self):
-        cur = self.current_input_report
-        if cur.has_been_populated:
-            self.reports[cur.report_ID] = cur
+        for cur, dest in ((self.current_input_report, self.input_reports),
+                          (self.current_feature_report, self.feature_reports),
+                          (self.current_output_report, self.output_reports)):
+            if cur.has_been_populated:
+                dest[cur.report_ID] = cur
         self.current_input_report = None
+        self.current_feature_report = None
+        self.current_output_report = None
 
     def get(self, reportID, reportSize):
         try:
-            report = self.reports[reportID]
+            report = self.input_reports[reportID]
         except AttributeError:
             try:
-                report = self.reports[-1]
+                report = self.input_reports[-1]
             except AttributeError:
                 return None
 
@@ -838,7 +846,7 @@ class ReportDescriptor(object):
         return None
 
     def get_report_from_application(self, application):
-        for r in self.reports.values():
+        for r in self.input_reports.values():
             if r.application == application or r.application_name == application:
                 return r
         return None
@@ -852,6 +860,8 @@ class ReportDescriptor(object):
         if item == "Report ID":
             self.close_rdesc()
             self.current_input_report = HidReport(value, self.application)
+            self.current_feature_report = HidReport(value, self.application)
+            self.current_output_report = HidReport(value, self.application)
             self.report_ID = value
         elif item == "Push":
             self.usage_page_list.append(self.usage_page)
@@ -915,9 +925,41 @@ class ReportDescriptor(object):
         elif item == "Feature":
             if len(self.usages) > 0 and self.usages[-1] == 0xff0000c5:
                 self.win8 = True
+            featureItems = HidFeatureField.getHidFields(self.report_ID,
+                                                        self.logical,
+                                                        self.physical,
+                                                        self.application,
+                                                        value,
+                                                        self.usage_page,
+                                                        self.usages,
+                                                        self.usage_min,
+                                                        self.usage_max,
+                                                        self.logical_min,
+                                                        self.logical_max,
+                                                        self.item_size,
+                                                        self.count)
+            self.current_feature_report.extend(featureItems)
             self.usages = []
+            self.usage_min = 0
+            self.usage_max = 0
         elif item == "Output":
+            outputItems = HidOutputField.getHidFields(self.report_ID,
+                                                      self.logical,
+                                                      self.physical,
+                                                      self.application,
+                                                      value,
+                                                      self.usage_page,
+                                                      self.usages,
+                                                      self.usage_min,
+                                                      self.usage_max,
+                                                      self.logical_min,
+                                                      self.logical_max,
+                                                      self.item_size,
+                                                      self.count)
+            self.current_output_report.extend(outputItems)
             self.usages = []
+            self.usage_min = 0
+            self.usage_max = 0
 
     def dump(self, dump_file, type_output='default'):
         indent = 0
@@ -978,6 +1020,8 @@ class ReportDescriptor(object):
             rdesc_object.append(item)
             rdesc_object.parse_item(item)
 
+        rdesc_object.close_rdesc()
+
         return rdesc_object
 
     def format_report(self, data, global_data=None, reportID=None, application=None):
@@ -994,6 +1038,6 @@ class ReportDescriptor(object):
         else:
             if reportID is None:
                 reportID = -1
-            rdesc = self.reports[reportID]
+            rdesc = self.input_reports[reportID]
 
         return rdesc.format_report(data, global_data)

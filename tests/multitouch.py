@@ -61,6 +61,7 @@ class Pen(Touch):
 class Digitizer(base.UHIDTest):
     @classmethod
     def msCertificationBlob(cls, reportID):
+        return ''
         return f'''
         Usage Page (Digitizers)
         Usage (Touch Screen)
@@ -82,29 +83,13 @@ class Digitizer(base.UHIDTest):
         self.scantime = 0
         if max_contacts is None:
             self.max_contacts = 1
+            for features in self.parsed_rdesc.feature_reports.values():
+                for feature in features:
+                    if feature.usage_name == 'Contact Max':
+                        self.max_contacts = feature.logical_max
         else:
             self.max_contacts = max_contacts
         self.application = application
-        usages = []
-        logical_max = 0
-
-        # retrieve some info from the devices:
-        # - the applications associated to each input report
-        # - the contact max
-        for item in self.parsed_rdesc.rdesc_items:
-            descr = item.get_human_descr(0)[0]
-            if 'Usage (' in descr:
-                r = parse.parse('Usage ({usage})', descr)
-                assert(r is not None)
-                usages.append(r['usage'])
-            elif 'Logical Maximum' in descr:
-                logical_max = item.value
-            elif 'Feature' in descr:
-                if 'Contact Max' in usages and max_contacts is None:
-                    self.max_contacts = logical_max
-                usages = []
-            elif 'Input' in descr or 'Output' in descr:
-                usages = []
 
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
