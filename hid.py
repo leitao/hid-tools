@@ -664,6 +664,7 @@ class HidReport(object):
         self.fields = []
         self.report_ID = report_ID
         self.application = application
+        self._application_name = None
         self._bitsize = 0
         if self.numbered:
             self._bitsize = 8
@@ -678,6 +679,13 @@ class HidReport(object):
         for f in fields:
             f.start = self._bitsize
             self._bitsize += f.size
+
+    @property
+    def application_name(self):
+        try:
+            return inv_usages[self.application]
+        except KeyError:
+            return 'Vendor'
 
     @property
     def numbered(self):
@@ -769,6 +777,12 @@ class ReportDescriptor(object):
         if report.size >= reportSize:
             return report
 
+        return None
+
+    def get_report_from_application(self, application):
+        for r in self.reports.values():
+            if r.application == application or r.application_name == application:
+                return r
         return None
 
     def parse_item(self, rdesc_item):

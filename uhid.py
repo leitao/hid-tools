@@ -291,20 +291,26 @@ class UHIDDevice(object):
         self.prev_seen_usages.append(usage)
         return
 
-    def format_report(self, reportID, data):
+    def format_report(self, data, reportID=None, application=None):
         # make sure the data is iterable
         try:
             iter(data)
         except TypeError:
             data = [data]
 
+        rdesc = None
+
         self.prev_seen_usages = []
-        if reportID is None:
-            reportID = -1
-        rdesc = self.parsed_rdesc.reports[reportID]
+        if application is not None:
+            rdesc = self.parsed_rdesc.get_report_from_application(application)
+        else:
+            if reportID is None:
+                reportID = -1
+            rdesc = self.parsed_rdesc.reports[reportID]
+
         r = [0 for i in range(rdesc.size)]
-        if reportID >= 0:
-            r[0] = reportID
+        if rdesc.numbered:
+            r[0] = rdesc.report_ID
         for item in rdesc:
             self._format_one_event(data, item, r)
 

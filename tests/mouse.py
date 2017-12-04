@@ -92,7 +92,7 @@ class Mouse(base.UHIDTest):
             mouse.b3 = int(m)
             mouse.x = x
             mouse.y = y
-            return super(Mouse, self).format_report(None, mouse)
+            return super(Mouse, self).format_report(mouse)
 
         button_mask = sum(1 << i for i, b in enumerate([l, r, m]) if b)
         x = base.to_twos_comp(x, 8)

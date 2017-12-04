@@ -81,12 +81,9 @@ class Digitizer(base.UHIDTest):
             self.max_contacts = 1
         else:
             self.max_contacts = max_contacts
-        self.report_ids = {}
         self.application = application
         usages = []
-        application = None
         logical_max = 0
-        report_ids = {}
 
         # retrieve some info from the devices:
         # - the applications associated to each input report
@@ -97,13 +94,6 @@ class Digitizer(base.UHIDTest):
                 r = parse.parse('Usage ({usage})', descr)
                 assert(r is not None)
                 usages.append(r['usage'])
-            elif 'Collection (Application)' in descr:
-                application = usages[0]
-            elif 'Report ID' in descr:
-                try:
-                    report_ids[application].append(item.value)
-                except KeyError:
-                    report_ids[application] = [item.value]
             elif 'Logical Maximum' in descr:
                 logical_max = item.value
             elif 'Feature' in descr:
@@ -112,14 +102,6 @@ class Digitizer(base.UHIDTest):
                 usages = []
             elif 'Input' in descr or 'Output' in descr:
                 usages = []
-
-        # we have alist of possible report ID per application,
-        # now filter out the ones associated with the input reports
-        for application in report_ids:
-            for id in report_ids[application]:
-                if id in self.parsed_rdesc.reports:
-                    self.report_ids[application] = id
-                    break
 
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
@@ -132,7 +114,7 @@ class Digitizer(base.UHIDTest):
         self.contactcount = len(slots)
 
         while len(slots):
-            r = self.format_report(reportID=self.report_ids[self.application], data=slots)
+            r = self.format_report(application=self.application, data=slots)
             self.call_input_event(r)
             rs.append(r)
             self.contactcount = 0
