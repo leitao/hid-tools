@@ -20,6 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import copy
 import parse_hut
 from parse import parse as _parse
 
@@ -482,13 +483,7 @@ class HidField(object):
         self.count = count
 
     def copy(self):
-        return HidField(self.type,
-                        self.usage_page,
-                        self.usage,
-                        self.logical_min,
-                        self.logical_max,
-                        self.size,
-                        self.count)
+        return copy.deepcopy(self)
 
     def _usage_name(self, usage):
         usage_page = usage >> 16
@@ -597,13 +592,13 @@ class HidField(object):
         if len(usages) > 0:
             usage = usages[0]
 
-        item = HidField(value,
-                        usage_page,
-                        usage,
-                        logical_min,
-                        logical_max,
-                        item_size,
-                        1)
+        item = cls(value,
+                   usage_page,
+                   usage,
+                   logical_min,
+                   logical_max,
+                   item_size,
+                   1)
         items = []
 
         if value & (0x1 << 0):  # Const item
@@ -634,6 +629,18 @@ class HidField(object):
             item.count = count
             return [item]
         return items
+
+
+class HidInputField(HidField):
+    pass
+
+
+class HidOutputField(HidField):
+    pass
+
+
+class HidFeatureField(HidField):
+    pass
 
 
 class ReportDescriptor(object):
@@ -754,15 +761,15 @@ class ReportDescriptor(object):
         elif item == "Report Size":
             self.item_size = value
         elif item == "Input":
-            inputItems = HidField.getHidFields(value,
-                                               self.usage_page,
-                                               self.usages,
-                                               self.usage_min,
-                                               self.usage_max,
-                                               self.logical_min,
-                                               self.logical_max,
-                                               self.item_size,
-                                               self.count)
+            inputItems = HidInputField.getHidFields(value,
+                                                    self.usage_page,
+                                                    self.usages,
+                                                    self.usage_min,
+                                                    self.usage_max,
+                                                    self.logical_min,
+                                                    self.logical_max,
+                                                    self.item_size,
+                                                    self.count)
             self.report.extend(inputItems)
             for inputItem in inputItems:
                 inputItem.start = self.r_size
