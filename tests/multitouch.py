@@ -28,6 +28,9 @@ import unittest
 from base import main, setUpModule, tearDownModule  # noqa
 
 
+class Data(object):
+    pass
+
 class Touch(object):
     def __init__(self, id, x, y):
         self.contactid = id
@@ -111,10 +114,13 @@ class Digitizer(base.UHIDTest):
         rs = []
         # make sure we have only the required number of available slots
         slots = slots[:self.max_contacts]
-        self.contactcount = len(slots)
+
+        global_data = Data()
+        global_data.contactcount = len(slots)
+        global_data.scantime = self.scantime
 
         while len(slots):
-            r = self.format_report(application=self.application, data=slots)
+            r = self.format_report(application=self.application, data=slots, global_data=global_data)
             self.call_input_event(r)
             rs.append(r)
             self.contactcount = 0

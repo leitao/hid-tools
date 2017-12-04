@@ -709,6 +709,64 @@ class HidReport(object):
         return iter(self.fields)
 
 
+    def _fix_xy_usage_for_mt_devices(self, usage):
+        if usage not in self.prev_seen_usages:
+            return usage
+
+        # multitouch devices might have 2 X for CX, TX
+        if usage == 'X' and ('Y' not in self.prev_seen_usages or
+                             'CY' in self.prev_seen_usages):
+            usage = 'CX'
+
+        # multitouch devices might have 2 Y for CY, TY
+        if usage == 'Y' and ('X' not in self.prev_seen_usages or
+                             'CX' in self.prev_seen_usages):
+            usage = 'CY'
+
+        return usage
+
+    def _format_one_event(self, data, global_data, hidInputItem, r):
+        if hidInputItem.const:
+            return
+
+        # FIXME: arrays?
+        usage = hidInputItem.usage_name
+
+        usage = self._fix_xy_usage_for_mt_devices(usage)
+
+        if usage in self.prev_seen_usages and not 'Vendor' in usage:
+            if len(data) > 0:
+                data.pop(0)
+            self.prev_seen_usages.clear()
+
+        value = 0
+        field = usage.replace(' ', '').lower()
+        if len(data) > 0 and hasattr(data[0], field):
+            value = getattr(data[0], field)
+        elif hasattr(global_data, field):
+            value = getattr(global_data, field)
+
+        hidInputItem.set_values(r, [value])
+        self.prev_seen_usages.append(usage)
+
+    def format_report(self, data, global_data):
+        self.prev_seen_usages = []
+        r = [0 for i in range(self.size)]
+
+        if self.numbered:
+            r[0] = self.report_ID
+
+        for item in self:
+            self._format_one_event(data, global_data, item, r)
+
+        if len(data) > 0:
+            # remove the last item we just processed
+            data.pop(0)
+
+        return r
+
+
+
 class ReportDescriptor(object):
 
     def __init__(self):
@@ -921,3 +979,21 @@ class ReportDescriptor(object):
             rdesc_object.parse_item(item)
 
         return rdesc_object
+
+    def format_report(self, data, global_data=None, reportID=None, application=None):
+        # make sure the data is iterable
+        try:
+            iter(data)
+        except TypeError:
+            data = [data]
+
+        rdesc = None
+
+        if application is not None:
+            rdesc = self.get_report_from_application(application)
+        else:
+            if reportID is None:
+                reportID = -1
+            rdesc = self.reports[reportID]
+
+        return rdesc.format_report(data, global_data)
