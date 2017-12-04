@@ -301,8 +301,8 @@ class UHIDDevice(object):
         self.prev_seen_usages = []
         if reportID is None:
             reportID = -1
-        rdesc, size = self.parsed_rdesc.reports[reportID]
-        r = [0 for i in range(size)]
+        rdesc = self.parsed_rdesc.reports[reportID]
+        r = [0 for i in range(rdesc.size)]
         if reportID >= 0:
             r[0] = reportID
         for item in rdesc:

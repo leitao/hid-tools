@@ -25,11 +25,12 @@ import hid
 from parse import parse as _parse
 
 
-def get_report(time, report, rdesc, numbered):
+def get_report(time, report, rdesc):
     """
     Translate the given report to a human readable format.
     """
 
+    numbered = rdesc.report_ID >= 0
     output = f'{time:>10s} '
     sep = ''
     report_descriptor = rdesc
@@ -103,9 +104,9 @@ def get_report(time, report, rdesc, numbered):
 def parse_event(line, rdesc_object):
     e, time, size, report = line.split(' ', 3)
     report = [int(item, 16) for item in report.split(' ')]
-    rdesc, numbered = rdesc_object.get(report[0], int(size))
+    rdesc = rdesc_object.get(report[0], int(size))
     if rdesc is not None:
-        return get_report(time, report, rdesc, numbered)
+        return get_report(time, report, rdesc)
     return None
 
 

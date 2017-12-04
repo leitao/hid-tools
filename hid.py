@@ -659,6 +659,48 @@ class HidFeatureField(HidField):
     pass
 
 
+class HidReport(object):
+    def __init__(self, report_ID, application):
+        self.fields = []
+        self.report_ID = report_ID
+        self.application = application
+        self._bitsize = 0
+        if self.numbered:
+            self._bitsize = 8
+
+    def append(self, field):
+        self.fields.append(field)
+        field.start = self._bitsize
+        self._bitsize += field.size
+
+    def extend(self, fields):
+        self.fields.extend(fields)
+        for f in fields:
+            f.start = self._bitsize
+            self._bitsize += f.size
+
+    @property
+    def numbered(self):
+        return self.report_ID >= 0
+
+    @property
+    def bitsize(self):
+        return self._bitsize
+
+    @property
+    def size(self):
+        return self._bitsize >> 3
+
+    @property
+    def has_been_populated(self):
+        if self.report_ID >= 0:
+            return self.size > 8
+        return self.size > 0
+
+    def __iter__(self):
+        return iter(self.fields)
+
+
 class ReportDescriptor(object):
 
     def __init__(self):
@@ -678,12 +720,11 @@ class ReportDescriptor(object):
         self.logical_max_item = None
         self.count = 0
         self.item_size = 0
-        self.report = []
+        self.current_input_report = HidReport(-1, None)
         self.report_ID = -1
         self.win8 = False
         self.rdesc_items = []
         self.rdesc_size = 0
-        self.r_size = 0
         self.current_item = None
 
     def append(self, item):
@@ -710,33 +751,25 @@ class ReportDescriptor(object):
         return None
 
     def close_rdesc(self):
-        if self.report_ID and self.r_size > 8:
-            self.reports[self.report_ID] = self.report, (self.r_size >> 3)
-        self.report = []
-        self.r_size = 0
+        cur = self.current_input_report
+        if cur.has_been_populated:
+            self.reports[cur.report_ID] = cur
+        self.current_input_report = None
 
     def get(self, reportID, reportSize):
-        # check for numbered reports with correct size
-        for k, v in self.reports.items():
-            if k == reportID and reportSize == v[1]:
-                return v[0], True
-        if -1 in self.reports:
-            for k, v in self.reports.items():
-                if k == -1 and reportSize == v[1]:
-                    return v[0], False
+        try:
+            report = self.reports[reportID]
+        except AttributeError:
+            try:
+                report = self.reports[-1]
+            except AttributeError:
+                return None
 
-        # mabe the report is larger than it should
-        key = None
-        current_size = 0
-        for k, v in self.reports.items():
-            if k == reportID and v[1] < reportSize and current_size < reportSize:
-                current_size = v[1]
-                key = k
+        # if the report is larger than it should, it's OK
+        if report.size >= reportSize:
+            return report
 
-        if key in self.reports:
-            return self.reports[key][0], True
-
-        return None, False
+        return None
 
     def parse_item(self, rdesc_item):
         # store current usage_page in rdesc_item
@@ -746,8 +779,8 @@ class ReportDescriptor(object):
 
         if item == "Report ID":
             self.close_rdesc()
+            self.current_input_report = HidReport(value, self.application)
             self.report_ID = value
-            self.r_size = 8
         elif item == "Push":
             self.usage_page_list.append(self.usage_page)
         elif item == "Pop":
@@ -803,10 +836,7 @@ class ReportDescriptor(object):
                                                     self.logical_max,
                                                     self.item_size,
                                                     self.count)
-            self.report.extend(inputItems)
-            for inputItem in inputItems:
-                inputItem.start = self.r_size
-                self.r_size += inputItem.size * inputItem.count
+            self.current_input_report.extend(inputItems)
             self.usages = []
             self.usage_min = 0
             self.usage_max = 0
