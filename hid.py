@@ -466,6 +466,10 @@ class HidRDescItem(object):
 class HidField(object):
 
     def __init__(self,
+                 report_ID,
+                 logical,
+                 physical,
+                 application,
                  value,
                  usage_page,
                  usage,
@@ -473,6 +477,10 @@ class HidField(object):
                  logical_max,
                  item_size,
                  count):
+        self.report_ID = report_ID
+        self.logical = logical
+        self.physical = physical
+        self.application = application
         self.type = value
         self.usage_page = usage_page
         self.usage = usage
@@ -579,6 +587,10 @@ class HidField(object):
 
     @classmethod
     def getHidFields(cls,
+                     report_ID,
+                     logical,
+                     physical,
+                     application,
                      value,
                      usage_page,
                      usages,
@@ -592,7 +604,11 @@ class HidField(object):
         if len(usages) > 0:
             usage = usages[0]
 
-        item = cls(value,
+        item = cls(report_ID,
+                   logical,
+                   physical,
+                   application,
+                   value,
                    usage_page,
                    usage,
                    logical_min,
@@ -653,6 +669,9 @@ class ReportDescriptor(object):
         self.usages = []
         self.usage_min = 0
         self.usage_max = 0
+        self.logical = None
+        self.physical = None
+        self.application = None
         self.logical_min = 0
         self.logical_min_item = None
         self.logical_max = 0
@@ -740,6 +759,16 @@ class ReportDescriptor(object):
             self.usage_min = 0
             self.usage_max = 0
         elif item == "Collection":
+            c = inv_collections[value]
+            try:
+                if c == 'PHYSICAL':
+                    self.physical = self.usages[-1]
+                elif c == 'APPLICATION':
+                    self.application = self.usages[-1]
+                else:  # 'LOGICAL'
+                    self.logical = self.usages[-1]
+            except IndexError:
+                pass
             # reset the usage list
             self.usages = []
             self.usage_min = 0
@@ -761,7 +790,11 @@ class ReportDescriptor(object):
         elif item == "Report Size":
             self.item_size = value
         elif item == "Input":
-            inputItems = HidInputField.getHidFields(value,
+            inputItems = HidInputField.getHidFields(self.report_ID,
+                                                    self.logical,
+                                                    self.physical,
+                                                    self.application,
+                                                    value,
                                                     self.usage_page,
                                                     self.usages,
                                                     self.usage_min,
