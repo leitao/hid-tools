@@ -788,9 +788,7 @@ class ReportDescriptor(object):
         self.logical_max_item = None
         self.count = 0
         self.item_size = 0
-        self.current_input_report = None
-        self.current_feature_report = None
-        self.current_output_report = None
+        self.current_report = {}
         self.report_ID = -1
         self.win8 = False
         self.rdesc_items = []
@@ -841,6 +839,29 @@ class ReportDescriptor(object):
                 return r
         return None
 
+    def _get_current_report(self, type):
+        report_lists = {
+            'Input': self.input_reports,
+            'Output': self.output_reports,
+            'Feature': self.feature_reports,
+        }
+
+        try:
+            cur = self.current_report[type]
+        except KeyError:
+            cur = None
+
+        if cur is not None and cur.report_ID != self.report_ID:
+            cur = None
+
+        if cur is None:
+            try:
+                cur = report_lists[type][self.report_ID]
+            except KeyError:
+                cur = HidReport(self.report_ID, self.application)
+                report_lists[type][self.report_ID] = cur
+        return cur
+
     def parse_item(self, rdesc_item):
         # store current usage_page in rdesc_item
         rdesc_item.usage_page = self.usage_page
@@ -890,48 +911,15 @@ class ReportDescriptor(object):
             self.count = value
         elif item == "Report Size":
             self.item_size = value
-        elif item == "Input":
-            if self.current_input_report is not None:
-                if self.current_input_report != self.report_ID:
-                    self.current_input_report = None
-            if self.current_input_report is None:
-                try:
-                    self.current_input_report = self.input_reports[self.report_ID]
-                except KeyError:
-                    self.current_input_report = HidReport(self.report_ID, self.application)
-                    self.input_reports[self.report_ID] = self.current_input_report
+        elif item in ("Input", "Feature", "Output"):
+            field_types = {
+                "Input": HidInputField,
+                "Feature": HidFeatureField,
+                "Output": HidOutputField,
+            }
+            self.current_input_report = self._get_current_report(item)
 
-            inputItems = HidInputField.getHidFields(self.report_ID,
-                                                    self.logical,
-                                                    self.physical,
-                                                    self.application,
-                                                    value,
-                                                    self.usage_page,
-                                                    self.usages,
-                                                    self.usage_min,
-                                                    self.usage_max,
-                                                    self.logical_min,
-                                                    self.logical_max,
-                                                    self.item_size,
-                                                    self.count)
-            self.current_input_report.extend(inputItems)
-            self.usages = []
-            self.usage_min = 0
-            self.usage_max = 0
-        elif item == "Feature":
-            if self.current_output_report is not None:
-                if self.current_output_report != self.report_ID:
-                    self.current_output_report = None
-            if self.current_feature_report is None:
-                try:
-                    self.current_feature_report = self.feature_reports[self.report_ID]
-                except KeyError:
-                    self.current_feature_report = HidReport(self.report_ID, self.application)
-                    self.feature_reports[self.report_ID] = self.current_feature_report
-
-            if len(self.usages) > 0 and self.usages[-1] == 0xff0000c5:
-                self.win8 = True
-            featureItems = HidFeatureField.getHidFields(self.report_ID,
+            inputItems = field_types[item].getHidFields(self.report_ID,
                                                         self.logical,
                                                         self.physical,
                                                         self.application,
@@ -944,35 +932,9 @@ class ReportDescriptor(object):
                                                         self.logical_max,
                                                         self.item_size,
                                                         self.count)
-            self.current_feature_report.extend(featureItems)
-            self.usages = []
-            self.usage_min = 0
-            self.usage_max = 0
-        elif item == "Output":
-            if self.current_output_report is not None:
-                if self.current_output_report != self.report_ID:
-                    self.current_output_report = None
-            if self.current_output_report is None:
-                try:
-                    self.current_output_report = self.output_reports[self.report_ID]
-                except KeyError:
-                    self.current_output_report = HidReport(self.report_ID, self.application)
-                    self.output_reports[self.report_ID] = self.current_output_report
-
-            outputItems = HidOutputField.getHidFields(self.report_ID,
-                                                      self.logical,
-                                                      self.physical,
-                                                      self.application,
-                                                      value,
-                                                      self.usage_page,
-                                                      self.usages,
-                                                      self.usage_min,
-                                                      self.usage_max,
-                                                      self.logical_min,
-                                                      self.logical_max,
-                                                      self.item_size,
-                                                      self.count)
-            self.current_output_report.extend(outputItems)
+            self.current_input_report.extend(inputItems)
+            if item == "Feature" and len(self.usages) > 0 and self.usages[-1] == 0xff0000c5:
+                self.win8 = True
             self.usages = []
             self.usage_min = 0
             self.usage_max = 0
