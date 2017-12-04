@@ -22,7 +22,6 @@
 
 import base
 import libevdev
-import parse
 import sys
 import unittest
 from base import main, setUpModule, tearDownModule  # noqa
@@ -30,6 +29,7 @@ from base import main, setUpModule, tearDownModule  # noqa
 
 class Data(object):
     pass
+
 
 class Touch(object):
     def __init__(self, id, x, y):

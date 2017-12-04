@@ -23,7 +23,6 @@
 import base
 import libevdev
 import sys
-import unittest
 from base import main, setUpModule, tearDownModule  # noqa
 
 
