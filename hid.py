@@ -647,18 +647,6 @@ class HidField(object):
         return items
 
 
-class HidInputField(HidField):
-    pass
-
-
-class HidOutputField(HidField):
-    pass
-
-
-class HidFeatureField(HidField):
-    pass
-
-
 class HidReport(object):
     def __init__(self, report_ID, application):
         self.fields = []
@@ -912,26 +900,21 @@ class ReportDescriptor(object):
         elif item == "Report Size":
             self.item_size = value
         elif item in ("Input", "Feature", "Output"):
-            field_types = {
-                "Input": HidInputField,
-                "Feature": HidFeatureField,
-                "Output": HidOutputField,
-            }
             self.current_input_report = self._get_current_report(item)
 
-            inputItems = field_types[item].getHidFields(self.report_ID,
-                                                        self.logical,
-                                                        self.physical,
-                                                        self.application,
-                                                        value,
-                                                        self.usage_page,
-                                                        self.usages,
-                                                        self.usage_min,
-                                                        self.usage_max,
-                                                        self.logical_min,
-                                                        self.logical_max,
-                                                        self.item_size,
-                                                        self.count)
+            inputItems = HidField.getHidFields(self.report_ID,
+                                               self.logical,
+                                               self.physical,
+                                               self.application,
+                                               value,
+                                               self.usage_page,
+                                               self.usages,
+                                               self.usage_min,
+                                               self.usage_max,
+                                               self.logical_min,
+                                               self.logical_max,
+                                               self.item_size,
+                                               self.count)
             self.current_input_report.extend(inputItems)
             if item == "Feature" and len(self.usages) > 0 and self.usages[-1] == 0xff0000c5:
                 self.win8 = True
