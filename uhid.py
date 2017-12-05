@@ -49,17 +49,51 @@ class UHIDDevice(object):
     UHID_SET_REPORT = 13
     UHID_SET_REPORT_REPLY = 14
 
-    devices = {}
+    polling_functions = {}
     poll = select.poll()
+    devices = []
+
+    pyudev_context = None
+    pyudev_monitor = None
 
     @classmethod
     def process_one_event(cls, timeout=None):
         devices = cls.poll.poll(timeout)
-        if len(devices) > 0:
-            fd, mask = devices[0]
-            dev = cls.devices[fd]
-            dev._process_one_event()
+        for fd, mask in devices:
+            if mask & select.POLLIN:
+                fun = cls.polling_functions[fd]
+                fun()
         return len(devices)
+
+    @classmethod
+    def append_fd_to_poll(cls, fd, read_function):
+        cls.poll.register(fd)
+        cls.polling_functions[fd] = read_function
+
+    @classmethod
+    def remove_fd_from_poll(cls, fd):
+        cls.poll.unregister(fd)
+
+    @classmethod
+    def init_pyudev(cls):
+        if cls.pyudev_context is None:
+            cls.pyudev_context = pyudev.Context()
+            cls.pyudev_monitor = pyudev.Monitor.from_netlink(cls.pyudev_context)
+            cls.pyudev_monitor.filter_by('input')
+            cls.pyudev_monitor.start()
+
+            cls.append_fd_to_poll(cls.pyudev_monitor.fileno(), cls.cls_udev_event)
+
+    @classmethod
+    def cls_udev_event(cls):
+        event = cls.pyudev_monitor.poll()
+
+        if event is None:
+            return
+
+        for d in cls.devices:
+            if d.udev is not None and d.udev.sys_path in event.sys_path:
+                d.udev_event(event)
 
     def __init__(self):
         self._name = None
@@ -77,15 +111,20 @@ class UHIDDevice(object):
         self._output_report = self.output_report
         self._udev = None
         self.uniq = f'uhid_{str(uuid.uuid4())}'
-        UHIDDevice.poll.register(self._fd)
-        UHIDDevice.devices[self._fd] = self
+        self.append_fd_to_poll(self._fd, self._process_one_event)
+        self.init_pyudev()
+        UHIDDevice.devices.append(self)
 
     def __enter__(self):
         return self
 
     def __exit__(self, *exc_details):
-        UHIDDevice.poll.unregister(self._fd)
+        UHIDDevice.devices.remove(self)
+        self.remove_fd_from_poll(self._fd)
         os.close(self._fd)
+
+    def udev_event(self, event):
+        pass
 
     @property
     def fd(self):
@@ -167,8 +206,7 @@ class UHIDDevice(object):
     @property
     def udev(self):
         if self._udev is None:
-            context = pyudev.Context()
-            for device in context.list_devices(subsystem='hid'):
+            for device in self.pyudev_context.list_devices(subsystem='hid'):
                 if self.uniq == device.properties['HID_UNIQ']:
                     self._udev = device
         return self._udev
