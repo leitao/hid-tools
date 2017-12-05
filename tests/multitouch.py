@@ -111,6 +111,13 @@ class Digitizer(base.UHIDTest):
             self.contactcount = 0
         return rs
 
+    @property
+    def evdev(self):
+        if self.application not in self.input_nodes:
+            return None
+
+        return self.input_nodes[self.application]
+
 
 class MinWin8TSParallel(Digitizer):
     def __init__(self, max_slots):
@@ -258,8 +265,9 @@ class BaseTest:
 
         def test_mt_creation(self):
             with self.__create_device() as uhdev:
-                while not uhdev.opened:
-                    uhdev.process_one_event(100)
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
                 self.assertIsNotNone(uhdev.evdev)
                 self.assertEqual(uhdev.evdev.name, uhdev.name)
                 self.assertEqual(uhdev.evdev.num_slots, uhdev.max_contacts)
@@ -274,8 +282,8 @@ class BaseTest:
 
         def test_mt_single_touch(self):
             with self.__create_device() as uhdev:
-                while not uhdev.opened:
-                    uhdev.process_one_event(100)
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
 
                 t0 = Touch(1, 5, 10)
                 r = uhdev.event([t0])
@@ -296,8 +304,8 @@ class BaseTest:
 
         def test_mt_dual_touch(self):
             with self.__create_device() as uhdev:
-                while not uhdev.opened:
-                    uhdev.process_one_event(100)
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
 
                 t0 = Touch(1, 5, 10)
                 t1 = Touch(2, 15, 20)
@@ -346,8 +354,8 @@ class BaseTest:
                 if uhdev.max_contacts <= 2:
                     uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible')
-                while not uhdev.opened:
-                    uhdev.process_one_event(100)
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
 
                 t0 = Touch(1, 5, 10)
                 t1 = Touch(2, 15, 20)
@@ -380,8 +388,8 @@ class BaseTest:
 
         def test_mt_max_contact(self):
             with self.__create_device() as uhdev:
-                while not uhdev.opened:
-                    uhdev.process_one_event(100)
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
 
                 touches = [Touch(i, i * 10, i * 10 + 5) for i in range(uhdev.max_contacts)]
                 r = uhdev.event(touches)
@@ -474,7 +482,6 @@ class Testatmel_03eb_8409(BaseTest.TestMultitouch):
         return Digitizer("uhid test atmel_03eb_8409", rdesc="639 05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 02 46 c8 0a 26 6f 08 09 30 81 02 35 00 35 00 46 18 06 26 77 0f 09 31 81 02 35 00 35 00 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 48 81 02 09 49 81 02 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 02 46 c8 0a 26 6f 08 09 30 81 02 35 00 35 00 46 18 06 26 77 0f 09 31 81 02 35 00 35 00 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 48 81 02 09 49 81 02 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 02 46 c8 0a 26 6f 08 09 30 81 02 35 00 35 00 46 18 06 26 77 0f 09 31 81 02 35 00 35 00 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 48 81 02 09 49 81 02 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 02 46 c8 0a 26 6f 08 09 30 81 02 35 00 35 00 46 18 06 26 77 0f 09 31 81 02 35 00 35 00 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 48 81 02 09 49 81 02 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 02 46 c8 0a 26 6f 08 09 30 81 02 35 00 35 00 46 18 06 26 77 0f 09 31 81 02 35 00 35 00 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 48 81 02 09 49 81 02 c0 05 0d 27 ff ff 00 00 75 10 95 01 09 56 81 02 15 00 25 1f 75 05 09 54 95 01 81 02 75 03 25 01 95 01 81 03 75 08 85 02 09 55 25 10 b1 02 06 00 ff 85 05 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 00 a1 01 85 03 09 20 a1 00 15 00 25 01 75 01 95 01 09 42 81 02 09 44 81 02 09 45 81 02 81 03 09 32 81 02 95 03 81 03 05 01 55 0e 65 11 35 00 75 10 95 02 46 c8 0a 26 6f 08 09 30 81 02 46 18 06 26 77 0f 09 31 81 02 05 0d 09 30 15 01 26 ff 00 75 08 95 01 81 02 c0 c0")
 
 
-@unittest.skip('still WIP (Pen node)')
 class Testatmel_03eb_840b(BaseTest.TestMultitouch):
     def _create_device(self):
         return Digitizer("uhid test atmel_03eb_840b", rdesc="639 05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 05 0d 27 ff ff 00 00 75 10 95 01 09 56 81 02 15 00 25 1f 75 05 09 54 95 01 81 02 75 03 25 01 95 01 81 03 75 08 85 02 09 55 25 10 b1 02 06 00 ff 85 05 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 02 a1 01 85 03 09 20 a1 00 15 00 25 01 75 01 95 01 09 42 81 02 09 44 81 02 09 45 81 02 81 03 09 32 81 02 95 03 81 03 05 01 55 0e 65 11 35 00 75 10 95 02 46 00 0a 26 ff 0f 09 30 81 02 46 a0 05 26 ff 0f 09 31 81 02 05 0d 09 30 15 01 26 ff 00 75 08 95 01 81 02 c0 c0")

@@ -106,8 +106,8 @@ class Mouse(base.UHIDTest):
 class TestMouse(base.BaseTestCase.TestUhid):
     def test_creation(self):
         with Mouse() as uhdev:
-            while not uhdev.opened:
-                uhdev.process_one_event(100)
+            while len(uhdev.input_nodes) == 0:
+                uhdev.process_one_event(10)
             self.assertIsNotNone(uhdev.evdev)
             self.assertEqual(uhdev.evdev.name, uhdev.name)
             self.assertEqual(len(uhdev.next_sync_events()), 0)
@@ -154,8 +154,8 @@ class TestMouse(base.BaseTestCase.TestUhid):
 
     def test_buttons(self):
         with Mouse() as uhdev:
-            while not uhdev.opened:
-                uhdev.process_one_event(100)
+            while len(uhdev.input_nodes) == 0:
+                uhdev.process_one_event(10)
 
             syn_event = self.syn_event
             key_event = self.key_event
@@ -225,8 +225,8 @@ class TestMouse(base.BaseTestCase.TestUhid):
 
     def test_relative(self):
         with Mouse() as uhdev:
-            while not uhdev.opened:
-                uhdev.process_one_event(100)
+            while len(uhdev.input_nodes) == 0:
+                uhdev.process_one_event(10)
 
             syn_event = self.syn_event
             key_event = self.key_event

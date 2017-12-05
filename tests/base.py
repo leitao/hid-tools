@@ -53,31 +53,55 @@ class UHIDTest(UHIDDevice):
         super(UHIDTest, self).__init__()
         self.name = name
         self.opened = False
-        self.evdev = None
+        self.input_nodes = {}
         if rdesc is None:
             self.rdesc = hid.ReportDescriptor.from_rdesc_str(rdesc_str)
         else:
             self.rdesc = rdesc
 
+    def udev_event(self, event):
+        if event.action != 'add':
+            return
+
+        device = event
+
+        if 'DEVNAME' not in device.properties:
+            return
+
+        devname = device.properties['DEVNAME']
+        if not devname.startswith('/dev/input/event'):
+            return
+
+        # associate the Input type to the matching HID application
+        # we reuse the guess work from udev
+        type = None
+        if 'ID_INPUT_TOUCHSCREEN' in device.properties:
+            type = 'Touch Screen'
+        elif 'ID_INPUT_TOUCHPAD' in device.properties:
+            type = 'Touch Pad'
+        elif 'ID_INPUT_TABLET' in device.properties:
+            type = 'Pen'
+        elif 'ID_INPUT_MOUSE' in device.properties:
+            type = 'Mouse'
+        else:
+            # abort, the device has not been processed by udev
+            print('abort', devname, list(device.properties.items()))
+            return
+
+        event_node = open(devname, 'rb')
+        evdev = libevdev.Device(event_node)
+        fd = evdev.fd.fileno()
+        flag = fcntl.fcntl(fd, fcntl.F_GETFD)
+        fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
+
+        self.input_nodes[type] = evdev
+
     def open(self):
         self.opened = True
-        # FIXME: we should handle more than one evdev node per uhid device
-        if self.evdev is not None:
-            return
-        for c in self.udev.children:
-            if 'DEVNAME' not in c.properties:
-                continue
-            devname = c.properties['DEVNAME']
-            if devname.startswith('/dev/input/event'):
-                event_node = open(devname, 'rb')
-                self.evdev = libevdev.Device(event_node)
-                fd = self.evdev.fd.fileno()
-                flag = fcntl.fcntl(fd, fcntl.F_GETFD)
-                fcntl.fcntl(fd, fcntl.F_SETFL, flag | os.O_NONBLOCK)
 
     def __exit__(self, *exc_details):
-        if self.evdev is not None:
-            self.evdev.fd.close()
+        for evdev in self.input_nodes.values():
+            evdev.fd.close()
         super(UHIDTest, self).__exit__(*exc_details)
 
     def close(self):
@@ -87,9 +111,9 @@ class UHIDTest(UHIDDevice):
         pass
 
     def stop(self):
-        if self.evdev is not None:
-            self.evdev.fd.close()
-            self.evdev = None
+        for name, evdev in self.input_nodes.items():
+            evdev.fd.close()
+            del(self.input_nodes[name])
 
     def get_report(self, req, rnum, rtype):
         self.call_get_report(req, [], 1)
@@ -99,6 +123,14 @@ class UHIDTest(UHIDDevice):
 
     def next_sync_events(self):
         return list(self.evdev.events())
+
+    @property
+    def evdev(self):
+        if len(self.input_nodes) == 0:
+            return None
+
+        # return the 'first' input node
+        return self.input_nodes[list(self.input_nodes.keys())[0]]
 
 
 class BaseTestCase:
