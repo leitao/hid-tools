@@ -63,6 +63,11 @@ class UHIDTest(UHIDDevice):
         if event.action != 'add':
             return
 
+        # we do not need to process the udev events if the device is being
+        # removed
+        if not self.ready:
+            return
+
         device = event
 
         if 'DEVNAME' not in device.properties:
