@@ -49,6 +49,10 @@ class UHIDDevice(object):
     UHID_SET_REPORT = 13
     UHID_SET_REPORT_REPLY = 14
 
+    UHID_FEATURE_REPORT = 0
+    UHID_OUTPUT_REPORT = 1
+    UHID_INPUT_REPORT = 2
+
     polling_functions = {}
     poll = select.poll()
     devices = []
