@@ -442,9 +442,9 @@ class BaseTest:
             self.assertIn(uhdev.name, uhdev.evdev.name)
 
 
-class TestMinWin8TSParallelDual(BaseTest.TestMultitouch):
+class TestMinWin8TSParallelTriple(BaseTest.TestMultitouch):
     def _create_device(self):
-        return MinWin8TSParallel(2)
+        return MinWin8TSParallel(3)
 
 
 class TestMinWin8TSParallel(BaseTest.TestMultitouch):
