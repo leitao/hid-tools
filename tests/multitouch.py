@@ -250,6 +250,7 @@ class BaseTest:
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestMultitouch, self).__init__(methodName)
             self.__create_device = self._create_device
+            self.__assertName = self.assertName
 
         @classmethod
         def _debug_reports(cls, reports):
@@ -263,13 +264,16 @@ class BaseTest:
         def _create_device(self):
             raise Exception("please reimplement me in subclasses")
 
+        def assertName(self, uhdev):
+            self.assertEqual(uhdev.evdev.name, uhdev.name)
+
         def test_mt_creation(self):
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
                 self.assertIsNotNone(uhdev.evdev)
-                self.assertEqual(uhdev.evdev.name, uhdev.name)
+                self.__assertName(uhdev)
                 self.assertEqual(uhdev.evdev.num_slots, uhdev.max_contacts)
                 self.assertEqual(len(uhdev.next_sync_events()), 0)
 
@@ -387,6 +391,8 @@ class BaseTest:
                 uhdev.destroy()
 
         def test_mt_max_contact(self):
+            if isinstance(self, Testelan_04f3_300b):
+                raise unittest.SkipTest('Device can not handle more than 3 touches while it exports 15')
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
@@ -409,6 +415,10 @@ class BaseTest:
                     self.assertEqual(uhdev.evdev.slot_value(i, 'ABS_MT_TRACKING_ID'), -1)
 
                 uhdev.destroy()
+
+    class TestPTP(TestMultitouch):
+        def assertName(self, uhdev):
+            self.assertIn(uhdev.name, uhdev.evdev.name)
 
 
 class TestMinWin8TSParallelDual(BaseTest.TestMultitouch):
@@ -527,10 +537,9 @@ class Testelan_04f3_200a(BaseTest.TestMultitouch):
         return Digitizer("uhid test elan_04f3_200a", rdesc="219 05 0d 09 04 a1 01 85 01 09 22 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 75 06 09 51 25 3f 81 02 26 ff 00 75 08 09 48 81 02 09 49 81 02 95 01 05 01 26 c0 0e 75 10 55 0f 65 11 09 30 35 00 46 26 01 95 02 81 02 26 40 08 46 a6 00 09 31 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 75 06 09 51 25 3f 81 02 26 ff 00 75 08 09 48 81 02 09 49 81 02 95 01 05 01 26 c0 0e 75 10 55 0f 65 11 09 30 35 00 46 26 01 95 02 81 02 26 40 08 46 a6 00 09 31 81 02 c0 05 0d 09 56 55 00 65 00 27 ff ff 00 00 95 01 75 20 81 02 09 54 25 7f 95 01 75 08 81 02 85 0a 09 55 25 0a b1 02 85 0e 06 00 ff 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0")
 
 
-@unittest.skip('still WIP (PTP)')
-class Testelan_04f3_300b(BaseTest.TestMultitouch):
+class Testelan_04f3_300b(BaseTest.TestPTP):
     def _create_device(self):
-        return Digitizer("uhid test elan_04f3_300b", max_contacts=3, application='Touch Pad', rdesc="361 05 01 09 02 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 95 06 81 03 05 01 09 30 09 31 09 38 15 81 25 7f 75 08 95 03 81 06 05 0c 0a 38 02 95 01 81 06 75 08 95 03 81 03 c0 06 00 ff 85 0d 09 c5 15 00 26 ff 00 75 08 95 04 b1 02 85 0c 09 c6 96 76 02 75 08 b1 02 85 0b 09 c7 95 42 75 08 b1 02 09 01 85 5d 95 1f 75 08 81 06 c0 05 0d 09 05 a1 01 85 04 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 02 25 02 09 51 81 02 75 01 95 04 81 03 05 01 15 00 26 a7 0c 75 10 55 0e 65 13 09 30 35 00 46 9d 01 95 01 81 02 46 25 01 26 2b 09 26 2b 09 09 31 81 02 05 0d 15 00 25 64 95 03 c0 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 09 56 81 02 09 54 25 7f 95 01 75 08 81 02 05 09 09 01 25 01 75 01 95 01 81 02 95 07 81 03 05 0d 85 02 09 55 09 59 75 04 95 02 25 0f b1 02 85 07 09 60 75 01 95 01 15 00 25 01 b1 02 95 0f b1 03 06 00 ff 06 00 ff 85 06 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 0e a1 01 85 03 09 22 a1 00 09 52 15 00 25 0a 75 08 95 02 b1 02 c0 09 22 a1 00 85 05 09 57 09 58 15 00 75 01 95 02 25 03 b1 02 95 0e b1 03 c0 c0")
+        return Digitizer("uhid test elan_04f3_300b", application='Touch Pad', rdesc="361 05 01 09 02 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 95 06 81 03 05 01 09 30 09 31 09 38 15 81 25 7f 75 08 95 03 81 06 05 0c 0a 38 02 95 01 81 06 75 08 95 03 81 03 c0 06 00 ff 85 0d 09 c5 15 00 26 ff 00 75 08 95 04 b1 02 85 0c 09 c6 96 76 02 75 08 b1 02 85 0b 09 c7 95 42 75 08 b1 02 09 01 85 5d 95 1f 75 08 81 06 c0 05 0d 09 05 a1 01 85 04 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 02 25 02 09 51 81 02 75 01 95 04 81 03 05 01 15 00 26 a7 0c 75 10 55 0e 65 13 09 30 35 00 46 9d 01 95 01 81 02 46 25 01 26 2b 09 26 2b 09 09 31 81 02 05 0d 15 00 25 64 95 03 c0 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 09 56 81 02 09 54 25 7f 95 01 75 08 81 02 05 09 09 01 25 01 75 01 95 01 81 02 95 07 81 03 05 0d 85 02 09 55 09 59 75 04 95 02 25 0f b1 02 85 07 09 60 75 01 95 01 15 00 25 01 b1 02 95 0f b1 03 06 00 ff 06 00 ff 85 06 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 0e a1 01 85 03 09 22 a1 00 09 52 15 00 25 0a 75 08 95 02 b1 02 c0 09 22 a1 00 85 05 09 57 09 58 15 00 75 01 95 02 25 03 b1 02 95 0e b1 03 c0 c0")
 
 
 class Testilitek_222a_0015(BaseTest.TestMultitouch):
