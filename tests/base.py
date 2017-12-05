@@ -52,6 +52,8 @@ class UHIDTest(UHIDDevice):
             raise Exception('Please provide at least a rdesc or rdesc_str')
         super(UHIDTest, self).__init__()
         self.name = name
+        if not name.startswith('uhid test '):
+            self.name = 'uhid test ' + self.name
         self.opened = False
         self.input_nodes = {}
         if rdesc is None:
@@ -158,14 +160,24 @@ class BaseTestCase:
             self.assertEqual(len(r), 0)
 
 
+def reload_udev_rules():
+    import subprocess
+    subprocess.run("udevadm control --reload-rules".split())
+    subprocess.run("udevadm hwdb --update".split())
+
+
 def setUpModule():
-    # FIXME: setup udev rule to ignore our own uhid nodes
-    pass
+    # create a udev rule to make libinput ignore the test devices
+    os.makedirs('/run/udev/rules.d', exist_ok=True)
+    with open('/run/udev/rules.d/91-uhid-test-device-REMOVEME-XXXXX.rules', 'w') as f:
+        f.write('KERNELS=="*input*", ATTRS{name}=="uhid test *", ENV{LIBINPUT_TEST_DEVICE}="1"')
+    reload_udev_rules()
 
 
 def tearDownModule():
-    # FIXME: teardown udev rule to ignore our own uhid nodes
-    pass
+    # clean up after ourselves
+    os.remove('/run/udev/rules.d/91-uhid-test-device-REMOVEME-XXXXX.rules')
+    reload_udev_rules()
 
 
 def parse(input_string):
