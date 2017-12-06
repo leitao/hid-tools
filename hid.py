@@ -549,7 +549,7 @@ class HidField(object):
 
         while n - bits_to_set >= 0:
             report[byte_idx] &= ~(0xff << bit_shift)
-            report[byte_idx] |= value << bit_shift
+            report[byte_idx] |= (value << bit_shift) & 0xff
             value >>= bits_to_set
             n -= bits_to_set
             bits_to_set = 8
