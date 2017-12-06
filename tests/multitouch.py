@@ -61,7 +61,6 @@ class Pen(Touch):
 class Digitizer(base.UHIDTest):
     @classmethod
     def msCertificationBlob(cls, reportID):
-        return ''
         return f'''
         Usage Page (Digitizers)
         Usage (Touch Screen)
