@@ -23,6 +23,7 @@
 import base
 import libevdev
 import sys
+import time
 import unittest
 from base import main, setUpModule, tearDownModule  # noqa
 
@@ -326,6 +327,26 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
 
+                uhdev.destroy()
+
+        def test_mt_release_miss(self):
+            with self.__create_device() as uhdev:
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 5, 10)
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+
+                time.sleep(0.12)
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 1)
                 uhdev.destroy()
 
         def test_mt_dual_touch(self):
