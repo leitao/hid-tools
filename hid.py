@@ -491,7 +491,10 @@ class HidField(object):
         self.count = count
 
     def copy(self):
-        return copy.deepcopy(self)
+        c = copy.copy(self)
+        if self.usages is not None:
+            c.usages = self.usages[:]
+        return c
 
     def _usage_name(self, usage):
         usage_page = usage >> 16
