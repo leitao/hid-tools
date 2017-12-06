@@ -56,6 +56,7 @@ class UHIDTest(UHIDDevice):
             self.name = 'uhid test ' + self.name
         self.opened = False
         self.input_nodes = {}
+        self._opened_files = []
         if rdesc is None:
             self.rdesc = hid.ReportDescriptor.from_rdesc_str(rdesc_str)
         else:
@@ -96,6 +97,7 @@ class UHIDTest(UHIDDevice):
             return
 
         event_node = open(devname, 'rb')
+        self._opened_files.append(event_node)
         evdev = libevdev.Device(event_node)
         fd = evdev.fd.fileno()
         flag = fcntl.fcntl(fd, fcntl.F_GETFD)
@@ -106,10 +108,9 @@ class UHIDTest(UHIDDevice):
     def open(self):
         self.opened = True
 
-    def __exit__(self, *exc_details):
-        for evdev in self.input_nodes.values():
-            evdev.fd.close()
-        super(UHIDTest, self).__exit__(*exc_details)
+    def __del__(self):
+        for evdev in self._opened_files:
+            evdev.close()
 
     def close(self):
         self.opened = False
