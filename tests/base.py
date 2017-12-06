@@ -167,18 +167,28 @@ def reload_udev_rules():
     subprocess.run("udevadm hwdb --update".split())
 
 
-def setUpModule():
-    # create a udev rule to make libinput ignore the test devices
+def create_udev_rule(uuid):
     os.makedirs('/run/udev/rules.d', exist_ok=True)
-    with open('/run/udev/rules.d/91-uhid-test-device-REMOVEME-XXXXX.rules', 'w') as f:
+    with open(f'/run/udev/rules.d/91-uhid-test-device-REMOVEME-{uuid}.rules', 'w') as f:
         f.write('KERNELS=="*input*", ATTRS{name}=="uhid test *", ENV{LIBINPUT_TEST_DEVICE}="1"')
     reload_udev_rules()
 
 
+def teardown_udev_rule(uuid):
+    os.remove(f'/run/udev/rules.d/91-uhid-test-device-REMOVEME-{uuid}.rules')
+    reload_udev_rules()
+
+
+def setUpModule():
+    # create a udev rule to make libinput ignore the test devices
+    if 'PYTEST_RUNNING' not in os.environ:
+        create_udev_rule('XXXXX')
+
+
 def tearDownModule():
     # clean up after ourselves
-    os.remove('/run/udev/rules.d/91-uhid-test-device-REMOVEME-XXXXX.rules')
-    reload_udev_rules()
+    if 'PYTEST_RUNNING' not in os.environ:
+        teardown_udev_rule('XXXXX')
 
 
 def parse(input_string):
