@@ -78,7 +78,7 @@ class Digitizer(base.UHIDTest):
     '''
 
     def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', max_contacts=None):
-        super(Digitizer, self).__init__("uhid test simple", rdesc_str, rdesc)
+        super(Digitizer, self).__init__(name, rdesc_str, rdesc)
         self.info = 3, 1, 2
         self.scantime = 0
         if max_contacts is None:
