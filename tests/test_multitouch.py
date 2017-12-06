@@ -91,16 +91,22 @@ class Digitizer(base.UHIDTest):
             self.max_contacts = max_contacts
         self.application = application
 
+        self.fields = []
+        for r in self.parsed_rdesc.input_reports.values():
+            if r.application_name == self.application:
+                self.fields = set([f.usage_name for f in r])
+
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
 
-    def event(self, slots):
+    def event(self, slots, global_data=None):
         self.scantime += 1
         rs = []
         # make sure we have only the required number of available slots
         slots = slots[:self.max_contacts]
 
-        global_data = Data()
+        if global_data is None:
+            global_data = Data()
         global_data.contactcount = len(slots)
         global_data.scantime = self.scantime
 
@@ -137,9 +143,41 @@ class Digitizer(base.UHIDTest):
             return
 
         self.contactmax = self.max_contacts
-        self.buttontype = 0
         r = rdesc.format_report([self], None)
         self.call_get_report(req, r, 0)
+
+
+class PTP(Digitizer):
+    def __init__(self, name, type='Click Pad', rdesc_str=None, rdesc=None, application='Touch Pad', max_contacts=None):
+        self.type = type.lower().replace(' ', '')
+        if self.type == 'clickpad':
+            self.buttontype = 0
+        else:  # pressurepad
+            self.buttontype = 1
+        self.clickpad_state = False
+        self.left_state = False
+        self.right_state = False
+        super(PTP, self).__init__(name, rdesc_str, rdesc, application, max_contacts)
+
+    def event(self, slots=None, click=None, left=None, right=None):
+        # update our internal state
+        if click is not None:
+            self.clickpad_state = click
+        if left is not None:
+            self.left_state = left
+        if right is not None:
+            self.right_state = right
+
+        # now create the global data
+        global_data = Data()
+        global_data.b1 = 1 if self.clickpad_state else 0
+        global_data.b2 = 1 if self.left_state else 0
+        global_data.b3 = 1 if self.right_state else 0
+
+        if slots is None:
+            slots = [Data()]
+
+        return super(PTP, self).event(slots, global_data)
 
 
 class MinWin8TSParallel(Digitizer):
@@ -458,8 +496,73 @@ class BaseTest:
                 uhdev.destroy()
 
     class TestPTP(TestMultitouch):
+        def __init__(self, methodName='runTest'):
+            super(BaseTest.TestPTP, self).__init__(methodName)
+            self.__create_device = self._create_device
+
         def assertName(self, uhdev):
             self.assertIn(uhdev.name, uhdev.evdev.name)
+
+        def test_ptp_buttons(self):
+            with self.__create_device() as uhdev:
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                if uhdev.type == 'clickpad':
+                    r = uhdev.event(click=True)
+                    events = uhdev.next_sync_events()
+                    self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_LEFT', 1), events)
+                    self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_LEFT"), 1)
+
+                    r = uhdev.event(click=False)
+                    events = uhdev.next_sync_events()
+                    self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_LEFT', 0), events)
+                    self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_LEFT"), 0)
+                else:
+                    r = uhdev.event(left=True)
+                    events = uhdev.next_sync_events()
+                    self._debug_reports(r)
+                    self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_LEFT', 1), events)
+                    self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_LEFT"), 1)
+
+                    r = uhdev.event(left=False)
+                    events = uhdev.next_sync_events()
+                    self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_LEFT', 0), events)
+                    self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_LEFT"), 0)
+
+                    r = uhdev.event(right=True)
+                    events = uhdev.next_sync_events()
+                    self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_RIGHT', 1), events)
+                    self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_RIGHT"), 1)
+
+                    r = uhdev.event(right=False)
+                    events = uhdev.next_sync_events()
+                    self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_RIGHT', 0), events)
+                    self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_RIGHT"), 0)
+
+        def test_mt_confidence(self):
+            with self.__create_device() as uhdev:
+                if 'Confidence' not in uhdev.fields:
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible, missing Confidence usage')
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 150, 200)
+                r = uhdev.event([t0])
+                self._debug_reports(r)
+                events = uhdev.next_sync_events()
+
+                t0.confidence = False
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self._debug_reports(r)
+                print(events)
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+
+                uhdev.destroy()
 
 
 class TestMinWin8TSParallelTriple(BaseTest.TestMultitouch):
@@ -484,7 +587,7 @@ class TestElanXPS9360(BaseTest.TestMultitouch):
 
 class TestTouchpadXPS9360(BaseTest.TestPTP):
     def _create_device(self):
-        return Digitizer("uhid test TouchpadXPS9360", application='Touch Pad', max_contacts=5, rdesc="665 05 01 09 02 a1 01 85 02 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 95 06 81 01 05 01 09 30 09 31 15 81 25 7f 75 08 95 02 81 06 c0 c0 05 0d 09 05 a1 01 85 03 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 09 56 81 02 09 54 25 7f 95 01 75 08 81 02 05 09 09 01 25 01 75 01 95 01 81 02 95 07 81 03 05 0d 85 08 09 55 09 59 75 04 95 02 25 0f b1 02 85 0d 09 60 75 01 95 01 15 00 25 01 b1 02 95 07 b1 03 85 07 06 00 ff 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 0e a1 01 85 04 09 22 a1 02 09 52 15 00 25 0a 75 08 95 01 b1 02 c0 09 22 a1 00 85 06 09 57 09 58 75 01 95 02 25 01 b1 02 95 06 b1 03 c0 c0 06 00 ff 09 01 a1 01 85 09 09 02 15 00 26 ff 00 75 08 95 14 91 02 85 0a 09 03 15 00 26 ff 00 75 08 95 14 91 02 85 0b 09 04 15 00 26 ff 00 75 08 95 3d 81 02 85 0c 09 05 15 00 26 ff 00 75 08 95 3d 81 02 85 0f 09 06 15 00 26 ff 00 75 08 95 03 b1 02 85 0e 09 07 15 00 26 ff 00 75 08 95 01 b1 02 c0")
+        return PTP("uhid test TouchpadXPS9360", max_contacts=5, rdesc="665 05 01 09 02 a1 01 85 02 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 95 06 81 01 05 01 09 30 09 31 15 81 25 7f 75 08 95 02 81 06 c0 c0 05 0d 09 05 a1 01 85 03 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 c0 04 75 10 55 0e 65 11 09 30 35 00 46 f5 03 95 01 81 02 46 36 02 26 a8 02 09 31 81 02 c0 05 0d 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 09 56 81 02 09 54 25 7f 95 01 75 08 81 02 05 09 09 01 25 01 75 01 95 01 81 02 95 07 81 03 05 0d 85 08 09 55 09 59 75 04 95 02 25 0f b1 02 85 0d 09 60 75 01 95 01 15 00 25 01 b1 02 95 07 b1 03 85 07 06 00 ff 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 0e a1 01 85 04 09 22 a1 02 09 52 15 00 25 0a 75 08 95 01 b1 02 c0 09 22 a1 00 85 06 09 57 09 58 75 01 95 02 25 01 b1 02 95 06 b1 03 c0 c0 06 00 ff 09 01 a1 01 85 09 09 02 15 00 26 ff 00 75 08 95 14 91 02 85 0a 09 03 15 00 26 ff 00 75 08 95 14 91 02 85 0b 09 04 15 00 26 ff 00 75 08 95 3d 81 02 85 0c 09 05 15 00 26 ff 00 75 08 95 3d 81 02 85 0f 09 06 15 00 26 ff 00 75 08 95 03 b1 02 85 0e 09 07 15 00 26 ff 00 75 08 95 01 b1 02 c0")
 
 
 class Test3m_0596_051c(BaseTest.TestMultitouch):
@@ -543,6 +646,11 @@ class Testatmel_03eb_840b(BaseTest.TestMultitouch):
         return Digitizer("uhid test atmel_03eb_840b", rdesc="639 05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 01 81 03 95 01 81 03 25 1f 75 05 09 51 81 02 05 01 55 0e 65 11 35 00 75 10 95 01 46 00 0a 26 ff 0f 09 30 81 02 09 00 81 03 46 a0 05 26 ff 0f 09 31 81 02 09 00 81 03 05 0d 95 01 75 08 15 00 26 ff 00 46 ff 00 09 00 81 03 09 00 81 03 c0 05 0d 27 ff ff 00 00 75 10 95 01 09 56 81 02 15 00 25 1f 75 05 09 54 95 01 81 02 75 03 25 01 95 01 81 03 75 08 85 02 09 55 25 10 b1 02 06 00 ff 85 05 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 02 a1 01 85 03 09 20 a1 00 15 00 25 01 75 01 95 01 09 42 81 02 09 44 81 02 09 45 81 02 81 03 09 32 81 02 95 03 81 03 05 01 55 0e 65 11 35 00 75 10 95 02 46 00 0a 26 ff 0f 09 30 81 02 46 a0 05 26 ff 0f 09 31 81 02 05 0d 09 30 15 01 26 ff 00 75 08 95 01 81 02 c0 c0")
 
 
+class Testdell_044e_1220(BaseTest.TestPTP):
+    def _create_device(self):
+        return PTP("uhid test dell_044e_1220", type="pressurepad", rdesc="337 05 01 09 02 a1 01 85 01 09 01 a1 00 05 09 19 01 29 03 15 00 25 01 75 01 95 03 81 02 95 05 81 01 05 01 09 30 09 31 15 81 25 7f 75 08 95 02 81 06 09 38 95 01 81 06 05 0c 0a 38 02 81 06 c0 c0 05 0d 09 05 a1 01 85 08 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 03 25 05 09 51 81 02 75 01 95 03 81 03 05 01 15 00 26 af 04 75 10 55 0e 65 11 09 30 35 00 46 e8 03 95 01 81 02 26 7b 02 46 12 02 09 31 81 02 c0 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 05 0d 09 56 81 02 09 54 25 05 95 01 75 08 81 02 05 09 19 01 29 03 25 01 75 01 95 03 81 02 95 05 81 03 05 0d 85 09 09 55 75 08 95 01 25 05 b1 02 06 00 ff 85 0a 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 06 01 ff 09 01 a1 01 85 03 09 01 15 00 26 ff 00 95 1b 81 02 85 04 09 02 95 50 81 02 85 05 09 03 95 07 b1 02 85 06 09 04 81 02 c0 06 02 ff 09 01 a1 01 85 07 09 02 95 86 75 08 b1 02 c0 05 0d 09 0e a1 01 85 0b 09 22 a1 02 09 52 15 00 25 0a 75 08 95 01 b1 02 c0 09 22 a1 00 85 0c 09 57 09 58 75 01 95 02 25 01 b1 02 95 06 b1 03 c0 c0")
+
+
 class Testegalax_capacitive_0eef_790a(BaseTest.TestMultitouch):
     def _create_device(self):
         return Digitizer("uhid test egalax_capacitive_0eef_790a", max_contacts=10, rdesc="557 05 0d 09 04 a1 01 85 06 05 0d 09 54 75 08 15 00 25 0c 95 01 81 02 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 15 00 25 20 81 02 05 01 26 ff 0f 75 10 55 0e 65 11 09 30 35 00 46 13 0c 81 02 46 cb 06 09 31 81 02 75 08 95 02 81 03 81 03 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 15 00 25 20 81 02 05 01 26 ff 0f 75 10 55 0e 65 11 09 30 35 00 46 13 0c 81 02 46 cb 06 09 31 81 02 75 08 95 02 81 03 81 03 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 15 00 25 20 81 02 05 01 26 ff 0f 75 10 55 0e 65 11 09 30 35 00 46 13 0c 81 02 46 cb 06 09 31 81 02 75 08 95 02 81 03 81 03 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 15 00 25 20 81 02 05 01 26 ff 0f 75 10 55 0e 65 11 09 30 35 00 46 13 0c 81 02 46 cb 06 09 31 81 02 75 08 95 02 81 03 81 03 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 15 00 25 20 81 02 05 01 26 ff 0f 75 10 55 0e 65 11 09 30 35 00 46 13 0c 81 02 46 cb 06 09 31 81 02 75 08 95 02 81 03 81 03 c0 05 0d 17 00 00 00 00 27 ff ff ff 7f 75 20 95 01 55 00 65 00 09 56 81 02 09 55 09 53 75 08 95 02 26 ff 00 b1 02 06 00 ff 09 c5 85 07 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 01 09 01 a1 01 85 01 09 01 a1 02 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 0e a1 01 85 05 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0")
@@ -585,7 +693,7 @@ class Testelan_04f3_200a(BaseTest.TestMultitouch):
 
 class Testelan_04f3_300b(BaseTest.TestPTP):
     def _create_device(self):
-        return Digitizer("uhid test elan_04f3_300b", application='Touch Pad', max_contacts=3, rdesc="361 05 01 09 02 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 95 06 81 03 05 01 09 30 09 31 09 38 15 81 25 7f 75 08 95 03 81 06 05 0c 0a 38 02 95 01 81 06 75 08 95 03 81 03 c0 06 00 ff 85 0d 09 c5 15 00 26 ff 00 75 08 95 04 b1 02 85 0c 09 c6 96 76 02 75 08 b1 02 85 0b 09 c7 95 42 75 08 b1 02 09 01 85 5d 95 1f 75 08 81 06 c0 05 0d 09 05 a1 01 85 04 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 02 25 02 09 51 81 02 75 01 95 04 81 03 05 01 15 00 26 a7 0c 75 10 55 0e 65 13 09 30 35 00 46 9d 01 95 01 81 02 46 25 01 26 2b 09 26 2b 09 09 31 81 02 05 0d 15 00 25 64 95 03 c0 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 09 56 81 02 09 54 25 7f 95 01 75 08 81 02 05 09 09 01 25 01 75 01 95 01 81 02 95 07 81 03 05 0d 85 02 09 55 09 59 75 04 95 02 25 0f b1 02 85 07 09 60 75 01 95 01 15 00 25 01 b1 02 95 0f b1 03 06 00 ff 06 00 ff 85 06 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 0e a1 01 85 03 09 22 a1 00 09 52 15 00 25 0a 75 08 95 02 b1 02 c0 09 22 a1 00 85 05 09 57 09 58 15 00 75 01 95 02 25 03 b1 02 95 0e b1 03 c0 c0")
+        return PTP("uhid test elan_04f3_300b", max_contacts=3, rdesc="361 05 01 09 02 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 95 06 81 03 05 01 09 30 09 31 09 38 15 81 25 7f 75 08 95 03 81 06 05 0c 0a 38 02 95 01 81 06 75 08 95 03 81 03 c0 06 00 ff 85 0d 09 c5 15 00 26 ff 00 75 08 95 04 b1 02 85 0c 09 c6 96 76 02 75 08 b1 02 85 0b 09 c7 95 42 75 08 b1 02 09 01 85 5d 95 1f 75 08 81 06 c0 05 0d 09 05 a1 01 85 04 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 95 01 75 02 25 02 09 51 81 02 75 01 95 04 81 03 05 01 15 00 26 a7 0c 75 10 55 0e 65 13 09 30 35 00 46 9d 01 95 01 81 02 46 25 01 26 2b 09 26 2b 09 09 31 81 02 05 0d 15 00 25 64 95 03 c0 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 09 56 81 02 09 54 25 7f 95 01 75 08 81 02 05 09 09 01 25 01 75 01 95 01 81 02 95 07 81 03 05 0d 85 02 09 55 09 59 75 04 95 02 25 0f b1 02 85 07 09 60 75 01 95 01 15 00 25 01 b1 02 95 0f b1 03 06 00 ff 06 00 ff 85 06 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 0e a1 01 85 03 09 22 a1 00 09 52 15 00 25 0a 75 08 95 02 b1 02 c0 09 22 a1 00 85 05 09 57 09 58 15 00 75 01 95 02 25 03 b1 02 95 0e b1 03 c0 c0")
 
 
 class Testilitek_222a_0015(BaseTest.TestMultitouch):
@@ -626,6 +734,11 @@ class Testn_trig_1b96_1000(BaseTest.TestMultitouch):
 class Testsharp_04dd_9681(BaseTest.TestMultitouch):
     def _create_device(self):
         return Digitizer("uhid test sharp_04dd_9681", rdesc="576 06 00 ff 09 01 a1 01 75 08 26 ff 00 15 00 85 06 95 3f 09 01 91 02 85 05 95 3f 09 01 81 02 c0 05 0d 09 04 a1 01 85 81 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 81 02 05 01 65 11 55 0f 35 00 46 b0 01 26 80 07 75 10 09 30 81 02 46 f3 00 26 38 04 09 31 81 02 05 0d 09 48 09 49 26 ff 00 95 02 75 08 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 81 02 05 01 65 11 55 0f 35 00 46 b0 01 26 80 07 75 10 09 30 81 02 46 f3 00 26 38 04 09 31 81 02 05 0d 09 48 09 49 26 ff 00 95 02 75 08 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 81 02 05 01 65 11 55 0f 35 00 46 b0 01 26 80 07 75 10 09 30 81 02 46 f3 00 26 38 04 09 31 81 02 05 0d 09 48 09 49 26 ff 00 95 02 75 08 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 81 02 05 01 65 11 55 0f 35 00 46 b0 01 26 80 07 75 10 09 30 81 02 46 f3 00 26 38 04 09 31 81 02 05 0d 09 48 09 49 26 ff 00 95 02 75 08 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 75 08 09 51 95 01 81 02 05 01 65 11 55 0f 35 00 46 b0 01 26 80 07 75 10 09 30 81 02 46 f3 00 26 38 04 09 31 81 02 05 0d 09 48 09 49 26 ff 00 95 02 75 08 81 02 c0 05 0d 09 56 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 81 02 09 54 95 01 75 08 15 00 25 0a 81 02 85 84 09 55 b1 02 85 87 06 00 ff 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 09 0e a1 01 85 83 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0 05 01 09 02 a1 01 09 01 a1 00 85 80 05 09 19 01 29 01 15 00 25 01 95 01 75 01 81 02 95 01 75 07 81 01 05 01 65 11 55 0f 09 30 26 80 07 35 00 46 66 00 75 10 95 01 81 02 09 31 26 38 04 35 00 46 4d 00 81 02 c0 c0")
+
+
+class Testsipodev_0603_0002(BaseTest.TestPTP):
+    def _create_device(self):
+        return PTP("uhid test sipodev_0603_0002", type="clickpad", rdesc="465 05 01 09 02 a1 01 85 03 09 01 a1 00 05 09 19 01 29 02 25 01 75 01 95 02 81 02 95 06 81 03 05 01 09 30 09 31 15 80 25 7f 75 08 95 02 81 06 c0 c0 05 0d 09 05 a1 01 85 04 09 22 a1 02 15 00 25 01 09 47 09 42 95 02 75 01 81 02 75 01 95 02 81 03 95 01 75 04 25 05 09 51 81 02 05 01 15 00 26 44 0a 75 0c 55 0e 65 11 09 30 35 00 46 ac 03 95 01 81 02 46 fe 01 26 34 05 75 0c 09 31 81 02 05 0d c0 55 0c 66 01 10 47 ff ff 00 00 27 ff ff 00 00 75 10 95 01 09 56 81 02 09 54 25 0a 95 01 75 04 81 02 75 01 95 03 81 03 05 09 09 01 25 01 75 01 95 01 81 02 05 0d 85 0a 09 55 09 59 75 04 95 02 25 0f b1 02 85 0b 09 60 75 01 95 01 15 00 25 01 b1 02 95 07 b1 03 85 09 06 00 ff 09 c5 15 00 26 ff 00 75 08 96 00 01 b1 02 c0 05 0d 09 0e a1 01 85 06 09 22 a1 02 09 52 15 00 25 0a 75 08 95 01 b1 02 c0 09 22 a1 00 85 07 09 57 09 58 75 01 95 02 25 01 b1 02 95 06 b1 03 c0 c0 05 01 09 0c a1 01 85 08 15 00 25 01 09 c6 75 01 95 01 81 06 75 07 81 03 c0 05 01 09 80 a1 01 85 01 15 00 25 01 75 01 0a 81 00 0a 82 00 0a 83 00 95 03 81 06 95 05 81 01 c0 06 0c 00 09 01 a1 01 85 02 25 01 15 00 75 01 0a b5 00 0a b6 00 0a b7 00 0a cd 00 0a e2 00 0a a2 00 0a e9 00 0a ea 00 95 08 81 02 0a 83 01 0a 6f 00 0a 70 00 0a 88 01 0a 8a 01 0a 92 01 0a a8 02 0a 24 02 95 08 81 02 0a 21 02 0a 23 02 0a 96 01 0a 25 02 0a 26 02 0a 27 02 0a 23 02 0a b1 02 95 08 81 02 c0 06 00 ff 09 01 a1 01 85 05 15 00 26 ff 00 19 01 29 02 75 08 95 05 b1 02 c0")
 
 
 class Testsynaptics_06cb_1d10(BaseTest.TestMultitouch):
