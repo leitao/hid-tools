@@ -200,6 +200,6 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    from mouse import *  # noqa
-    from multitouch import *  # noqa
+    from test_mouse import *  # noqa
+    from test_multitouch import *  # noqa
     main(sys.argv[1:])
