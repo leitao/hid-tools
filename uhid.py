@@ -212,8 +212,11 @@ class UHIDDevice(object):
     def udev(self):
         if self._udev is None:
             for device in self.pyudev_context.list_devices(subsystem='hid'):
-                if self.uniq == device.properties['HID_UNIQ']:
-                    self._udev = device
+                try:
+                    if self.uniq == device.properties['HID_UNIQ']:
+                        self._udev = device
+                except KeyError:
+                    pass
         return self._udev
 
     @property
