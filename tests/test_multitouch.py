@@ -94,20 +94,28 @@ class Digitizer(base.UHIDTest):
         self.fields = []
         for r in self.parsed_rdesc.input_reports.values():
             if r.application_name == self.application:
-                self.fields = set([f.usage_name for f in r])
+                self.fields = [f.usage_name for f in r]
 
         # self.parsed_rdesc.dump(sys.stdout)
         self.create_kernel_device()
 
-    def event(self, slots, global_data=None):
-        self.scantime += 1
+    @property
+    def touches_in_a_report(self):
+        return self.fields.count('Contact Id')
+
+    def event(self, slots, global_data=None, contact_count=None, incr_scantime=True):
+        if incr_scantime:
+            self.scantime += 1
         rs = []
         # make sure we have only the required number of available slots
         slots = slots[:self.max_contacts]
 
         if global_data is None:
             global_data = Data()
-        global_data.contactcount = len(slots)
+        if contact_count is None:
+            global_data.contactcount = len(slots)
+        else:
+            global_data.contactcount = contact_count
         global_data.scantime = self.scantime
 
         while len(slots):
@@ -159,7 +167,7 @@ class PTP(Digitizer):
         self.right_state = False
         super(PTP, self).__init__(name, rdesc_str, rdesc, application, max_contacts)
 
-    def event(self, slots=None, click=None, left=None, right=None):
+    def event(self, slots=None, click=None, left=None, right=None, contact_count=None, incr_scantime=True):
         # update our internal state
         if click is not None:
             self.clickpad_state = click
@@ -177,7 +185,7 @@ class PTP(Digitizer):
         if slots is None:
             slots = [Data()]
 
-        return super(PTP, self).event(slots, global_data)
+        return super(PTP, self).event(slots, global_data, contact_count, incr_scantime)
 
 
 class MinWin8TSParallel(Digitizer):
@@ -584,7 +592,7 @@ class BaseTest:
                     self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_RIGHT', 0), events)
                     self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_RIGHT"), 0)
 
-        def test_mt_confidence(self):
+        def test_ptp_confidence(self):
             with self.__create_device() as uhdev:
                 if 'Confidence' not in uhdev.fields:
                     uhdev.destroy()
@@ -605,6 +613,37 @@ class BaseTest:
                 print(events)
                 self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+
+                uhdev.destroy()
+
+        def test_ptp_non_touch_data(self):
+            with self.__create_device() as uhdev:
+                if uhdev.touches_in_a_report >= uhdev.max_contacts:
+                    # there is not point testing those
+                    uhdev.destroy()
+                    return
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                touches = [Touch(i, i * 10, i * 10 + 5) for i in range(uhdev.max_contacts)]
+                contact_count = uhdev.max_contacts
+                incr_scantime = True
+                btn_state = True
+                events = None
+                while touches:
+                    t = touches[:uhdev.touches_in_a_report]
+                    touches = touches[uhdev.touches_in_a_report:]
+                    r = uhdev.event(t, click=btn_state, left=btn_state, contact_count=contact_count, incr_scantime=incr_scantime)
+                    contact_count = 0
+                    incr_scantime = False
+                    btn_state = False
+                    events = uhdev.next_sync_events()
+                    if touches:
+                        self.assertEqual(len(events), 0)
+
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_LEFT', 1), events)
+                self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_LEFT"), 1)
 
                 uhdev.destroy()
 
