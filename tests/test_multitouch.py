@@ -337,6 +337,11 @@ class BaseTest:
             self.assertEqual(uhdev.evdev.name, uhdev.name)
 
         def test_mt_creation(self):
+            """Make sure the device gets processed by the kernel and creates
+            the expected application input node.
+
+            If this fail, there is something wrong in the device report
+            descriptors."""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
@@ -354,6 +359,8 @@ class BaseTest:
                     uhdev.evdev.fd.read()
 
         def test_mt_single_touch(self):
+            """send a single touch in the first slot of the device,
+            and release it."""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
@@ -376,6 +383,12 @@ class BaseTest:
                 uhdev.destroy()
 
         def test_mt_release_miss(self):
+            """send a single touch in the first slot of the device, and
+            forget to release it. The kernel is supposed to release by itself
+            the touch in 100ms.
+            Make sure that we are dealing with a new touch by resending the
+            same touch after the timeout expired, and check that the kernel
+            considers it as a separate touch (different tracking ID)"""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
@@ -396,6 +409,11 @@ class BaseTest:
                 uhdev.destroy()
 
         def test_mt_dual_touch(self):
+            """Send 2 touches in the first 2 slots.
+            Make sure the kernel sees this as a dual touch.
+            Release and check
+
+            Note: PTP will send here BTN_DOUBLETAP emulation"""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
@@ -443,6 +461,11 @@ class BaseTest:
                 uhdev.destroy()
 
         def test_mt_triple_tap(self):
+            """Send 3 touches in the first 3 slots.
+            Make sure the kernel sees this as a triple touch.
+            Release and check
+
+            Note: PTP will send here BTN_TRIPLETAP emulation"""
             with self.__create_device() as uhdev:
                 if uhdev.max_contacts <= 2:
                     uhdev.destroy()
@@ -480,6 +503,9 @@ class BaseTest:
                 uhdev.destroy()
 
         def test_mt_max_contact(self):
+            """send the maximum number of contact as reported by the device.
+            Make sure all contacts are forwarded and that there is no miss.
+            Release and check."""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
@@ -504,6 +530,15 @@ class BaseTest:
                 uhdev.destroy()
 
         def test_mt_inrange(self):
+            """Send one contact that has the InRange bit set before/after
+            tipswitch.
+            Kernel is supposed to mark the contact with a distance > 0
+            when inrange is set but not tipswitch.
+
+            This tests the hovering capability of devices (MT_QUIRK_HOVERING).
+
+            Make sure the contact is only released from the kernel POV
+            when the inrange bit is set to 0."""
             with self.__create_device() as uhdev:
                 if 'In Range' not in uhdev.fields:
                     uhdev.destroy()
@@ -556,6 +591,10 @@ class BaseTest:
             self.assertIn(uhdev.name, uhdev.evdev.name)
 
         def test_ptp_buttons(self):
+            """check for button reliability.
+            There are 2 types of touchpads: the click pads and the pressure pads.
+            Each should reliably report the BTN_LEFT events.
+            """
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
@@ -593,6 +632,12 @@ class BaseTest:
                     self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_RIGHT"), 0)
 
         def test_ptp_confidence(self):
+            """Check for the validity of the confidence bit.
+            When a contact is marked as not confident, it should be detected
+            as a palm from the kernel POV and released.
+
+            Note: shouldn't the kernel use ABS_MT_TOOL_PALM instead of
+            blindly releasing it?"""
             with self.__create_device() as uhdev:
                 if 'Confidence' not in uhdev.fields:
                     uhdev.destroy()
@@ -609,14 +654,17 @@ class BaseTest:
                 t0.confidence = False
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
-                self._debug_reports(r)
-                print(events)
                 self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
 
                 uhdev.destroy()
 
         def test_ptp_non_touch_data(self):
+            """Some single finger hybrid touchpads might not provide the
+            button information in subsequent reports (only in the first report).
+
+            Emulate this and make sure we do not release the buttons in the
+            middle of the event."""
             with self.__create_device() as uhdev:
                 if uhdev.touches_in_a_report >= uhdev.max_contacts:
                     # there is not point testing those
@@ -643,6 +691,7 @@ class BaseTest:
                         self.assertEqual(len(events), 0)
 
                 self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_LEFT', 1), events)
+                self.assertNotIn(libevdev.InputEvent("EV_KEY", 'BTN_LEFT', 0), events)
                 self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_LEFT"), 1)
 
                 uhdev.destroy()

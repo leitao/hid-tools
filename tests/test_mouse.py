@@ -105,6 +105,11 @@ class Mouse(base.UHIDTest):
 
 class TestMouse(base.BaseTestCase.TestUhid):
     def test_creation(self):
+        """Make sure the device gets processed by the kernel and creates
+        the expected application input node.
+
+        If this fail, there is something wrong in the device report
+        descriptors."""
         with Mouse() as uhdev:
             while len(uhdev.input_nodes) == 0:
                 uhdev.process_one_event(10)
@@ -119,6 +124,9 @@ class TestMouse(base.BaseTestCase.TestUhid):
                 uhdev.evdev.fd.read()
 
     def test_rdesc(self):
+        """Check that the testsuite actually manages to format the
+        reports according to the report descriptors.
+        No kernel device is used here"""
         with Mouse() as uhdev:
             event = (0, 0, (None, None, None))
             self.assertEqual(uhdev.format_report(*event, True),
@@ -153,6 +161,7 @@ class TestMouse(base.BaseTestCase.TestUhid):
                              uhdev.format_report(*event, False))
 
     def test_buttons(self):
+        """check for button reliability."""
         with Mouse() as uhdev:
             while len(uhdev.input_nodes) == 0:
                 uhdev.process_one_event(10)
@@ -224,6 +233,7 @@ class TestMouse(base.BaseTestCase.TestUhid):
             uhdev.destroy()
 
     def test_relative(self):
+        """Check for relative events."""
         with Mouse() as uhdev:
             while len(uhdev.input_nodes) == 0:
                 uhdev.process_one_event(10)
