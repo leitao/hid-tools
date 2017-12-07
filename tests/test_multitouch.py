@@ -495,6 +495,50 @@ class BaseTest:
 
                 uhdev.destroy()
 
+        def test_mt_inrange(self):
+            with self.__create_device() as uhdev:
+                if 'In Range' not in uhdev.fields:
+                    uhdev.destroy()
+                    # raise unittest.SkipTest('Device not compatible, missing In Range usage')
+                    return
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 150, 200)
+                t0.tipswitch = False
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 1), events)
+                self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_TOUCH"), 1)
+                self.assertIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_TRACKING_ID', 0), events)
+                self.assertIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_DISTANCE'), events)
+                self.assertGreater(uhdev.evdev.slot_value(0, 'ABS_MT_DISTANCE'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 150)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 200)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), -1)
+
+                t0.tipswitch = True
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_DISTANCE', 0), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_DISTANCE'), 0)
+
+                t0.tipswitch = False
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_DISTANCE'), events)
+                self.assertGreater(uhdev.evdev.slot_value(0, 'ABS_MT_DISTANCE'), 0)
+
+                t0.inrange = False
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 0), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), -1)
+
+                uhdev.destroy()
+
     class TestPTP(TestMultitouch):
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestPTP, self).__init__(methodName)
