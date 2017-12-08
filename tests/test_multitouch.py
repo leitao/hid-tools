@@ -581,6 +581,37 @@ class BaseTest:
 
                 uhdev.destroy()
 
+        def test_mt_duplicates(self):
+            """Test the MT_QUIRK_IGNORE_DUPLICATES from the kernel.
+            If a touch is reported more than once with the same Contact ID,
+            we should only handle the first touch.
+
+            Note: this is not in MS spec, but the current kernel behaves
+            like that"""
+            with self.__create_device() as uhdev:
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 5, 10)
+                t1 = Touch(1, 15, 20)
+                t2 = Touch(2, 50, 100)
+
+                r = uhdev.event([t0, t1, t2], contact_count=2)
+                events = uhdev.next_sync_events()
+                self._debug_reports(r)
+                print(events)
+                self.assertIn(libevdev.InputEvent("EV_KEY", 'BTN_TOUCH', 1), events)
+                self.assertEqual(uhdev.evdev.event_value("EV_KEY", "BTN_TOUCH"), 1)
+                self.assertIn(libevdev.InputEvent("EV_ABS", 'ABS_MT_TRACKING_ID', 0), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), 1)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_X'), 50)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_POSITION_Y'), 100)
+
+                uhdev.destroy()
+
     class TestPTP(TestMultitouch):
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestPTP, self).__init__(methodName)
