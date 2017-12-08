@@ -686,7 +686,7 @@ class BaseTest:
                 if uhdev.touches_in_a_report >= uhdev.max_contacts:
                     # there is not point testing those
                     uhdev.destroy()
-                    return
+                    raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
