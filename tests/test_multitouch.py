@@ -321,15 +321,6 @@ class BaseTest:
             self.__create_device = self._create_device
             self.__assertName = self.assertName
 
-        @classmethod
-        def _debug_reports(cls, reports):
-            if len(reports) == 1:
-                print(f'sending 1 report: {" ".join([f"{v:02x}" for v in reports[0]])}')
-            else:
-                print(f'sending {len(reports)} reports:')
-                for report in reports:
-                    print('\t', ' '.join([f'{v:02x}' for v in report]))
-
         def _create_device(self):
             raise Exception('please reimplement me in subclasses')
 

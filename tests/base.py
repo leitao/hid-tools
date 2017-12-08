@@ -162,6 +162,23 @@ class BaseTestCase:
             r = self.assertInputEventsIn(expected_events, effective_events)
             self.assertEqual(len(r), 0)
 
+        @classmethod
+        def debug_reports(cls, reports, uhdev=None):
+            data = [' '.join([f'{v:02x}' for v in r]) for r in reports]
+
+            if uhdev is not None:
+                human_data = [uhdev.parsed_rdesc.get_str(r, split_lines=False) for r in reports]
+                data = [f'{d}\n\t ====> {h}' for d, h in zip(data, human_data)]
+
+            reports = data
+
+            if len(reports) == 1:
+                print(f'sending 1 report:')
+            else:
+                print(f'sending {len(reports)} reports:')
+            for report in reports:
+                print('\t', report)
+
 
 def reload_udev_rules():
     import subprocess

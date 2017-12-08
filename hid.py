@@ -755,7 +755,7 @@ class HidReport(object):
 
         return r
 
-    def get_str(self, data):
+    def get_str(self, data, split_lines=True):
         """
         Translate the given report to a human readable format.
         """
@@ -788,7 +788,9 @@ class HidReport(object):
 
                 # if we don't get a key error this is a duplicate in
                 # this report descriptor and we need a linebreak
-                if usage_name in self.prev_seen_usages and 'Vendor' not in usage_name:
+                if (split_lines and
+                   usage_name in self.prev_seen_usages
+                   and 'Vendor' not in usage_name):
                     self.prev_seen_usages = []
                     output += '\n'
                 self.prev_seen_usages.append(usage_name)
@@ -1071,3 +1073,10 @@ class ReportDescriptor(object):
             rdesc = self.input_reports[reportID]
 
         return rdesc.format_report(data, global_data)
+
+    def get_str(self, data, split_lines=True):
+        rdesc = self.get(data[0], len(data))
+        if rdesc is None:
+            return None
+
+        return rdesc.get_str(data, split_lines)
