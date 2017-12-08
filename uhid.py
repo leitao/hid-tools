@@ -143,6 +143,8 @@ class UHIDDevice(object):
     def rdesc(self, rdesc):
         parsed_rdesc = rdesc
         if not isinstance(rdesc, hid.ReportDescriptor):
+            if isinstance(rdesc, str):
+                rdesc = f'XXX {rdesc}'
             parsed_rdesc = hid.ReportDescriptor.parse_rdesc(rdesc)
         self.parsed_rdesc = parsed_rdesc
         self._rdesc = parsed_rdesc.data()

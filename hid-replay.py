@@ -59,8 +59,7 @@ class HIDReplay(object):
                     r = parse('R: {length:d} {desc}', l)
                     assert r is not None
                     length = r['length']
-                    r = findall(' {:x}', " " + r['desc'])
-                    dev.rdesc = [x[0] for x in r]
+                    dev.rdesc = r['desc']
                     assert len(dev.rdesc) == length
 
         for d in self._devices.values():
