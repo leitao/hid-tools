@@ -598,8 +598,6 @@ class BaseTest:
 
                 r = uhdev.event([t0, t1, t2], contact_count=2)
                 events = uhdev.next_sync_events()
-                self._debug_reports(r)
-                print(events)
                 self.assertIn(libevdev.InputEvent('EV_KEY', 'BTN_TOUCH', 1), events)
                 self.assertEqual(uhdev.evdev.event_value('EV_KEY', 'BTN_TOUCH'), 1)
                 self.assertIn(libevdev.InputEvent('EV_ABS', 'ABS_MT_TRACKING_ID', 0), events)
@@ -642,7 +640,6 @@ class BaseTest:
                 else:
                     r = uhdev.event(left=True)
                     events = uhdev.next_sync_events()
-                    self._debug_reports(r)
                     self.assertIn(libevdev.InputEvent('EV_KEY', 'BTN_LEFT', 1), events)
                     self.assertEqual(uhdev.evdev.event_value('EV_KEY', 'BTN_LEFT'), 1)
 
@@ -678,7 +675,6 @@ class BaseTest:
 
                 t0 = Touch(1, 150, 200)
                 r = uhdev.event([t0])
-                self._debug_reports(r)
                 events = uhdev.next_sync_events()
 
                 t0.confidence = False
