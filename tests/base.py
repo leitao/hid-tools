@@ -172,7 +172,7 @@ def reload_udev_rules():
 def create_udev_rule(uuid):
     os.makedirs('/run/udev/rules.d', exist_ok=True)
     with open(f'/run/udev/rules.d/91-uhid-test-device-REMOVEME-{uuid}.rules', 'w') as f:
-        f.write('KERNELS=="*input*", ATTRS{name}=="uhid test *", ENV{LIBINPUT_TEST_DEVICE}="1"')
+        f.write('KERNELS=="*input*", ATTRS{name}=="uhid test *", ENV{LIBINPUT_IGNORE_DEVICE}="1"')
     reload_udev_rules()
 
 
