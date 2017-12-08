@@ -373,6 +373,30 @@ class BaseTest:
 
                 uhdev.destroy()
 
+        def test_mt_tx_cx(self):
+            """send a single touch in the first slot of the device, with
+            different values of Tx and Cx. Make sure the kernel reports Tx."""
+            with self.__create_device() as uhdev:
+                if uhdev.fields.count('X') == uhdev.touches_in_a_report:
+                    # there is not point testing those
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 5, 10)
+                t0.cx = 50
+                t0.cy = 100
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent('EV_KEY', 'BTN_TOUCH', 1), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
+
+                uhdev.destroy()
+
         def test_mt_release_miss(self):
             """send a single touch in the first slot of the device, and
             forget to release it. The kernel is supposed to release by itself
