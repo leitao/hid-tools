@@ -755,6 +755,78 @@ class HidReport(object):
 
         return r
 
+    def get_str(self, data):
+        """
+        Translate the given report to a human readable format.
+        """
+
+        output = ''
+
+        self.prev_seen_usages = []
+        sep = ''
+        if self.numbered:
+            assert self.report_ID == data[0]
+            output += f'ReportID: {self.report_ID} '
+            sep = '/'
+        prev = None
+        for report_item in self:
+            if report_item.const:
+                output += f'{sep} # '
+                continue
+
+            # get the value and consumes bits
+            values = report_item.get_values(data)
+
+            if not report_item.array:
+                value_format = "{:d}"
+                if report_item.size > 1:
+                    value_format = f'{{:{str(len(str(1 << report_item.size)) + 1)}d}}'
+                if isinstance(values[0], str):
+                    value_format = "{}"
+                usage_name = self._fix_xy_usage_for_mt_devices(report_item.usage_name)
+                usage = f' {usage_name}:'
+
+                # if we don't get a key error this is a duplicate in
+                # this report descriptor and we need a linebreak
+                if usage_name in self.prev_seen_usages and 'Vendor' not in usage_name:
+                    self.prev_seen_usages = []
+                    output += '\n'
+                self.prev_seen_usages.append(usage_name)
+
+                # do not reapeat the usage name if several are in a row
+                if (prev and
+                   prev.type == report_item.type and
+                   prev.usage == report_item.usage):
+                    sep = ","
+                    usage = ""
+                output += f'{sep}{usage} {value_format.format(values[0])} '
+            else:
+                usage_page_name = report_item.usage_page_name
+                if not usage_page_name:
+                    usage_page_name = "Array"
+                usages = []
+                for v in values:
+                    if (v < report_item.logical_min or
+                       v > report_item.logical_max):
+                        usages.append('')
+                    else:
+                        usage = ""
+                        if isinstance(values[0], str):
+                            usage = v
+                        else:
+                            usage = f'{v:02x}'
+                        if ('vendor' not in usage_page_name.lower() and
+                           v > 0 and
+                           v < len(report_item.usages)):
+                            usage = report_item.get_usage_name(v)
+                            if "no event indicated" in usage.lower():
+                                usage = ''
+                        usages.append(usage)
+                output += f'{sep}{usage_page_name} [{", ".join(usages)}] '
+            sep = '|'
+            prev = report_item
+        return output
+
 
 class ReportDescriptor(object):
 
