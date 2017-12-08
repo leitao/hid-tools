@@ -35,8 +35,17 @@ def get_report(time, report, rdesc):
 
     output += rdesc.get_str(report)
 
-    if rdesc.numbered:
-        indent_2nd_line = output.index('/')
+    # align the lines with the matching fields
+    try:
+        second_row = output.split('\n')[1]
+    except IndexError:
+        pass
+    else:
+        # we have a multi-line output, find where the fields are split
+        colon = second_row.index(':')
+        # the `1` / `-1` below is to remove the leading '|' that might match
+        # with '/'
+        indent_2nd_line = output.index(second_row[1:colon]) - 1
 
     indent = f'\n{" " * indent_2nd_line}'
 
