@@ -601,6 +601,35 @@ class BaseTest:
 
                 uhdev.destroy()
 
+        def test_mt_contact_count_accurate(self):
+            """Test the MT_QUIRK_CONTACT_CNT_ACCURATE from the kernel.
+            A report should forward an accurate contact count and the kernel
+            should ignore any data provided after we have reached this
+            contact count."""
+            with self.__create_device() as uhdev:
+                if uhdev.touches_in_a_report == 1:
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 5, 10)
+                t1 = Touch(2, 15, 20)
+
+                r = uhdev.event([t0, t1], contact_count=1)
+                self.debug_reports(r, uhdev)
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent('EV_KEY', 'BTN_TOUCH', 1), events)
+                self.assertEqual(uhdev.evdev.event_value('EV_KEY', 'BTN_TOUCH'), 1)
+                self.assertIn(libevdev.InputEvent('EV_ABS', 'ABS_MT_TRACKING_ID', 0), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_TRACKING_ID'), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_X'), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, 'ABS_MT_POSITION_Y'), 10)
+                self.assertEqual(uhdev.evdev.slot_value(1, 'ABS_MT_TRACKING_ID'), -1)
+
+                uhdev.destroy()
+
     class TestPTP(TestMultitouch):
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestPTP, self).__init__(methodName)
