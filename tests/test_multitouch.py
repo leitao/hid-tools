@@ -542,8 +542,7 @@ class BaseTest:
             with self.__create_device() as uhdev:
                 if 'In Range' not in uhdev.fields:
                     uhdev.destroy()
-                    # raise unittest.SkipTest('Device not compatible, missing In Range usage')
-                    return
+                    raise unittest.SkipTest('Device not compatible, missing In Range usage')
 
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
