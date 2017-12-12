@@ -145,11 +145,11 @@ class UHIDTest(UHIDDevice):
 
 class BaseTestCase:
     class TestUhid(unittest.TestCase):
-        syn_event = libevdev.InputEvent('EV_SYN', 'SYN_REPORT', 0)
-        key_event = libevdev.InputEvent("EV_KEY")
-        abs_event = libevdev.InputEvent("EV_ABS")
-        rel_event = libevdev.InputEvent("EV_REL")
-        msc_event = libevdev.InputEvent("EV_MSC", "MSC_SCAN")
+        syn_event = libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0)
+        key_event = libevdev.InputEvent(libevdev.EV_KEY)
+        abs_event = libevdev.InputEvent(libevdev.EV_ABS)
+        rel_event = libevdev.InputEvent(libevdev.EV_REL)
+        msc_event = libevdev.InputEvent(libevdev.EV_MSC.MSC_SCAN)
 
         def assertInputEventsIn(self, expected_events, effective_events):
             effective_events = effective_events.copy()
