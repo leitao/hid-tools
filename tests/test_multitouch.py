@@ -393,7 +393,9 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_X), 50)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
+                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_Y), 100)
 
                 uhdev.destroy()
 
