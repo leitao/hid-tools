@@ -440,7 +440,7 @@ class BaseTest:
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_TOUCH), 1)
+                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
@@ -449,7 +449,7 @@ class BaseTest:
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH), events)
-                self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_TOUCH), 1)
+                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_X, 5), events)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_Y, 10), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
@@ -569,7 +569,7 @@ class BaseTest:
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_TOUCH), 1)
+                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TRACKING_ID, 0), events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_DISTANCE), events)
                 self.assertGreater(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_DISTANCE), 0)
@@ -616,7 +616,7 @@ class BaseTest:
                 r = uhdev.event([t0, t1, t2], contact_count=2)
                 events = uhdev.next_sync_events()
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_TOUCH), 1)
+                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TRACKING_ID, 0), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
@@ -647,7 +647,7 @@ class BaseTest:
                 self.debug_reports(r, uhdev)
                 events = uhdev.next_sync_events()
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_TOUCH), 1)
+                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TRACKING_ID, 0), events)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
@@ -677,32 +677,32 @@ class BaseTest:
                     r = uhdev.event(click=True)
                     events = uhdev.next_sync_events()
                     self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1), events)
-                    self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_LEFT), 1)
+                    self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
                     r = uhdev.event(click=False)
                     events = uhdev.next_sync_events()
                     self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0), events)
-                    self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_LEFT), 0)
+                    self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
                 else:
                     r = uhdev.event(left=True)
                     events = uhdev.next_sync_events()
                     self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1), events)
-                    self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_LEFT), 1)
+                    self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
                     r = uhdev.event(left=False)
                     events = uhdev.next_sync_events()
                     self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0), events)
-                    self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_LEFT), 0)
+                    self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
                     r = uhdev.event(right=True)
                     events = uhdev.next_sync_events()
                     self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1), events)
-                    self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_RIGHT), 1)
+                    self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
 
                     r = uhdev.event(right=False)
                     events = uhdev.next_sync_events()
                     self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0), events)
-                    self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_RIGHT), 0)
+                    self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
 
         def test_ptp_confidence(self):
             """Check for the validity of the confidence bit.
@@ -764,7 +764,7 @@ class BaseTest:
 
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1), events)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0), events)
-                self.assertEqual(uhdev.evdev.event_value(libevdev.EV_KEY.BTN_LEFT), 1)
+                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
                 uhdev.destroy()
 
