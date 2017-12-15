@@ -65,6 +65,13 @@ class HIDReplay(object):
         for d in self._devices.values():
             d.create_kernel_device()
 
+    @property
+    def ready(self):
+        for d in self._devices.values():
+            if not d.has_evdev_node:
+                return False
+        return True
+
     def destroy(self):
         for d in self._devices.values():
             d.destroy()
@@ -115,7 +122,8 @@ def main(argv):
         replay = HIDReplay(argv[0])
         try:
             while uhid.UHIDDevice.process_one_event(1000):
-                pass
+                if replay.ready:
+                    break
             print('Hit enter (re)start replaying the events')
             sys.stdin.readline()
             replay.inject_events()

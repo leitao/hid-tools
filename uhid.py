@@ -115,6 +115,7 @@ class UHIDDevice(object):
         self._output_report = self.output_report
         self._udev = None
         self.ready = False
+        self.has_evdev_node = False
         self.uniq = f'uhid_{str(uuid.uuid4())}'
         self.append_fd_to_poll(self._fd, self._process_one_event)
         self.init_pyudev()
@@ -129,7 +130,24 @@ class UHIDDevice(object):
         os.close(self._fd)
 
     def udev_event(self, event):
-        pass
+        if event.action != 'add':
+            return
+
+        # we do not need to process the udev events if the device is being
+        # removed
+        if not self.ready:
+            return
+
+        device = event
+
+        if 'DEVNAME' not in device.properties:
+            return
+
+        devname = device.properties['DEVNAME']
+        if not devname.startswith('/dev/input/event'):
+            return
+
+        self.has_evdev_node = True
 
     @property
     def fd(self):
