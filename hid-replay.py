@@ -31,6 +31,7 @@ class HIDReplay(object):
     def __init__(self, filename):
         self._devices = {}
         self.filename = filename
+        self.replayed_count = 0
         with open(filename) as f:
             idx = 0
             for l in f.readlines():
@@ -115,6 +116,23 @@ class HIDReplay(object):
                         timestamp_offset = timestamp
                         time.sleep(wait_max_seconds)
                     dev.call_input_event(data)
+        self.replayed_count += 1
+
+    def start_injecting_event(self):
+        sys.stdin.readline()
+        self.inject_events()
+
+    def replay_one_sequence(self, wait=False):
+        if not wait:
+            self.inject_events()
+            return
+        count = self.replayed_count
+        uhid.UHIDDevice.append_fd_to_poll(sys.stdin.fileno(),
+                                          self.start_injecting_event)
+        print('Hit enter (re)start replaying the events')
+        while count == self.replayed_count:
+                uhid.UHIDDevice.process_one_event(None)
+        uhid.UHIDDevice.remove_fd_from_poll(sys.stdin.fileno())
 
 
 def main(argv):
@@ -124,9 +142,8 @@ def main(argv):
             while uhid.UHIDDevice.process_one_event(1000):
                 if replay.ready:
                     break
-            print('Hit enter (re)start replaying the events')
-            sys.stdin.readline()
-            replay.inject_events()
+            while True:
+                replay.replay_one_sequence(wait=True)
         except KeyboardInterrupt:
             pass
         replay.destroy()
