@@ -95,8 +95,10 @@ class HIDReplay(object):
                         t = now
                         timestamp_offset = timestamp
                     target_time = t + timedelta(seconds=timestamp - timestamp_offset)
-                    sleep = target_time - now
-                    sleep = sleep.seconds + sleep.microseconds / 1000000
+                    sleep = 0
+                    if target_time > now:
+                        sleep = target_time - now
+                        sleep = sleep.seconds + sleep.microseconds / 1000000
                     if sleep < 0.01:
                         pass
                     elif sleep < wait_max_seconds:
