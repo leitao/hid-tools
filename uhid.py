@@ -70,8 +70,8 @@ class UHIDDevice(object):
         return len(devices)
 
     @classmethod
-    def append_fd_to_poll(cls, fd, read_function):
-        cls.poll.register(fd)
+    def append_fd_to_poll(cls, fd, read_function, mask=select.POLLIN):
+        cls.poll.register(fd, mask)
         cls.polling_functions[fd] = read_function
 
     @classmethod
