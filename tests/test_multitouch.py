@@ -90,6 +90,12 @@ class Digitizer(base.UHIDTest):
         else:
             self.max_contacts = max_contacts
         self.application = application
+        self.cur_application = application
+
+        for features in self.parsed_rdesc.feature_reports.values():
+                for feature in features:
+                    if feature.usage_name == 'Inputmode':
+                        self.cur_application = 'Mouse'
 
         self.fields = []
         for r in self.parsed_rdesc.input_reports.values():
@@ -119,7 +125,7 @@ class Digitizer(base.UHIDTest):
         global_data.scantime = self.scantime
 
         while len(slots):
-            r = self.format_report(application=self.application, data=slots, global_data=global_data)
+            r = self.format_report(application=self.cur_application, data=slots, global_data=global_data)
             self.call_input_event(r)
             rs.append(r)
             self.contactcount = 0
@@ -153,6 +159,38 @@ class Digitizer(base.UHIDTest):
         self.contactmax = self.max_contacts
         r = rdesc.format_report([self], None)
         self.call_get_report(req, r, 0)
+
+    def set_report(self, req, rnum, rtype, size, data):
+        if rtype != self.UHID_FEATURE_REPORT:
+            self.call_set_report(req, 1)
+
+        rdesc = None
+        for v in self.parsed_rdesc.feature_reports.values():
+            if v.report_ID == rnum:
+                rdesc = v
+
+        if rdesc is None:
+            self.call_set_report(req, 1)
+            return
+
+        if 'Inputmode' not in [f.usage_name for f in rdesc]:
+            self.call_set_report(req, 0)
+            return
+
+        for f in rdesc:
+            if 'Inputmode' == f.usage_name:
+                values = f.get_values(data)
+                assert len(values) == 1
+                value = values[0]
+
+                if value == 0:
+                    self.cur_application = 'Mouse'
+                elif value == 2:
+                    self.cur_application = 'Touch Screen'
+                elif value == 3:
+                    self.cur_application = 'Touch Pad'
+
+        self.call_set_report(req, 0)
 
 
 class PTP(Digitizer):
