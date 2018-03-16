@@ -21,6 +21,7 @@
 #
 
 import base
+import hid
 import libevdev
 import sys
 import time
@@ -386,6 +387,22 @@ class BaseTest:
                         break
                 with self.assertRaises(OSError):
                     uhdev.evdev.fd.read()
+
+        def test_required_usages(self):
+            """Make sure the device exports the correct required features and
+            inputs."""
+            with self.__create_device() as uhdev:
+                rdesc = uhdev.parsed_rdesc
+                for feature in rdesc.feature_reports.values():
+                    for field in feature:
+                        if field.usage in hid.inv_usages and hid.inv_usages[field.usage] == 'Contact Max':
+                            self.assertIn(hid.inv_usages[field.application], ['Touch Screen', 'Touch Pad', 'System Multi-Axis Controller'])
+                        if field.usage in hid.inv_usages and hid.inv_usages[field.usage] == 'Button Type':
+                            self.assertIn(hid.inv_usages[field.application], ['Touch Pad'])
+                        if field.usage in hid.inv_usages and hid.inv_usages[field.usage] == 'Inputmode':
+                            self.assertIn(hid.inv_usages[field.application], ['Touch Pad', 'Device Configuration'])
+
+                uhdev.destroy()
 
         def test_mt_single_touch(self):
             """send a single touch in the first slot of the device,
