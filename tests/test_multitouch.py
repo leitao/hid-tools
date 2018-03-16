@@ -178,8 +178,10 @@ class Digitizer(base.UHIDTest):
             self.call_set_report(req, 0)
             return
 
+        Inputmode_seen = False
         for f in rdesc:
-            if 'Inputmode' == f.usage_name:
+            if 'Inputmode' == f.usage_name and not Inputmode_seen:
+                Inputmode_seen = True
                 values = f.get_values(data)
                 assert len(values) == 1
                 value = values[0]
