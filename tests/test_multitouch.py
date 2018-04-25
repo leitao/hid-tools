@@ -262,6 +262,12 @@ class MinWin8TSParallel(Digitizer):
              Physical Maximum ({self.phys_max[1]})
              Usage (Y)
              Input (Data,Var,Abs)
+             Usage Page (Digitizers)
+             Usage (Azimuth)
+             Logical Maximum (360)
+             Unit (Degrees,SILinear)
+             Report Size (16)
+             Input (Data,Var,Abs)
             End Collection
 '''
         rdesc_str = f'''
@@ -710,6 +716,31 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
                 self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
                 self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+
+                uhdev.destroy()
+
+        def test_mt_azimuth(self):
+            """Check for the azimtuh information bit.
+            When azimuth is presented by the device, it should be exported
+            as ABS_MT_ORIENTATION and the exported value should report a quarter
+            of circle."""
+            with self.__create_device() as uhdev:
+                if 'Azimuth' not in uhdev.fields:
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible, missing Azimuth usage')
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 5, 10)
+                t0.azimuth = 270
+
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
+
+                # orientation is clockwise, while Azimuth is counter clockwise
+                self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_ORIENTATION, 90), events)
 
                 uhdev.destroy()
 
