@@ -454,10 +454,8 @@ class BaseTest:
                     for field in feature:
                         if field.usage in hid.inv_usages and hid.inv_usages[field.usage] == 'Contact Max':
                             self.assertIn(hid.inv_usages[field.application], ['Touch Screen', 'Touch Pad', 'System Multi-Axis Controller'])
-                        if field.usage in hid.inv_usages and hid.inv_usages[field.usage] == 'Button Type':
-                            self.assertIn(hid.inv_usages[field.application], ['Touch Pad'])
                         if field.usage in hid.inv_usages and hid.inv_usages[field.usage] == 'Inputmode':
-                            self.assertIn(hid.inv_usages[field.application], ['Touch Pad', 'Device Configuration'])
+                            self.assertIn(hid.inv_usages[field.application], ['Touch Screen', 'Touch Pad', 'Device Configuration'])
 
                 uhdev.destroy()
 
@@ -679,6 +677,18 @@ class BaseTest:
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestWin8Multitouch, self).__init__(methodName)
             self.__create_device = self._create_device
+
+        def test_required_usages8(self):
+            """Make sure the device exports the correct required features and
+            inputs."""
+            with self.__create_device() as uhdev:
+                rdesc = uhdev.parsed_rdesc
+                for feature in rdesc.feature_reports.values():
+                    for field in feature:
+                        if field.usage in hid.inv_usages and hid.inv_usages[field.usage] == 'Inputmode':
+                            self.assertNotIn(hid.inv_usages[field.application], ['Touch Screen'])
+
+                uhdev.destroy()
 
         def test_mt_tx_cx(self):
             """send a single touch in the first slot of the device, with
@@ -1333,6 +1343,13 @@ class TestTpv_25aa_8883(BaseTest.TestMultitouch):
         return Digitizer('uhid test tpv_25aa_8883',
                          rdesc='05 01 09 02 a1 01 85 0d 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 05 0d 09 32 95 01 75 01 81 02 95 01 75 05 81 03 05 01 55 0e 65 11 75 10 95 01 35 00 46 98 12 26 7f 07 09 30 81 22 46 78 0a 26 37 04 09 31 81 22 35 00 45 00 15 81 25 7f 75 08 95 01 09 38 81 06 09 00 75 08 95 07 81 03 c0 c0 05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 75 10 55 0e 65 11 09 30 35 00 46 98 12 26 7f 07 81 02 09 31 46 78 0a 26 37 04 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 75 10 55 0e 65 11 09 30 35 00 46 98 12 26 7f 07 81 02 46 78 0a 26 37 04 09 31 81 02 c0 05 0d 09 54 15 00 26 ff 00 95 01 75 08 81 02 09 55 25 02 95 01 85 02 b1 02 c0 05 0d 09 0e a1 01 06 00 ff 09 01 26 ff 00 75 08 95 47 85 03 b1 02 09 01 96 ff 03 85 04 b1 02 09 01 95 0b 85 05 b1 02 09 01 96 ff 03 85 06 b1 02 09 01 95 0f 85 07 b1 02 09 01 96 ff 03 85 08 b1 02 09 01 96 ff 03 85 09 b1 02 09 01 95 3f 85 0a b1 02 09 01 96 ff 03 85 0b b1 02 09 01 96 c3 03 85 0e b1 02 09 01 96 ff 03 85 0f b1 02 09 01 96 83 03 85 10 b1 02 09 01 96 93 00 85 11 b1 02 09 01 96 ff 03 85 12 b1 02 05 0d 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 85 0c b1 02 c0 c0',
                          info=(0x3, 0x25aa, 0x8883))
+
+
+class TestTrs_star_238f_0001(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test trs-star_238f_0001',
+                         rdesc='05 0d 09 04 a1 01 85 01 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 95 01 81 03 09 37 95 01 81 03 95 01 81 03 15 00 25 0f 75 04 09 51 95 01 81 02 09 54 95 01 81 02 09 55 95 01 81 02 05 01 26 ff 03 15 00 75 10 65 00 09 30 95 01 81 02 09 31 81 02 c0 05 0d 09 0e 85 02 09 23 a1 02 15 00 25 0a 09 52 75 08 95 01 b1 02 09 53 95 01 b1 02 09 55 95 01 b1 02 c0 c0',
+                         info=(0x3, 0x238f, 0x0001))
 
 
 class TestUnitec_227d_0103(BaseTest.TestMultitouch):
