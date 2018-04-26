@@ -29,6 +29,33 @@ import unittest
 from base import main, setUpModule, tearDownModule  # noqa
 
 
+def BIT(x):
+    return 1 << x
+
+
+mt_quirks = {
+    'NOT_SEEN_MEANS_UP':            BIT(0),
+    'SLOT_IS_CONTACTID':            BIT(1),
+    'CYPRESS':                      BIT(2),
+    'SLOT_IS_CONTACTNUMBER':        BIT(3),
+    'ALWAYS_VALID':                 BIT(4),
+    'VALID_IS_INRANGE':             BIT(5),
+    'VALID_IS_CONFIDENCE':          BIT(6),
+    'CONFIDENCE':                   BIT(7),
+    'SLOT_IS_CONTACTID_MINUS_ONE':  BIT(8),
+    'NO_AREA':                      BIT(9),
+    'IGNORE_DUPLICATES':            BIT(10),
+    'HOVERING':                     BIT(11),
+    'CONTACT_CNT_ACCURATE':         BIT(12),
+    'FORCE_GET_FEATURE':            BIT(13),
+    'FIX_CONST_CONTACT_ID':         BIT(14),
+    'TOUCH_SIZE_SCALING':           BIT(15),
+    'STICKY_FINGERS':               BIT(16),
+    'ASUS_CUSTOM_UP':               BIT(17),
+    'WIN8_PTP_BUTTONS':             BIT(18),
+}
+
+
 class Data(object):
     pass
 
@@ -78,10 +105,11 @@ class Digitizer(base.UHIDTest):
         End Collection
     '''
 
-    def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', max_contacts=None, info=(3, 1, 2)):
+    def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', max_contacts=None, info=(3, 1, 2), quirks=None):
         super(Digitizer, self).__init__(name, rdesc_str, rdesc)
         self.info = info
         self.scantime = 0
+        self.quirks = quirks
         if max_contacts is None:
             self.max_contacts = 1
             for features in self.parsed_rdesc.feature_reports.values():
@@ -374,6 +402,15 @@ class BaseTest:
         def assertName(self, uhdev):
             self.assertEqual(uhdev.evdev.name, uhdev.name)
 
+        def get_slot(self, uhdev, t, default):
+            if uhdev.quirks is None:
+                return default
+
+            if 'SLOT_IS_CONTACTID' in uhdev.quirks:
+                    return t.contactid
+
+            return default
+
         def test_mt_creation(self):
             """Make sure the device gets processed by the kernel and creates
             the expected application input node.
@@ -383,6 +420,11 @@ class BaseTest:
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
+
+                # some sanity checking for the quirks
+                if uhdev.quirks is not None:
+                    for q in uhdev.quirks:
+                        self.assertIn(q, mt_quirks)
 
                 self.assertIsNotNone(uhdev.evdev)
                 self.__assertName(uhdev)
@@ -419,14 +461,17 @@ class BaseTest:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
-                t0 = Touch(1, 5, 10)
+                t0 = Touch(1, 50, 100)
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
+
+                slot = self.get_slot(uhdev, t0, 0)
+
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
+                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
+                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
+                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
 
                 t0.tipswitch = False
                 t0.inrange = False
@@ -434,7 +479,7 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
 
                 uhdev.destroy()
 
@@ -448,17 +493,21 @@ class BaseTest:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
-                t0 = Touch(1, 5, 10)
-                t1 = Touch(2, 15, 20)
+                t0 = Touch(1, 50, 100)
+                t1 = Touch(2, 150, 200)
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
+
+                slot0 = self.get_slot(uhdev, t0, 0)
+                slot1 = self.get_slot(uhdev, t1, 1)
+
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
 
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
@@ -467,20 +516,20 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_X, 5), events)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_Y, 10), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_POSITION_X), 15)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 20)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_X), 150)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 200)
 
                 t0.tipswitch = False
                 t0.inrange = False
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_X), events)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_Y), events)
 
@@ -489,8 +538,8 @@ class BaseTest:
                 r = uhdev.event([t1])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
 
                 uhdev.destroy()
 
@@ -507,21 +556,26 @@ class BaseTest:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
-                t0 = Touch(1, 5, 10)
-                t1 = Touch(2, 15, 20)
-                t2 = Touch(3, 25, 30)
+                t0 = Touch(1, 50, 100)
+                t1 = Touch(2, 150, 200)
+                t2 = Touch(3, 250, 300)
                 r = uhdev.event([t0, t1, t2])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_POSITION_X), 15)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 20)
-                self.assertEqual(uhdev.evdev.slot_value(2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 2)
-                self.assertEqual(uhdev.evdev.slot_value(2, libevdev.EV_ABS.ABS_MT_POSITION_X), 25)
-                self.assertEqual(uhdev.evdev.slot_value(2, libevdev.EV_ABS.ABS_MT_POSITION_Y), 30)
+
+                slot0 = self.get_slot(uhdev, t0, 0)
+                slot1 = self.get_slot(uhdev, t1, 1)
+                slot2 = self.get_slot(uhdev, t2, 2)
+
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_X), 150)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 200)
+                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 2)
+                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_POSITION_X), 250)
+                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_POSITION_Y), 300)
 
                 t0.tipswitch = False
                 t0.inrange = False
@@ -532,9 +586,10 @@ class BaseTest:
                 r = uhdev.event([t0, t1, t2])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+
+                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
 
                 uhdev.destroy()
 
@@ -546,14 +601,16 @@ class BaseTest:
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
-                touches = [Touch(i, i * 10, i * 10 + 5) for i in range(uhdev.max_contacts)]
+                touches = [Touch(i, (i + 3) * 20, (i + 3) * 20 + 5) for i in range(uhdev.max_contacts)]
                 r = uhdev.event(touches)
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 for i, t in enumerate(touches):
-                    self.assertEqual(uhdev.evdev.slot_value(i, libevdev.EV_ABS.ABS_MT_TRACKING_ID), i)
-                    self.assertEqual(uhdev.evdev.slot_value(i, libevdev.EV_ABS.ABS_MT_POSITION_X), t.x)
-                    self.assertEqual(uhdev.evdev.slot_value(i, libevdev.EV_ABS.ABS_MT_POSITION_Y), t.y)
+                    slot = self.get_slot(uhdev, t, i)
+
+                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), i)
+                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_X), t.x)
+                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_Y), t.y)
 
                 for t in touches:
                     t.tipswitch = False
@@ -563,7 +620,9 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 for i, t in enumerate(touches):
-                    self.assertEqual(uhdev.evdev.slot_value(i, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                    slot = self.get_slot(uhdev, t, i)
+
+                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
 
                 uhdev.destroy()
 
@@ -573,6 +632,10 @@ class BaseTest:
             should ignore any data provided after we have reached this
             contact count."""
             with self.__create_device() as uhdev:
+                if uhdev.quirks is not None and 'CONTACT_CNT_ACCURATE' not in uhdev.quirks:
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible')
+
                 if uhdev.touches_in_a_report == 1:
                     uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
@@ -897,6 +960,24 @@ class BaseTest:
 # Windows 7 compatible devices
 #
 ################################################################################
+
+class Test3m_0596_0500(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test 3m_0596_0500',
+                         rdesc='05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 09 01 95 01 75 01 15 00 25 01 81 02 95 07 75 01 81 03 95 01 75 08 81 03 05 01 09 30 09 31 15 00 26 ff 7f 35 00 46 00 00 95 02 75 10 81 02 c0 a1 02 15 00 26 ff 00 09 01 95 39 75 08 81 01 c0 c0 05 0d 09 0e a1 01 85 11 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0 09 04 a1 01 85 10 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 3a 06 81 02 09 31 46 e8 03 81 02 c0 05 0d 09 54 95 01 75 08 15 00 25 0a 81 02 85 12 09 55 95 01 75 08 15 00 25 0a b1 02 06 00 ff 15 00 26 ff 00 85 03 09 01 75 08 95 07 b1 02 85 04 09 01 75 08 95 17 b1 02 85 05 09 01 75 08 95 47 b1 02 85 06 09 01 75 08 95 07 b1 02 85 07 09 01 75 08 95 07 b1 02 85 08 09 01 75 08 95 07 b1 02 85 09 09 01 75 08 95 3f b1 02 c0',
+                         info=(0x3, 0x0596, 0x0500),
+                         max_contacts=60,
+                         quirks=('VALID_IS_CONFIDENCE', 'SLOT_IS_CONTACTID', 'TOUCH_SIZE_SCALING'))
+
+
+class Test3m_0596_0506(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test 3m_0596_0506',
+                         rdesc='05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 09 01 95 01 75 01 15 00 25 01 81 02 95 07 75 01 81 03 95 01 75 08 81 03 05 01 09 30 09 31 15 00 26 ff 7f 35 00 46 00 00 95 02 75 10 81 02 c0 a1 02 15 00 26 ff 00 09 01 95 39 75 08 81 03 c0 c0 05 0d 09 0e a1 01 85 11 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0 09 04 a1 01 85 13 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 d6 0a 81 02 09 31 46 22 06 81 02 05 0d 75 10 95 01 09 48 81 02 09 49 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 d6 0a 81 02 09 31 46 22 06 81 02 05 0d 75 10 95 01 09 48 81 02 09 49 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 d6 0a 81 02 09 31 46 22 06 81 02 05 0d 75 10 95 01 09 48 81 02 09 49 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 d6 0a 81 02 09 31 46 22 06 81 02 05 0d 75 10 95 01 09 48 81 02 09 49 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 d6 0a 81 02 09 31 46 22 06 81 02 05 0d 75 10 95 01 09 48 81 02 09 49 81 02 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 0e 65 33 09 30 35 00 46 d6 0a 81 02 09 31 46 22 06 81 02 05 0d 75 10 95 01 09 48 81 02 09 49 81 02 c0 05 0d 09 54 95 01 75 08 15 00 25 3c 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 02 81 03 05 0d 85 12 09 55 95 01 75 08 15 00 25 3c b1 02 06 00 ff 15 00 26 ff 00 85 03 09 01 75 08 95 07 b1 02 85 04 09 01 75 08 95 17 b1 02 85 05 09 01 75 08 95 47 b1 02 85 06 09 01 75 08 95 07 b1 02 85 73 09 01 75 08 95 07 b1 02 85 08 09 01 75 08 95 07 b1 02 85 09 09 01 75 08 95 3f b1 02 85 0f 09 01 75 08 96 07 02 b1 02 c0',
+                         info=(0x3, 0x0596, 0x0506),
+                         max_contacts=60,
+                         quirks=('VALID_IS_CONFIDENCE', 'SLOT_IS_CONTACTID', 'TOUCH_SIZE_SCALING'))
+
 
 class TestActionStar_2101_1011(BaseTest.TestMultitouch):
     def __init__(self, methodName='runTest'):
