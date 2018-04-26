@@ -78,9 +78,9 @@ class Digitizer(base.UHIDTest):
         End Collection
     '''
 
-    def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', max_contacts=None):
+    def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', max_contacts=None, info=(3, 1, 2)):
         super(Digitizer, self).__init__(name, rdesc_str, rdesc)
-        self.info = 3, 1, 2
+        self.info = info
         self.scantime = 0
         if max_contacts is None:
             self.max_contacts = 1
@@ -861,6 +861,45 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
                 uhdev.destroy()
+
+
+class TestActionStar_2101_1011(BaseTest.TestMultitouch):
+    def __init__(self, methodName='runTest'):
+        super(TestActionStar_2101_1011, self).__init__(methodName)
+        self.__create_device = self._create_device
+
+    def _create_device(self):
+        return Digitizer('uhid test ActionStar_2101_1011',
+                         rdesc='05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 09 51 75 08 95 01 81 02 05 01 35 00 55 0e 65 33 75 10 95 01 09 30 26 ff 4d 46 70 03 81 02 09 31 26 ff 2b 46 f1 01 81 02 46 00 00 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 09 51 75 08 95 01 81 02 05 01 35 00 55 0e 65 33 75 10 95 01 09 30 26 ff 4d 46 70 03 81 02 09 31 26 ff 2b 46 f1 01 81 02 46 00 00 c0 05 0d 09 54 75 08 95 01 81 02 05 0d 85 02 09 55 25 02 75 08 95 01 b1 02 c0',
+                         info=(3, 0x2101, 0x1011))
+
+    def test_mt_actionstar_inrange(self):
+        """Special sequence that might not be handled properly"""
+        with self.__create_device() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.process_one_event(10)
+
+            sequence = [
+                # t0 = Touch(1, 6999, 2441) | t1 = Touch(2, 15227, 2026)
+                '01 ff 01 57 1b 89 09 ff 02 7b 3b ea 07 02',
+                # t0.xy = (6996, 2450)      | t1.y = 2028
+                '01 ff 01 54 1b 92 09 ff 02 7b 3b ec 07 02',
+                # t1.xy = (15233, 2040)     | t0.tipswitch = False
+                '01 ff 02 81 3b f8 07 fe 01 54 1b 92 09 02',
+                # t1                        | t0.inrange = False
+                '01 ff 02 81 3b f8 07 fc 01 54 1b 92 09 02',
+            ]
+
+            for num, r_str in enumerate(sequence):
+                r = [int(i, 16) for i in r_str.split()]
+                uhdev.call_input_event(r)
+                events = uhdev.next_sync_events()
+                self.debug_reports([r], uhdev);
+                for e in events: print(e)
+                if num == 2:
+                    self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+
+            uhdev.destroy()
 
 
 class TestMinWin8TSParallelTriple(BaseTest.TestWin8Multitouch):
