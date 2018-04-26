@@ -105,7 +105,7 @@ class Digitizer(base.UHIDTest):
         End Collection
     '''
 
-    def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', max_contacts=None, info=(3, 1, 2), quirks=None):
+    def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', physical='Finger', max_contacts=None, info=(3, 1, 2), quirks=None):
         super(Digitizer, self).__init__(name, rdesc_str, rdesc)
         self.info = info
         self.scantime = 0
@@ -119,6 +119,7 @@ class Digitizer(base.UHIDTest):
         else:
             self.max_contacts = max_contacts
         self.application = application
+        self.physical = physical
         self.cur_application = application
 
         for features in self.parsed_rdesc.feature_reports.values():
@@ -129,6 +130,9 @@ class Digitizer(base.UHIDTest):
         self.fields = []
         for r in self.parsed_rdesc.input_reports.values():
             if r.application_name == self.application:
+                physicals = [f.physical_name for f in r]
+                if self.physical not in physicals and None not in physicals:
+                    continue
                 self.fields = [f.usage_name for f in r]
 
         # self.parsed_rdesc.dump(sys.stdout)
@@ -225,7 +229,7 @@ class Digitizer(base.UHIDTest):
 
 
 class PTP(Digitizer):
-    def __init__(self, name, type='Click Pad', rdesc_str=None, rdesc=None, application='Touch Pad', max_contacts=None):
+    def __init__(self, name, type='Click Pad', rdesc_str=None, rdesc=None, application='Touch Pad', physical='Pointer', max_contacts=None):
         self.type = type.lower().replace(' ', '')
         if self.type == 'clickpad':
             self.buttontype = 0
@@ -234,7 +238,7 @@ class PTP(Digitizer):
         self.clickpad_state = False
         self.left_state = False
         self.right_state = False
-        super(PTP, self).__init__(name, rdesc_str, rdesc, application, max_contacts)
+        super(PTP, self).__init__(name, rdesc_str, rdesc, application, physical, max_contacts)
 
     def event(self, slots=None, click=None, left=None, right=None, contact_count=None, incr_scantime=True):
         # update our internal state
@@ -477,7 +481,8 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
 
                 t0.tipswitch = False
-                t0.inrange = False
+                if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
+                    t0.inrange = False
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
@@ -527,7 +532,8 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 200)
 
                 t0.tipswitch = False
-                t0.inrange = False
+                if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
+                    t0.inrange = False
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
@@ -537,7 +543,8 @@ class BaseTest:
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_Y), events)
 
                 t1.tipswitch = False
-                t1.inrange = False
+                if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
+                    t1.inrange = False
                 r = uhdev.event([t1])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
@@ -581,11 +588,12 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_POSITION_Y), 300)
 
                 t0.tipswitch = False
-                t0.inrange = False
                 t1.tipswitch = False
-                t1.inrange = False
                 t2.tipswitch = False
-                t2.inrange = False
+                if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
+                    t0.inrange = False
+                    t1.inrange = False
+                    t2.inrange = False
                 r = uhdev.event([t0, t1, t2])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
@@ -621,7 +629,8 @@ class BaseTest:
 
                 for t in touches:
                     t.tipswitch = False
-                    t.inrange = False
+                    if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
+                        t.inrange = False
 
                 r = uhdev.event(touches)
                 events = uhdev.next_sync_events()
@@ -1101,6 +1110,59 @@ class TestE4_2219_044c(BaseTest.TestMultitouch):
         return Digitizer('uhid test e4_2219_044c',
                          rdesc='05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 00 65 00 09 30 35 00 46 00 00 81 02 09 31 46 00 00 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 7f 75 10 55 00 65 00 09 30 35 00 46 00 00 81 02 09 31 46 00 00 81 02 c0 05 0d 09 54 95 01 75 08 15 00 25 08 81 02 09 55 b1 02 c0 09 0e a1 01 85 02 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0 05 01 09 02 a1 01 85 03 09 01 a1 00 05 09 19 01 29 03 15 00 25 01 95 03 75 01 81 02 95 01 75 05 81 01 05 01 09 30 09 31 15 00 26 ff 7f 75 10 95 02 81 02 05 01 09 38 15 81 25 7f 75 08 95 01 81 06 c0 c0',
                          info=(0x3, 0x2219, 0x044c))
+
+
+class TestEgalax_capacitive_0eef_7224(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test egalax-capacitive_0eef_7224',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 15 00 25 01 81 02 09 51 75 05 95 01 16 00 00 26 10 00 81 02 09 47 75 01 95 01 15 00 25 01 81 02 05 01 09 30 75 10 95 01 55 0d 65 33 35 00 46 34 49 26 ff 7f 81 02 09 31 75 10 95 01 55 0d 65 33 35 00 46 37 29 26 ff 7f 81 02 05 0d 09 55 25 08 75 08 95 01 b1 02 c0 c0 05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 04 a1 01 85 02 09 20 a1 00 09 42 09 32 15 00 25 01 95 02 75 01 81 02 95 06 75 01 81 03 05 01 09 30 75 10 95 01 a4 55 0d 65 33 36 00 00 46 34 49 16 00 00 26 ff 0f 81 02 09 31 16 00 00 26 ff 0f 36 00 00 46 37 29 81 02 b4 c0 c0 05 0d 09 0e a1 01 85 05 09 22 a1 00 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0',
+                         info=(0x3, 0x0eef, 0x7224),
+                         quirks=('SLOT_IS_CONTACTID', 'ALWAYS_VALID'))
+
+
+class TestEgalax_capacitive_0eef_72fa(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test egalax-capacitive_0eef_72fa',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 15 00 25 01 81 02 09 51 75 05 95 01 16 00 00 26 10 00 81 02 09 47 75 01 95 01 15 00 25 01 81 02 05 01 09 30 75 10 95 01 55 0d 65 33 35 00 46 72 22 26 ff 7f 81 02 09 31 75 10 95 01 55 0d 65 33 35 00 46 87 13 26 ff 7f 81 02 05 0d 09 55 25 08 75 08 95 01 b1 02 c0 c0 05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 04 a1 01 85 02 09 20 a1 00 09 42 09 32 15 00 25 01 95 02 75 01 81 02 95 06 75 01 81 03 05 01 09 30 75 10 95 01 a4 55 0d 65 33 36 00 00 46 72 22 16 00 00 26 ff 0f 81 02 09 31 16 00 00 26 ff 0f 36 00 00 46 87 13 81 02 b4 c0 c0 05 0d 09 0e a1 01 85 05 09 22 a1 00 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0',
+                         info=(0x3, 0x0eef, 0x72fa),
+                         quirks=('SLOT_IS_CONTACTID', 'VALID_IS_INRANGE'))
+
+
+class TestEgalax_capacitive_0eef_7336(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test egalax-capacitive_0eef_7336',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 15 00 25 01 81 02 09 51 75 05 95 01 16 00 00 26 10 00 81 02 09 47 75 01 95 01 15 00 25 01 81 02 05 01 09 30 75 10 95 01 55 0d 65 33 35 00 46 c1 20 26 ff 7f 81 02 09 31 75 10 95 01 55 0d 65 33 35 00 46 c2 18 26 ff 7f 81 02 05 0d 09 55 25 08 75 08 95 01 b1 02 c0 c0 05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 04 a1 01 85 02 09 20 a1 00 09 42 09 32 15 00 25 01 95 02 75 01 81 02 95 06 75 01 81 03 05 01 09 30 75 10 95 01 a4 55 0d 65 33 36 00 00 46 c1 20 16 00 00 26 ff 0f 81 02 09 31 16 00 00 26 ff 0f 36 00 00 46 c2 18 81 02 b4 c0 c0 05 0d 09 0e a1 01 85 05 09 22 a1 00 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0',
+                         info=(0x3, 0x0eef, 0x7336))
+
+
+class TestEgalax_capacitive_0eef_7337(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test egalax-capacitive_0eef_7337',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 15 00 25 01 81 02 09 51 75 05 95 01 16 00 00 26 10 00 81 02 09 47 75 01 95 01 15 00 25 01 81 02 05 01 09 30 75 10 95 01 55 0d 65 33 35 00 46 ae 17 26 ff 7f 81 02 09 31 75 10 95 01 55 0d 65 33 35 00 46 c3 0e 26 ff 7f 81 02 05 0d 09 55 25 08 75 08 95 01 b1 02 c0 c0 05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 04 a1 01 85 02 09 20 a1 00 09 42 09 32 15 00 25 01 95 02 75 01 81 02 95 06 75 01 81 03 05 01 09 30 75 10 95 01 a4 55 0d 65 33 36 00 00 46 ae 17 16 00 00 26 ff 0f 81 02 09 31 16 00 00 26 ff 0f 36 00 00 46 c3 0e 81 02 b4 c0 c0 05 0d 09 0e a1 01 85 05 09 22 a1 00 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0',
+                         info=(0x3, 0x0eef, 0x7337))
+
+
+class TestEgalax_capacitive_0eef_7349(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test egalax-capacitive_0eef_7349',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 15 00 25 01 81 02 09 51 75 05 95 01 16 00 00 26 10 00 81 02 09 47 75 01 95 01 15 00 25 01 81 02 05 01 09 30 75 10 95 01 55 0d 65 33 35 00 46 34 49 26 ff 7f 81 02 09 31 75 10 95 01 55 0d 65 33 35 00 46 37 29 26 ff 7f 81 02 05 0d 09 55 25 08 75 08 95 01 b1 02 c0 c0 05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 04 a1 01 85 02 09 20 a1 00 09 42 09 32 15 00 25 01 95 02 75 01 81 02 95 06 75 01 81 03 05 01 09 30 75 10 95 01 a4 55 0d 65 33 36 00 00 46 34 49 16 00 00 26 ff 0f 81 02 09 31 16 00 00 26 ff 0f 36 00 00 46 37 29 81 02 b4 c0 c0 05 0d 09 0e a1 01 85 05 09 22 a1 00 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0',
+                         info=(0x3, 0x0eef, 0x7349),
+                         quirks=('SLOT_IS_CONTACTID', 'ALWAYS_VALID'))
+
+
+class TestEgalax_capacitive_0eef_73f4(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test egalax-capacitive_0eef_73f4',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 15 00 25 01 81 02 09 51 75 05 95 01 16 00 00 26 10 00 81 02 09 47 75 01 95 01 15 00 25 01 81 02 05 01 09 30 75 10 95 01 55 0d 65 33 35 00 46 96 4e 26 ff 7f 81 02 09 31 75 10 95 01 55 0d 65 33 35 00 46 23 2c 26 ff 7f 81 02 05 0d 09 55 25 08 75 08 95 01 b1 02 c0 c0 05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 04 a1 01 85 02 09 20 a1 00 09 42 09 32 15 00 25 01 95 02 75 01 81 02 95 06 75 01 81 03 05 01 09 30 75 10 95 01 a4 55 0d 65 33 36 00 00 46 96 4e 16 00 00 26 ff 0f 81 02 09 31 16 00 00 26 ff 0f 36 00 00 46 23 2c 81 02 b4 c0 c0 05 0d 09 0e a1 01 85 05 09 22 a1 00 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0',
+                         info=(0x3, 0x0eef, 0x73f4))
+
+
+class TestEgalax_capacitive_0eef_a001(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test egalax-capacitive_0eef_a001',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 09 32 15 00 25 01 81 02 09 51 75 05 95 01 16 00 00 26 10 00 81 02 09 47 75 01 95 01 15 00 25 01 81 02 05 01 09 30 75 10 95 01 55 0d 65 33 35 00 46 23 28 26 ff 7f 81 02 09 31 75 10 95 01 55 0d 65 33 35 00 46 11 19 26 ff 7f 81 02 05 0d 09 55 25 08 75 08 95 01 b1 02 c0 c0 05 01 09 01 a1 01 85 01 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 01 05 01 09 30 09 31 16 00 00 26 ff 0f 36 00 00 46 ff 0f 66 00 00 75 10 95 02 81 02 c0 c0 06 00 ff 09 01 a1 01 09 01 15 00 26 ff 00 85 03 75 08 95 3f 81 02 06 00 ff 09 01 15 00 26 ff 00 75 08 95 3f 91 02 c0 05 0d 09 0e a1 01 85 05 09 22 a1 00 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0',
+                         info=(0x3, 0x0eef, 0xa001),
+                         quirks=('SLOT_IS_CONTACTID', 'VALID_IS_INRANGE'))
 
 
 class TestElo_touchsystems_04e7_0022(BaseTest.TestMultitouch):

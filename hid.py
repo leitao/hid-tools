@@ -514,6 +514,18 @@ class HidField(object):
     def get_usage_name(self, index):
         return self._usage_name(self.usages[index])
 
+    @property
+    def physical_name(self):
+        phys = self.physical
+        if self.physical in inv_usages:
+            phys = inv_usages[self.physical]
+        else:
+            try:
+                phys = f'0x{phys:04x}'
+            except:
+                pass
+        return phys
+
     def _get_value(self, report, idx):
         value = 0
         start_bit = self.start + self.size * idx
