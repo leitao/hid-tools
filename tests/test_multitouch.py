@@ -409,6 +409,9 @@ class BaseTest:
             if 'SLOT_IS_CONTACTID' in uhdev.quirks:
                     return t.contactid
 
+            if 'SLOT_IS_CONTACTID_MINUS_ONE' in uhdev.quirks:
+                    return t.contactid - 1
+
             return default
 
         def test_mt_creation(self):
@@ -598,6 +601,10 @@ class BaseTest:
             Make sure all contacts are forwarded and that there is no miss.
             Release and check."""
             with self.__create_device() as uhdev:
+                if uhdev.max_contacts <= 2:
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible')
+
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
@@ -1016,6 +1023,14 @@ class TestActionStar_2101_1011(BaseTest.TestMultitouch):
                     self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
 
             uhdev.destroy()
+
+
+class TestAsus_computers_0486_0185(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test asus-computers_0486_0185',
+                         rdesc='05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 95 01 75 01 81 02 09 32 81 02 09 47 81 02 75 05 81 03 09 30 26 ff 00 75 08 81 02 09 51 25 02 81 02 26 96 0d 05 01 75 10 55 0d 65 33 09 30 35 00 46 fd 1d 81 02 09 31 46 60 11 81 02 c0 09 22 a1 02 05 0d 35 00 45 00 55 00 65 00 09 42 25 01 75 01 81 02 09 32 81 02 09 47 81 02 75 05 81 03 09 30 26 ff 00 75 08 81 02 09 51 25 02 81 02 26 96 0d 05 01 75 10 55 0d 65 33 09 30 46 fd 1d 81 02 09 31 46 60 11 81 02 c0 35 00 45 00 55 00 65 00 05 0d 09 54 75 08 25 02 81 02 85 08 09 55 b1 02 c0 09 0e a1 01 85 07 09 22 a1 00 09 52 25 0a b1 02 c0 05 0c 09 01 a1 01 85 06 09 01 26 ff 00 95 08 b1 02 c0 c0 05 01 09 02 a1 01 85 03 09 01 a1 00 05 09 19 01 29 02 25 01 75 01 95 02 81 02 95 06 81 03 26 96 0d 05 01 75 10 95 01 55 0d 65 33 09 30 46 fd 1d 81 02 09 31 46 60 11 81 02 c0 c0 06 ff 01 09 01 a1 01 26 ff 00 35 00 45 00 55 00 65 00 85 05 75 08 95 3f 09 00 81 02 c0',
+                         info=(0x3, 0x0486, 0x0185),
+                         quirks=('VALID_IS_CONFIDENCE', 'SLOT_IS_CONTACTID_MINUS_ONE'))
 
 
 class TestAtmel_03eb_201c(BaseTest.TestMultitouch):
