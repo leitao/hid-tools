@@ -436,32 +436,6 @@ class BaseTest:
 
                 uhdev.destroy()
 
-        def test_mt_tx_cx(self):
-            """send a single touch in the first slot of the device, with
-            different values of Tx and Cx. Make sure the kernel reports Tx."""
-            with self.__create_device() as uhdev:
-                if uhdev.fields.count('X') == uhdev.touches_in_a_report:
-                    # there is not point testing those
-                    uhdev.destroy()
-                    raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
-
-                while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
-
-                t0 = Touch(1, 5, 10)
-                t0.cx = 50
-                t0.cy = 100
-                r = uhdev.event([t0])
-                events = uhdev.next_sync_events()
-                self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_Y), 100)
-
-                uhdev.destroy()
-
         def test_mt_dual_touch(self):
             """Send 2 touches in the first 2 slots.
             Make sure the kernel sees this as a dual touch.
@@ -616,6 +590,32 @@ class BaseTest:
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestWin8Multitouch, self).__init__(methodName)
             self.__create_device = self._create_device
+
+        def test_mt_tx_cx(self):
+            """send a single touch in the first slot of the device, with
+            different values of Tx and Cx. Make sure the kernel reports Tx."""
+            with self.__create_device() as uhdev:
+                if uhdev.fields.count('X') == uhdev.touches_in_a_report:
+                    # there is not point testing those
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 5, 10)
+                t0.cx = 50
+                t0.cy = 100
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
+                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
+                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
+                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_X), 50)
+                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
+                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_Y), 100)
+
+                uhdev.destroy()
 
         def test_mt_inrange(self):
             """Send one contact that has the InRange bit set before/after
