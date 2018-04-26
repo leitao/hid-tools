@@ -615,6 +615,9 @@ class BaseTest:
                     uhdev.process_one_event(10)
 
                 touches = [Touch(i, (i + 3) * 20, (i + 3) * 20 + 5) for i in range(uhdev.max_contacts)]
+                if uhdev.quirks is not None and 'SLOT_IS_CONTACTID_MINUS_ONE' in uhdev.quirks:
+                    for t in touches:
+                        t.contactid += 1
                 r = uhdev.event(touches)
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
@@ -1266,6 +1269,22 @@ class TestLG_1fd2_0064(BaseTest.TestMultitouch):
         return Digitizer('uhid test lg_1fd2_0064',
                          rdesc='05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 95 06 81 03 75 08 09 51 95 01 81 02 a1 00 05 01 26 80 07 75 10 55 0e 65 33 09 30 35 00 46 53 07 81 02 26 38 04 46 20 04 09 31 81 02 45 00 c0 c0 05 0d 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 95 06 81 03 75 08 09 51 95 01 81 02 a1 00 05 01 26 80 07 75 10 55 0e 65 33 09 30 35 00 46 53 07 81 02 26 38 04 46 20 04 09 31 81 02 45 00 c0 c0 05 0d 09 54 95 01 75 08 81 02 85 08 09 55 95 01 25 02 b1 02 c0 09 0e a1 01 85 07 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 b1 02 c0 c0 05 01 09 02 a1 01 85 03 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 75 01 95 02 81 02 95 06 81 03 05 01 09 30 09 31 75 10 95 02 15 00 26 ff 7f 81 02 c0 c0',
                          info=(0x3, 0x1fd2, 0x0064))
+
+
+class TestLumio_202e_0006(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test lumio_202e_0006',
+                         rdesc='05 0d 09 04 a1 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 95 03 81 03 09 32 09 47 95 02 81 02 95 02 81 03 09 51 75 08 95 01 81 02 05 01 26 ff 7f 65 11 55 0e 46 b0 0e 75 10 95 01 09 30 81 02 09 31 46 c2 0b 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 95 03 81 03 09 32 09 47 95 02 81 02 95 02 81 03 09 51 75 08 95 01 81 02 05 01 26 ff 7f 65 11 55 0e 46 b0 0e 75 10 95 01 09 30 81 02 09 31 46 c2 0b 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 95 03 81 03 09 32 09 47 95 02 81 02 95 02 81 03 09 51 75 08 95 01 81 02 05 01 26 ff 7f 65 11 55 0e 46 b0 0e 75 10 95 01 09 30 81 02 09 31 46 c2 0b 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 95 03 81 03 09 32 09 47 95 02 81 02 95 02 81 03 09 51 75 08 95 01 81 02 05 01 26 ff 7f 65 11 55 0e 46 b0 0e 75 10 95 01 09 30 81 02 09 31 46 c2 0b 81 02 c0 05 0d 09 54 75 08 95 01 15 00 25 08 81 02 09 55 b1 02 c0',
+                         info=(0x3, 0x202e, 0x0006),
+                         quirks=('VALID_IS_CONFIDENCE', 'SLOT_IS_CONTACTID_MINUS_ONE'))
+
+
+class TestLumio_202e_0007(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test lumio_202e_0007',
+                         rdesc='05 0d 09 04 a1 01 09 22 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 95 03 81 03 09 32 09 47 95 02 81 02 95 0a 81 03 05 01 26 ff 7f 65 11 55 0e 46 ba 0e 75 10 95 01 09 30 81 02 09 31 46 ea 0b 81 02 05 0d 09 51 75 10 95 01 81 02 09 55 15 00 25 08 75 08 95 01 b1 02 c0 c0',
+                         info=(0x3, 0x202e, 0x0007),
+                         quirks=('VALID_IS_CONFIDENCE', 'SLOT_IS_CONTACTID_MINUS_ONE'))
 
 
 class TestNexio_1870_0100(BaseTest.TestMultitouch):
