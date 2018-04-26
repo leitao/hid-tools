@@ -654,7 +654,6 @@ class BaseTest:
                 t1 = Touch(2, 150, 200)
 
                 r = uhdev.event([t0, t1], contact_count=1)
-                self.debug_reports(r, uhdev)
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
