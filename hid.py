@@ -896,10 +896,10 @@ class ReportDescriptor(object):
     def get(self, reportID, reportSize):
         try:
             report = self.input_reports[reportID]
-        except AttributeError:
+        except KeyError:
             try:
                 report = self.input_reports[-1]
-            except AttributeError:
+            except KeyError:
                 return None
 
         # if the report is larger than it should, it's OK
