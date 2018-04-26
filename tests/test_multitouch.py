@@ -1338,6 +1338,14 @@ class TestStantum_1f87_0002(BaseTest.TestMultitouch):
                          info=(0x3, 0x1f87, 0x0002))
 
 
+class TestTopseed_1784_0016(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test topseed_1784_0016',
+                         rdesc='05 0d 09 04 a1 01 85 04 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 95 06 81 03 75 08 09 51 95 01 81 02 05 01 26 ff 04 75 10 55 00 65 00 09 30 35 00 46 ff 04 81 02 09 31 46 ff 04 81 02 c0 05 0d 09 54 95 01 75 08 15 00 25 0a 81 02 09 55 b1 02 c0 05 0c 09 01 a1 01 85 03 a1 02 09 b5 15 00 25 01 75 01 95 01 81 02 09 b6 81 02 09 b7 81 02 09 cd 81 02 09 e2 81 02 09 e9 81 02 09 ea 81 02 05 01 09 82 81 02 c0 c0',
+                         info=(0x3, 0x1784, 0x0016),
+                         max_contacts=2)
+
+
 class TestTpv_25aa_8883(BaseTest.TestMultitouch):
     def _create_device(self):
         return Digitizer('uhid test tpv_25aa_8883',
