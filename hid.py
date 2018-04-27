@@ -740,9 +740,9 @@ class HidReport(object):
 
         usage = self._fix_xy_usage_for_mt_devices(usage)
 
-        if (usage in self.prev_seen_usages and
-           'Vendor' not in usage and
-           usage not in ['Undefined']):
+        if (self.prev_collection is not None and
+           self.prev_collection != hidInputItem.collection and
+           usage in self.prev_seen_usages):
             if len(data) > 0:
                 data.pop(0)
             self.prev_seen_usages.clear()
@@ -755,10 +755,12 @@ class HidReport(object):
             value = getattr(global_data, field)
 
         hidInputItem.set_values(r, [value])
+        self.prev_collection = hidInputItem.collection
         self.prev_seen_usages.append(usage)
 
     def format_report(self, data, global_data):
         self.prev_seen_usages = []
+        self.prev_collection = None
         r = [0 for i in range(self.size)]
 
         if self.numbered:
