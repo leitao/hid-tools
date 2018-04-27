@@ -470,6 +470,7 @@ class HidField(object):
                  logical,
                  physical,
                  application,
+                 collection,
                  value,
                  usage_page,
                  usage,
@@ -481,6 +482,7 @@ class HidField(object):
         self.logical = logical
         self.physical = physical
         self.application = application
+        self.collection = collection
         self.type = value
         self.usage_page = usage_page
         self.usage = usage
@@ -606,6 +608,7 @@ class HidField(object):
                      logical,
                      physical,
                      application,
+                     collection,
                      value,
                      usage_page,
                      usages,
@@ -623,6 +626,7 @@ class HidField(object):
                    logical,
                    physical,
                    application,
+                   collection,
                    value,
                    usage_page,
                    usage,
@@ -775,6 +779,7 @@ class HidReport(object):
         output = ''
 
         self.prev_seen_usages = []
+        self.prev_collection = None
         sep = ''
         if self.numbered:
             assert self.report_ID == data[0]
@@ -801,10 +806,11 @@ class HidReport(object):
                 # if we don't get a key error this is a duplicate in
                 # this report descriptor and we need a linebreak
                 if (split_lines and
-                   usage_name in self.prev_seen_usages
-                   and 'Vendor' not in usage_name):
+                   self.prev_collection is not None and
+                   self.prev_collection != report_item.collection):
                     self.prev_seen_usages = []
                     output += '\n'
+                self.prev_collection = report_item.collection
                 self.prev_seen_usages.append(usage_name)
 
                 # do not reapeat the usage name if several are in a row
@@ -857,6 +863,7 @@ class ReportDescriptor(object):
         self.logical = None
         self.physical = None
         self.application = None
+        self.collection = [0, 0, 0] # application, physical, logical
         self.logical_min = 0
         self.logical_min_item = None
         self.logical_max = 0
@@ -959,10 +966,13 @@ class ReportDescriptor(object):
             c = inv_collections[value]
             try:
                 if c == 'PHYSICAL':
+                    self.collection[1] += 1
                     self.physical = self.usages[-1]
                 elif c == 'APPLICATION':
+                    self.collection[0] += 1
                     self.application = self.usages[-1]
                 else:  # 'LOGICAL'
+                    self.collection[2] += 1
                     self.logical = self.usages[-1]
             except IndexError:
                 pass
@@ -993,6 +1003,7 @@ class ReportDescriptor(object):
                                                self.logical,
                                                self.physical,
                                                self.application,
+                                               tuple(self.collection),
                                                value,
                                                self.usage_page,
                                                self.usages,
