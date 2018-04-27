@@ -516,15 +516,17 @@ class BaseTest:
                 t0 = Touch(1, 50, 100)
                 t1 = Touch(2, 150, 200)
 
-                if uhdev.quirks is not None and 'SLOT_IS_CONTACTID' in uhdev.quirks:
+                if (uhdev.quirks is not None and
+                   ('SLOT_IS_CONTACTID' in uhdev.quirks or
+                    'SLOT_IS_CONTACTNUMBER' in uhdev.quirks)):
                     t1.contactid = 0
+
+                slot0 = self.get_slot(uhdev, t0, 0)
+                slot1 = self.get_slot(uhdev, t1, 1)
 
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-
-                slot0 = self.get_slot(uhdev, t0, 0)
-                slot1 = self.get_slot(uhdev, t1, 1)
 
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
@@ -561,7 +563,12 @@ class BaseTest:
                 t1.tipswitch = False
                 if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
                     t1.inrange = False
-                r = uhdev.event([t1])
+
+                if uhdev.quirks is not None and 'SLOT_IS_CONTACTNUMBER' in uhdev.quirks:
+                    r = uhdev.event([t0, t1])
+                else:
+                    r = uhdev.event([t1])
+
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
@@ -1352,6 +1359,14 @@ class TestPenmount_14e1_3500(BaseTest.TestMultitouch):
                          info=(0x3, 0x14e1, 0x3500),
                          quirks=('VALID_IS_CONFIDENCE',),
                          max_contacts=10)
+
+
+class TestPixart_093a_8002(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test pixart_093a_8002',
+                         rdesc='05 01 09 02 a1 01 85 0d 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 01 75 06 81 03 05 01 55 0e 65 11 75 10 95 01 35 00 46 5a 14 26 ff 7f 09 30 81 22 46 72 0b 26 ff 7f 09 31 81 22 95 08 75 08 81 03 c0 c0 05 0d 09 04 a1 01 85 01 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 75 10 55 0e 65 11 09 30 35 00 46 5a 14 26 ff 7f 81 02 09 31 46 72 0b 26 ff 7f 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 75 08 09 51 95 01 81 02 05 01 75 10 55 0e 65 11 09 30 35 00 46 5a 14 26 ff 7f 81 02 46 72 0b 26 ff 7f 09 31 81 02 c0 05 0d 09 54 15 00 26 ff 00 95 01 75 08 81 02 09 55 25 02 95 01 85 02 b1 02 c0 05 0d 09 0e a1 01 06 00 ff 09 01 26 ff 00 75 08 95 47 85 03 b1 02 09 01 96 ff 03 85 04 b1 02 09 01 95 0b 85 05 b1 02 09 01 96 ff 03 85 06 b1 02 09 01 95 0f 85 07 b1 02 09 01 96 ff 03 85 08 b1 02 09 01 96 ff 03 85 09 b1 02 09 01 95 3f 85 0a b1 02 09 01 96 ff 03 85 0b b1 02 09 01 96 c3 03 85 0e b1 02 09 01 96 ff 03 85 0f b1 02 09 01 96 83 03 85 10 b1 02 09 01 96 93 00 85 11 b1 02 09 01 96 ff 03 85 12 b1 02 05 0d 09 23 a1 02 09 52 09 53 15 00 25 0a 75 08 95 02 85 0c b1 02 c0 c0',
+                         info=(0x3, 0x093a, 0x8002),
+                         quirks=('VALID_IS_INRANGE', 'SLOT_IS_CONTACTNUMBER'))
 
 
 class TestPqlabs_1ef1_0001(BaseTest.TestMultitouch):
