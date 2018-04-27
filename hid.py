@@ -867,9 +867,7 @@ class ReportDescriptor(object):
         self.application = None
         self.collection = [0, 0, 0] # application, physical, logical
         self.logical_min = 0
-        self.logical_min_item = None
         self.logical_max = 0
-        self.logical_max_item = None
         self.count = 0
         self.item_size = 0
         self.current_report = {}
@@ -988,10 +986,8 @@ class ReportDescriptor(object):
             self.usage_max = value | self.usage_page
         elif item == "Logical Minimum":
             self.logical_min = value
-            self.logical_min_item = rdesc_item
         elif item == "Logical Maximum":
             self.logical_max = value
-            self.logical_max_item = rdesc_item
         elif item == "Usage":
             self.usages.append(value | self.usage_page)
         elif item == "Report Count":
