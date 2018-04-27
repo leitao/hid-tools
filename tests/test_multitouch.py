@@ -447,10 +447,10 @@ class BaseTest:
                 self.assertEqual(len(uhdev.next_sync_events()), 0)
 
                 if uhdev.max_contacts > 1:
-                    self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                    self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                    self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
+                    self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
                 if uhdev.max_contacts > 2:
-                    self.assertEqual(uhdev.evdev.slot_value(2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                    self.assertEqual(uhdev.evdev.slots[2][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
                 while uhdev.opened:
@@ -488,9 +488,9 @@ class BaseTest:
                 slot = self.get_slot(uhdev, t0, 0)
 
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
+                self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
+                self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
 
                 t0.tipswitch = False
                 if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
@@ -499,7 +499,7 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
 
@@ -530,10 +530,10 @@ class BaseTest:
 
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
@@ -542,12 +542,12 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_X, 5), events)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_Y, 10), events)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_X), 150)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 200)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_POSITION_X], 150)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_POSITION_Y], 200)
 
                 t0.tipswitch = False
                 if uhdev.quirks is None or 'VALID_IS_INRANGE' not in uhdev.quirks:
@@ -555,8 +555,8 @@ class BaseTest:
                 r = uhdev.event([t0, t1])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_X), events)
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_POSITION_Y), events)
 
@@ -571,8 +571,8 @@ class BaseTest:
 
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
 
@@ -600,15 +600,15 @@ class BaseTest:
                 slot1 = self.get_slot(uhdev, t1, 1)
                 slot2 = self.get_slot(uhdev, t2, 2)
 
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_X), 150)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 200)
-                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 2)
-                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_POSITION_X), 250)
-                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_POSITION_Y), 300)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_POSITION_X], 150)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_POSITION_Y], 200)
+                self.assertEqual(uhdev.evdev.slots[slot2][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 2)
+                self.assertEqual(uhdev.evdev.slots[slot2][libevdev.EV_ABS.ABS_MT_POSITION_X], 250)
+                self.assertEqual(uhdev.evdev.slots[slot2][libevdev.EV_ABS.ABS_MT_POSITION_Y], 300)
 
                 t0.tipswitch = False
                 t1.tipswitch = False
@@ -621,9 +621,9 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
 
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
-                self.assertEqual(uhdev.evdev.slot_value(slot2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
+                self.assertEqual(uhdev.evdev.slots[slot2][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
 
@@ -649,9 +649,9 @@ class BaseTest:
                 for i, t in enumerate(touches):
                     slot = self.get_slot(uhdev, t, i)
 
-                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), i)
-                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_X), t.x)
-                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_POSITION_Y), t.y)
+                    self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], i)
+                    self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_POSITION_X], t.x)
+                    self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_POSITION_Y], t.y)
 
                 for t in touches:
                     t.tipswitch = False
@@ -664,7 +664,7 @@ class BaseTest:
                 for i, t in enumerate(touches):
                     slot = self.get_slot(uhdev, t, i)
 
-                    self.assertEqual(uhdev.evdev.slot_value(slot, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                    self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
 
@@ -697,10 +697,10 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TRACKING_ID, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(slot0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
-                self.assertEqual(uhdev.evdev.slot_value(slot1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
+                self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
+                self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
 
@@ -740,11 +740,11 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TOOL_Y), 100)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_X], 5)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TOOL_X], 50)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 10)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TOOL_Y], 100)
 
                 uhdev.destroy()
 
@@ -775,32 +775,32 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TRACKING_ID, 0), events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_DISTANCE), events)
-                self.assertGreater(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_DISTANCE), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 150)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 200)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertGreater(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_DISTANCE], 0)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_X], 150)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 200)
+                self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 t0.tipswitch = True
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_DISTANCE, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_DISTANCE), 0)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_DISTANCE], 0)
 
                 t0.tipswitch = False
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_DISTANCE), events)
-                self.assertGreater(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_DISTANCE), 0)
+                self.assertGreater(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_DISTANCE], 0)
 
                 t0.inrange = False
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
 
@@ -825,12 +825,12 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 1), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_TOUCH], 1)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TRACKING_ID, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_X), 5)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_POSITION_Y), 10)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_POSITION_X), 50)
-                self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_POSITION_Y), 100)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_X], 5)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 10)
+                self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
+                self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
+                self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
 
                 uhdev.destroy()
 
@@ -849,18 +849,18 @@ class BaseTest:
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 0)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
 
                 time.sleep(0.12)
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), 1)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
                 uhdev.destroy()
 
         def test_mt_azimuth(self):
@@ -968,7 +968,7 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
-                self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
                 uhdev.destroy()
 
@@ -1069,7 +1069,7 @@ class TestActionStar_2101_1011(BaseTest.TestMultitouch):
                 self.debug_reports([r], uhdev);
                 for e in events: print(e)
                 if num == 2:
-                    self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                    self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
             uhdev.destroy()
 
