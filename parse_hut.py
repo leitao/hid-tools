@@ -48,12 +48,14 @@ def parse_usages(usage_list):
                 print(line)
             continue
 
-        r = _parse('{usage:x}\t{name}', line)
+        # we are hitting https://github.com/r1chardj0n3s/parse/issues/65
+        # so we can not use {usage:x} or the value '0B' will be converted to 0
+        r = _parse('{usage}\t{name}', line)
         assert r is not None
         if 'reserved' in r['name'].lower():
             continue
 
-        usages[r['usage']] = r['name']
+        usages[int(r['usage'], 16)] = r['name']
 
     return idx, page_name, usages
 
