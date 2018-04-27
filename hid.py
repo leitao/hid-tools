@@ -853,25 +853,37 @@ class HidReport(object):
 
 
 class ReportDescriptor(object):
+    class Globals(object):
+        def __init__(self, other=None):
+            self.usage_page = 0
+            self.logical = None
+            self.physical = None
+            self.application = None
+            self.logical_min = 0
+            self.logical_max = 0
+            self.count = 0
+            self.item_size = 0
+            if other is not None:
+                self.usage_page = other.usage_page
+                self.logical = other.logical
+                self.physical = other.physical
+                self.application = other.application
+                self.logical_min = other.logical_min
+                self.logical_max = other.logical_max
+                self.count = other.count
+                self.item_size = other.item_size
 
     def __init__(self):
         self.input_reports = {}
         self.feature_reports = {}
         self.output_reports = {}
         self.index = 1  # 0 is the size
-        self.usage_page = 0
-        self.usage_page_list = []
+        self.glob = ReportDescriptor.Globals()
+        self.global_stack = []
         self.usages = []
         self.usage_min = 0
         self.usage_max = 0
-        self.logical = None
-        self.physical = None
-        self.application = None
         self.collection = [0, 0, 0] # application, physical, logical
-        self.logical_min = 0
-        self.logical_max = 0
-        self.count = 0
-        self.item_size = 0
         self.current_report = {}
         self.report_ID = -1
         self.win8 = False
@@ -942,24 +954,25 @@ class ReportDescriptor(object):
             try:
                 cur = report_lists[type][self.report_ID]
             except KeyError:
-                cur = HidReport(self.report_ID, self.application)
+                cur = HidReport(self.report_ID, self.glob.application)
                 report_lists[type][self.report_ID] = cur
         return cur
 
     def parse_item(self, rdesc_item):
         # store current usage_page in rdesc_item
-        rdesc_item.usage_page = self.usage_page
+        rdesc_item.usage_page = self.glob.usage_page
         item = rdesc_item.item
         value = rdesc_item.value
 
         if item == "Report ID":
             self.report_ID = value
         elif item == "Push":
-            self.usage_page_list.append(self.usage_page)
+            self.global_stack.append(self.glob)
+            self.glob = ReportDescriptor.Globals(self.glob)
         elif item == "Pop":
-            self.usage_page = self.usage_page_list.pop()
+            self.glob = self.global_stack.pop()
         elif item == "Usage Page":
-            self.usage_page = value << 16
+            self.glob.usage_page = value << 16
             # reset the usage list
             self.usages = []
             self.usage_min = 0
@@ -969,13 +982,13 @@ class ReportDescriptor(object):
             try:
                 if c == 'PHYSICAL':
                     self.collection[1] += 1
-                    self.physical = self.usages[-1]
+                    self.glob.physical = self.usages[-1]
                 elif c == 'APPLICATION':
                     self.collection[0] += 1
-                    self.application = self.usages[-1]
+                    self.glob.application = self.usages[-1]
                 else:  # 'LOGICAL'
                     self.collection[2] += 1
-                    self.logical = self.usages[-1]
+                    self.glob.logical = self.usages[-1]
             except IndexError:
                 pass
             # reset the usage list
@@ -983,36 +996,36 @@ class ReportDescriptor(object):
             self.usage_min = 0
             self.usage_max = 0
         elif item == "Usage Minimum":
-            self.usage_min = value | self.usage_page
+            self.usage_min = value | self.glob.usage_page
         elif item == "Usage Maximum":
-            self.usage_max = value | self.usage_page
+            self.usage_max = value | self.glob.usage_page
         elif item == "Logical Minimum":
-            self.logical_min = value
+            self.glob.logical_min = value
         elif item == "Logical Maximum":
-            self.logical_max = value
+            self.glob.logical_max = value
         elif item == "Usage":
-            self.usages.append(value | self.usage_page)
+            self.usages.append(value | self.glob.usage_page)
         elif item == "Report Count":
-            self.count = value
+            self.glob.count = value
         elif item == "Report Size":
-            self.item_size = value
+            self.glob.item_size = value
         elif item in ("Input", "Feature", "Output"):
             self.current_input_report = self._get_current_report(item)
 
             inputItems = HidField.getHidFields(self.report_ID,
-                                               self.logical,
-                                               self.physical,
-                                               self.application,
+                                               self.glob.logical,
+                                               self.glob.physical,
+                                               self.glob.application,
                                                tuple(self.collection),
                                                value,
-                                               self.usage_page,
+                                               self.glob.usage_page,
                                                self.usages,
                                                self.usage_min,
                                                self.usage_max,
-                                               self.logical_min,
-                                               self.logical_max,
-                                               self.item_size,
-                                               self.count)
+                                               self.glob.logical_min,
+                                               self.glob.logical_max,
+                                               self.glob.item_size,
+                                               self.glob.count)
             self.current_input_report.extend(inputItems)
             if item == "Feature" and len(self.usages) > 0 and self.usages[-1] == 0xff0000c5:
                 self.win8 = True
