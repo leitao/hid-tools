@@ -1336,6 +1336,15 @@ class TestNexio_1870_0119(BaseTest.TestMultitouch):
                          info=(0x3, 0x1870, 0x0119))
 
 
+class TestPenmount_14e1_3500(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test penmount_14e1_3500',
+                         rdesc='05 0d 09 04 a1 01 09 22 a1 00 09 51 15 00 25 0f 75 04 95 01 81 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 81 01 05 01 75 10 95 01 09 30 26 ff 07 81 02 09 31 26 ff 07 81 02 05 0d 09 55 75 08 95 05 b1 02 c0 c0',
+                         info=(0x3, 0x14e1, 0x3500),
+                         quirks=('VALID_IS_CONFIDENCE',),
+                         max_contacts=10)
+
+
 class TestPqlabs_1ef1_0001(BaseTest.TestMultitouch):
     def _create_device(self):
         return Digitizer('uhid test pqlabs_1ef1_0001',
