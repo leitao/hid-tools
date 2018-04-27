@@ -111,11 +111,19 @@ class Digitizer(base.UHIDTest):
         self.scantime = 0
         self.quirks = quirks
         if max_contacts is None:
-            self.max_contacts = 1
+            self.max_contacts = 255
             for features in self.parsed_rdesc.feature_reports.values():
                 for feature in features:
-                    if feature.usage_name == 'Contact Max':
+                    if feature.usage_name in ['Contact Max']:
                         self.max_contacts = feature.logical_max
+            for inputs in self.parsed_rdesc.input_reports.values():
+                for i in inputs:
+                    if (i.usage_name in ['Contact Count'] and
+                       i.logical_max > 0 and
+                       self.max_contacts > i.logical_max):
+                        self.max_contacts = i.logical_max
+            if self.max_contacts == 255:
+                self.max_contacts = 1
         else:
             self.max_contacts = max_contacts
         self.application = application
@@ -1252,6 +1260,13 @@ class TestIrtouch_6615_0070(BaseTest.TestMultitouch):
         return Digitizer('uhid test irtouch_6615_0070',
                          rdesc='05 01 09 02 a1 01 85 10 09 01 a1 00 05 09 19 01 29 02 15 00 25 01 95 02 75 01 81 02 95 06 81 03 05 01 09 30 09 31 15 00 26 ff 7f 75 10 95 02 81 02 c0 c0 05 0d 09 04 a1 01 85 30 09 22 a1 02 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 09 51 75 08 95 01 81 02 05 01 09 30 26 ff 7f 55 0f 65 11 35 00 46 51 02 75 10 95 01 81 02 09 31 35 00 46 73 01 81 02 c0 a1 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 09 51 75 08 95 01 81 02 05 01 09 30 26 ff 7f 55 0f 65 11 35 00 46 51 02 75 10 95 01 81 02 09 31 35 00 46 73 01 81 02 c0 05 0d 09 54 15 00 26 02 00 75 08 95 01 81 02 85 03 09 55 15 00 26 ff 00 75 08 95 01 b1 02 c0 05 0d 09 0e a1 01 85 02 09 52 09 53 15 00 26 ff 00 75 08 95 02 b1 02 c0 05 0d 09 02 a1 01 85 20 09 20 a1 00 09 42 15 00 25 01 75 01 95 01 81 02 95 07 81 03 05 01 09 30 26 ff 7f 55 0f 65 11 35 00 46 51 02 75 10 95 01 81 02 09 31 35 00 46 73 01 81 02 85 01 06 00 ff 09 01 75 08 95 01 b1 02 c0 c0',
                          info=(0x3, 0x6615, 0x0070))
+
+
+class TestIrtouch_6615_0081(BaseTest.TestMultitouch):
+    def _create_device(self):
+        return Digitizer('uhid test irtouch_6615_0081',
+                         rdesc='05 0d 09 04 a1 01 85 30 09 22 09 00 15 00 26 ff 00 75 08 95 05 81 02 a1 00 05 0d 09 51 15 00 26 ff 00 75 08 95 01 81 02 05 01 09 30 26 ff 7f 55 0e 65 13 35 00 46 b5 04 75 10 95 01 81 02 09 31 35 00 46 8a 03 81 02 09 32 35 00 46 8a 03 81 02 09 00 15 00 26 ff 7f 75 10 95 01 81 02 09 00 15 00 26 ff 7f 75 10 95 01 81 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 09 00 15 00 26 ff 00 75 08 95 01 81 02 c0 a1 00 05 0d 09 51 15 00 26 ff 00 75 08 95 01 81 02 05 01 09 30 26 ff 7f 55 0e 65 13 35 00 46 b5 04 75 10 95 01 81 02 09 31 35 00 46 8a 03 81 02 09 32 35 00 46 8a 03 81 02 09 00 15 00 26 ff 7f 75 10 95 01 81 02 09 00 15 00 26 ff 7f 75 10 95 01 81 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 09 00 15 00 26 ff 00 75 08 95 01 81 02 c0 a1 00 05 0d 09 51 15 00 26 ff 00 75 08 95 01 81 02 05 01 09 30 26 ff 7f 55 0e 65 13 35 00 46 b5 04 75 10 95 01 81 02 09 31 35 00 46 8a 03 81 02 09 32 35 00 46 8a 03 81 02 09 00 15 00 26 ff 7f 75 10 95 01 81 02 09 00 15 00 26 ff 7f 75 10 95 01 81 02 05 0d 09 42 15 00 25 01 75 01 95 01 81 02 09 32 81 02 09 47 81 02 95 05 81 03 09 00 15 00 26 ff 00 75 08 95 01 81 02 c0 a1 00 05 0d 09 54 15 00 25 1f 75 05 95 01 81 02 09 00 15 00 25 07 75 03 95 01 81 02 09 00 15 00 26 ff 00 75 08 95 01 81 02 c0 09 55 85 03 15 00 26 ff 00 75 08 95 01 b1 02 c0 05 0d 09 0e a1 01 85 02 09 52 09 53 15 00 26 ff 00 75 08 95 02 b1 02 c0 06 00 ff 09 00 a1 01 09 02 a1 00 85 aa 09 06 15 00 26 ff 00 35 00 46 ff 00 75 08 95 3f b1 02 c0 c0 05 01 09 02 a1 01 85 10 09 01 a1 00 05 01 09 00 15 00 26 ff 00 75 08 95 05 81 02 09 30 09 31 09 32 15 00 26 ff 7f 75 10 95 03 81 02 05 09 19 01 29 08 15 00 25 01 95 08 75 01 81 02 09 00 15 00 26 ff 00 75 08 95 02 81 02 c0 c0 06 00 ff 09 00 a1 01 85 40 09 00 15 00 26 ff 00 75 08 95 2e 81 02 c0',
+                         info=(0x3, 0x6615, 0x0081))
 
 
 class TestLG_043e_9aa1(BaseTest.TestMultitouch):

@@ -740,7 +740,9 @@ class HidReport(object):
 
         usage = self._fix_xy_usage_for_mt_devices(usage)
 
-        if usage in self.prev_seen_usages and 'Vendor' not in usage:
+        if (usage in self.prev_seen_usages and
+           'Vendor' not in usage and
+           usage not in ['Undefined']):
             if len(data) > 0:
                 data.pop(0)
             self.prev_seen_usages.clear()
