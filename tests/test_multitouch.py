@@ -161,7 +161,7 @@ class Digitizer(base.UHIDTest):
             r = self.format_report(application=self.cur_application, data=slots, global_data=global_data)
             self.call_input_event(r)
             rs.append(r)
-            self.contactcount = 0
+            global_data.contactcount = 0
         return rs
 
     @property
