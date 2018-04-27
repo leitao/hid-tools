@@ -446,6 +446,12 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.num_slots, uhdev.max_contacts)
                 self.assertEqual(len(uhdev.next_sync_events()), 0)
 
+                if uhdev.max_contacts > 1:
+                    self.assertEqual(uhdev.evdev.slot_value(0, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                    self.assertEqual(uhdev.evdev.slot_value(1, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+                if uhdev.max_contacts > 2:
+                    self.assertEqual(uhdev.evdev.slot_value(2, libevdev.EV_ABS.ABS_MT_TRACKING_ID), -1)
+
                 uhdev.destroy()
                 while uhdev.opened:
                     if uhdev.process_one_event(100) == 0:
