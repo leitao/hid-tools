@@ -167,7 +167,12 @@ class BaseTestCase:
             data = [' '.join([f'{v:02x}' for v in r]) for r in reports]
 
             if uhdev is not None:
-                human_data = [uhdev.parsed_rdesc.get_str(r, split_lines=False) for r in reports]
+                human_data = [uhdev.parsed_rdesc.get_str(r, split_lines=True) for r in reports]
+                try:
+                    human_data = [f'\n\t       {" " * h.index("/")}'.join(h.split('\n')) for h in human_data]
+                except ValueError:
+                    # '/' not found: not a numbered report
+                    human_data = [f'\n\t      '.join(h.split('\n')) for h in human_data]
                 data = [f'{d}\n\t ====> {h}' for d, h in zip(data, human_data)]
 
             reports = data
