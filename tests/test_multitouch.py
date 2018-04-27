@@ -111,7 +111,7 @@ class Digitizer(base.UHIDTest):
         self.scantime = 0
         self.quirks = quirks
         if max_contacts is None:
-            self.max_contacts = 255
+            self.max_contacts = sys.maxsize
             for features in self.parsed_rdesc.feature_reports.values():
                 for feature in features:
                     if feature.usage_name in ['Contact Max']:
@@ -122,7 +122,7 @@ class Digitizer(base.UHIDTest):
                        i.logical_max > 0 and
                        self.max_contacts > i.logical_max):
                         self.max_contacts = i.logical_max
-            if self.max_contacts == 255:
+            if self.max_contacts == sys.maxsize:
                 self.max_contacts = 1
         else:
             self.max_contacts = max_contacts
