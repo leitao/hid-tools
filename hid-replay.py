@@ -95,8 +95,8 @@ class HIDReplay(object):
                     assert r is not None
                     length = r['len']
                     timestamp = r['sec'] + r['usec'] / 1000000
-                    r = findall(' {:x}', r['data'])
-                    data = [x[0] for x in r]
+                    r_ = findall(' {:S}', r['data'])
+                    data = [int(x[0], 16) for x in r_]
                     assert len(data) == int(length)
                     now = datetime.today()
                     if t is None:
