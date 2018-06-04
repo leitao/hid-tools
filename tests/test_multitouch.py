@@ -948,8 +948,8 @@ class BaseTest:
             When a contact is marked as not confident, it should be detected
             as a palm from the kernel POV and released.
 
-            Note: shouldn't the kernel use ABS_MT_TOOL_PALM instead of
-            blindly releasing it?"""
+            Note: if the kernel exports ABS_MT_TOOL_TYPE, it shouldn't release
+            the touch but instead convert it to ABS_MT_TOOL_PALM."""
             with self.__create_device() as uhdev:
                 if 'Confidence' not in uhdev.fields:
                     uhdev.destroy()
@@ -967,6 +967,17 @@ class BaseTest:
                 r = uhdev.event([t0])
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
+
+                if uhdev.evdev.absinfo[libevdev.EV_ABS.ABS_MT_TOOL_TYPE] is not None:
+                    # the kernel exports MT_TOOL_PALM
+                    self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TOOL_TYPE, 2), events)
+                    self.assertNotEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
+
+                    t0.tipswitch = False
+                    r = uhdev.event([t0])
+                    events = uhdev.next_sync_events()
+                    self.debug_reports(r, uhdev); print(events)
+
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
