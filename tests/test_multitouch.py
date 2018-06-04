@@ -889,7 +889,7 @@ class BaseTest:
                 uhdev.destroy()
 
 
-    class TestPTP(TestMultitouch):
+    class TestPTP(TestWin8Multitouch):
         def __init__(self, methodName='runTest'):
             super(BaseTest.TestPTP, self).__init__(methodName)
             self.__create_device = self._create_device
