@@ -401,6 +401,77 @@ class MinWin8TSHybrid(Digitizer):
                                               rdesc_str)
 
 
+class Win8TSConfidence(Digitizer):
+    def __init__(self, max_slots):
+        self.max_slots = max_slots
+        self.phys_max = 120, 90
+        rdesc_finger_str = f'''
+            Usage Page (Digitizers)
+            Usage (Finger)
+            Collection (Logical)
+             Report Size (1)
+             Report Count (1)
+             Logical Minimum (0)
+             Logical Maximum (1)
+             Usage (Tip Switch)
+             Input (Data,Var,Abs)
+             Usage (Confidence)
+             Input (Data,Var,Abs)
+             Report Size (6)
+             Logical Maximum (127)
+             Input (Cnst,Var,Abs)
+             Report Size (8)
+             Logical Maximum (255)
+             Usage (Contact Id)
+             Input (Data,Var,Abs)
+             Report Size (16)
+             Unit Exponent (-1)
+             Unit (Centimeter,SILinear)
+             Logical Maximum (4095)
+             Physical Minimum (0)
+             Physical Maximum ({self.phys_max[0]})
+             Usage Page (Generic Desktop)
+             Usage (X)
+             Input (Data,Var,Abs)
+             Physical Maximum ({self.phys_max[1]})
+             Usage (Y)
+             Input (Data,Var,Abs)
+             Usage Page (Digitizers)
+             Usage (Azimuth)
+             Logical Maximum (360)
+             Unit (Degrees,SILinear)
+             Report Size (16)
+             Input (Data,Var,Abs)
+            End Collection
+'''
+        rdesc_str = f'''
+           Usage Page (Digitizers)
+           Usage (Touch Screen)
+           Collection (Application)
+            Report ID (1)
+            {rdesc_finger_str * self.max_slots}
+            Unit Exponent (-4)
+            Unit (Seconds,SILinear)
+            Logical Maximum (65535)
+            Physical Maximum (65535)
+            Usage Page (Digitizers)
+            Usage (Scan Time)
+            Input (Data,Var,Abs)
+            Report Size (8)
+            Logical Maximum (255)
+            Usage (Contact Count)
+            Input (Data,Var,Abs)
+            Report ID (2)
+            Logical Maximum ({self.max_slots})
+            Usage (Contact Max)
+            Feature (Data,Var,Abs)
+          End Collection
+          {Digitizer.msCertificationBlob(68)}
+'''
+        super(Win8TSConfidence, self).__init__(f'uhid test confidence {self.max_slots}',
+                                               rdesc_str)
+
+
 class BaseTest:
     class TestMultitouch(base.BaseTestCase.TestUhid):
         def __init__(self, methodName='runTest'):
@@ -1514,6 +1585,50 @@ class TestMinWin8TSParallel(BaseTest.TestWin8Multitouch):
 class TestMinWin8TSHybrid(BaseTest.TestWin8Multitouch):
     def _create_device(self):
         return MinWin8TSHybrid()
+
+
+class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
+    def __init__(self, methodName='runTest'):
+        super(TestWin8TSConfidence, self).__init__(methodName)
+        self.__create_device = self._create_device
+
+    def _create_device(self):
+        return Win8TSConfidence(5)
+
+    def test_mt_confidence_bad_release(self):
+            """Check for the validity of the confidence bit.
+            When a contact is marked as not confident, it should be detected
+            as a palm from the kernel POV and released.
+
+            Note: if the kernel exports ABS_MT_TOOL_TYPE, it shouldn't release
+            the touch but instead convert it to ABS_MT_TOOL_PALM."""
+            with self.__create_device() as uhdev:
+                if 'Confidence' not in uhdev.fields:
+                    uhdev.destroy()
+                    raise unittest.SkipTest('Device not compatible, missing Confidence usage')
+
+                while uhdev.application not in uhdev.input_nodes:
+                    uhdev.process_one_event(10)
+
+                t0 = Touch(1, 150, 200)
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
+
+                t0.confidence = False
+                t0.tipswitch = False
+                r = uhdev.event([t0])
+                events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
+
+                if uhdev.evdev.absinfo[libevdev.EV_ABS.ABS_MT_TOOL_TYPE] is not None:
+                    # the kernel exports MT_TOOL_PALM
+                    self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_TOOL_TYPE, 2), events)
+
+                self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
+                self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
+
+                uhdev.destroy()
 
 
 class TestElanXPS9360(BaseTest.TestWin8Multitouch):
