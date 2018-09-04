@@ -97,43 +97,6 @@ class BaseTest:
                 with self.assertRaises(OSError):
                     uhdev.evdev.fd.read()
 
-        def test_rdesc(self):
-            """Check that the testsuite actually manages to format the
-            reports according to the report descriptors.
-            No kernel device is used here"""
-            with self.create_mouse() as uhdev:
-                event = (0, 0, (None, None, None))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
-                event = (0, 0, (None, True, None))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
-                event = (0, 0, (True, True, None))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
-                event = (0, 0, (False, False, False))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
-                event = (1, 0, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
-                event = (-1, 0, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
-                event = (-5, 5, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
-                event = (0, -128, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
-
         def test_buttons(self):
             """check for button reliability."""
             with self.create_mouse() as uhdev:
@@ -276,6 +239,43 @@ class TestSimpleMouse(BaseTest.TestMouse):
                              0xc0,        # .End Collection                      54
                          ],
                          info=(3, 1, 2))
+
+        def test_rdesc(self):
+            """Check that the testsuite actually manages to format the
+            reports according to the report descriptors.
+            No kernel device is used here"""
+            with self.create_mouse() as uhdev:
+                event = (0, 0, (None, None, None))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
+
+                event = (0, 0, (None, True, None))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
+
+                event = (0, 0, (True, True, None))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
+
+                event = (0, 0, (False, False, False))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
+
+                event = (1, 0, (True, False, True))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
+
+                event = (-1, 0, (True, False, True))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
+
+                event = (-5, 5, (True, False, True))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
+
+                event = (0, -128, (True, False, True))
+                self.assertEqual(uhdev.format_report(*event, True),
+                                 uhdev.format_report(*event, False))
 
 
 if __name__ == "__main__":
