@@ -34,6 +34,7 @@ class BaseMouse(base.UHIDTest):
     def __init__(self, name, rdesc, info):
         super(BaseMouse, self).__init__(name, rdesc=rdesc)
         self.info = info
+        self.application = 'Mouse'
         self.left = False
         self.right = False
         self.middle = False
@@ -72,6 +73,13 @@ class BaseMouse(base.UHIDTest):
         self.call_input_event(r)
         return [r]
 
+    @property
+    def evdev(self):
+        if self.application not in self.input_nodes:
+            return None
+
+        return self.input_nodes[self.application]
+
 
 class MIDongleMIWirelessMouse(BaseMouse):
     def __init__(self, name):
@@ -104,7 +112,7 @@ class BaseTest:
             If this fail, there is something wrong in the device report
             descriptors."""
             with self.create_mouse() as uhdev:
-                while len(uhdev.input_nodes) == 0:
+                while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
                 self.assertIsNotNone(uhdev.evdev)
                 self.assertEqual(uhdev.evdev.name, uhdev.name)
@@ -119,7 +127,7 @@ class BaseTest:
         def test_buttons(self):
             """check for button reliability."""
             with self.create_mouse() as uhdev:
-                while len(uhdev.input_nodes) == 0:
+                while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
                 syn_event = self.syn_event
@@ -196,7 +204,7 @@ class BaseTest:
         def test_relative(self):
             """Check for relative events."""
             with self.create_mouse() as uhdev:
-                while len(uhdev.input_nodes) == 0:
+                while uhdev.application not in uhdev.input_nodes:
                     uhdev.process_one_event(10)
 
                 syn_event = self.syn_event
