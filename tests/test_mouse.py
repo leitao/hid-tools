@@ -70,6 +70,7 @@ class BaseMouse(base.UHIDTest):
     def event(self, x, y, buttons=None):
         r = self.format_report(x, y, buttons)
         self.call_input_event(r)
+        return [r]
 
 
 class BaseTest:
@@ -141,60 +142,69 @@ class BaseTest:
 
                 syn_event = self.syn_event
 
-                uhdev.event(0, 0, (None, True, None))
+                r = uhdev.event(0, 0, (None, True, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
 
-                uhdev.event(0, 0, (None, False, None))
+                r = uhdev.event(0, 0, (None, False, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
 
-                uhdev.event(0, 0, (None, None, True))
+                r = uhdev.event(0, 0, (None, None, True))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 1)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 1)
 
-                uhdev.event(0, 0, (None, None, False))
+                r = uhdev.event(0, 0, (None, None, False))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 0)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 0)
 
-                uhdev.event(0, 0, (True, None, None))
+                r = uhdev.event(0, 0, (True, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
-                uhdev.event(0, 0, (False, None, None))
+                r = uhdev.event(0, 0, (False, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
-                uhdev.event(0, 0, (True, True, None))
+                r = uhdev.event(0, 0, (True, True, None))
                 expected_event0 = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
                 expected_event1 = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event0, expected_event1), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
-                uhdev.event(0, 0, (False, None, None))
+                r = uhdev.event(0, 0, (False, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
-                uhdev.event(0, 0, (None, False, None))
+                r = uhdev.event(0, 0, (None, False, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
@@ -209,20 +219,23 @@ class BaseTest:
 
                 syn_event = self.syn_event
 
-                uhdev.event(0, -1, (None, None, None))
+                r = uhdev.event(0, -1, (None, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_Y, -1)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEvents((syn_event, expected_event), events)
 
-                uhdev.event(1, 0, (None, None, None))
+                r = uhdev.event(1, 0, (None, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_X, 1)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEvents((syn_event, expected_event), events)
 
-                uhdev.event(-1, 2, (None, None, None))
+                r = uhdev.event(-1, 2, (None, None, None))
                 expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
                 expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
                 events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev); print(events)
                 self.assertInputEvents((syn_event, expected_event0, expected_event1), events)
 
                 uhdev.destroy()
