@@ -171,10 +171,6 @@ class BaseTest:
                     uhdev.process_one_event(10)
 
                 syn_event = self.syn_event
-                key_event = self.key_event
-                abs_event = self.abs_event
-                rel_event = self.rel_event
-                msc_event = self.msc_event
 
                 uhdev.event(0, 0, (None, True, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
@@ -243,10 +239,6 @@ class BaseTest:
                     uhdev.process_one_event(10)
 
                 syn_event = self.syn_event
-                key_event = self.key_event
-                abs_event = self.abs_event
-                rel_event = self.rel_event
-                msc_event = self.msc_event
 
                 uhdev.event(0, -1, (None, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_Y, -1)
