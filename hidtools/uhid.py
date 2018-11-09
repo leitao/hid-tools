@@ -1,7 +1,7 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Hid tools / uhid.py
+# Hid tools / hid.py
 #
 # Copyright (c) 2017 Benjamin Tissoires <benjamin.tissoires@gmail.com>
 # Copyright (c) 2017 Red Hat, Inc.
@@ -20,7 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import hid
+import hidtools.hid
 import os
 import pyudev
 import select
@@ -28,7 +28,7 @@ import struct
 import uuid
 
 import logging
-logger = logging.getLogger('hid.uhid')
+logger = logging.getLogger('hidtools.hid.uhid')
 
 
 class UHIDUncompleteException(Exception):
@@ -163,10 +163,10 @@ class UHIDDevice(object):
     @rdesc.setter
     def rdesc(self, rdesc):
         parsed_rdesc = rdesc
-        if not isinstance(rdesc, hid.ReportDescriptor):
+        if not isinstance(rdesc, hidtools.hid.ReportDescriptor):
             if isinstance(rdesc, str):
                 rdesc = f'XXX {rdesc}'
-            parsed_rdesc = hid.ReportDescriptor.parse_rdesc(rdesc)
+            parsed_rdesc = hidtools.hid.ReportDescriptor.parse_rdesc(rdesc)
         self.parsed_rdesc = parsed_rdesc
         self._rdesc = parsed_rdesc.data()
 

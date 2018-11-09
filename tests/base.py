@@ -31,8 +31,8 @@ import unittest
 # FIXME: this is really wrong :)
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/..')
 
-import hid  # noqa
-from uhid import UHIDDevice  # noqa
+import hidtools.hid as hid # noqa
+from hidtools.uhid import UHIDDevice  # noqa
 
 
 def twos_comp(val, bits):

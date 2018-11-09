@@ -20,7 +20,38 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import hidtools.parse_rdesc
+import sys
+import hidtools.hid
+
+type_output = "default"
+
+
+def parse_rdesc(rdesc, dump_file=None):
+    """
+    Parse the given report descriptor and outputs it to stdout if show is True.
+    Returns:
+         - a ReportDescriptor object
+    """
+
+    rdesc_object = hidtools.hid.ReportDescriptor.parse_rdesc(rdesc)
+
+    if dump_file:
+        rdesc_object.dump(dump_file, type_output)
+
+    return rdesc_object
+
+
+def main():
+    f = open(sys.argv[1])
+    if len(sys.argv) > 2:
+        global type_output
+        type_output = sys.argv[2]
+    for line in f.readlines():
+        if line.startswith("R:"):
+            parse_rdesc(line.lstrip("R: "), sys.stdout)
+            break
+    f.close()
+
 
 if __name__ == "__main__":
-    hidtools.parse_rdesc.main()
+    main()

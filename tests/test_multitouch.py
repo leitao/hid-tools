@@ -21,7 +21,7 @@
 #
 
 import base
-import hid
+import hidtools.hid as hid
 import libevdev
 import sys
 import time

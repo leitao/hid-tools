@@ -21,7 +21,7 @@
 #
 
 import copy
-import parse_hut
+import hidtools.parse_hut
 from parse import parse as _parse
 
 
@@ -95,7 +95,7 @@ for type, items in hid_items.items():
         inv_hid[v] = k
         hid_type[k] = type
 
-usages = parse_hut.parse()
+usages = hidtools.parse_hut.parse()
 
 usage_pages = {}
 inv_usage_pages = {}
