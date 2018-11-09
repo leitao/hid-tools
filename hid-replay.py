@@ -73,7 +73,10 @@ class HIDReplay(object):
                 return False
         return True
 
-    def destroy(self):
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
         for d in self._devices.values():
             d.destroy()
 
@@ -138,18 +141,16 @@ class HIDReplay(object):
 
 def main(argv):
     try:
-        replay = HIDReplay(argv[0])
-        try:
+        with HIDReplay(argv[0]) as replay:
             while uhid.UHIDDevice.process_one_event(1000):
                 if replay.ready:
                     break
             while True:
                 replay.replay_one_sequence(wait=True)
-        except KeyboardInterrupt:
-            pass
-        replay.destroy()
     except PermissionError:
         print('Insufficient permissions, please run me as root.')
+    except KeyboardInterrupt:
+        pass
 
 
 if __name__ == '__main__':
