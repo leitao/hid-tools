@@ -21,6 +21,7 @@
 #
 
 from datetime import datetime, timedelta
+import argparse
 import sys
 import time
 import uhid
@@ -139,9 +140,13 @@ class HIDReplay(object):
         uhid.UHIDDevice.remove_fd_from_poll(sys.stdin.fileno())
 
 
-def main(argv):
+def main():
+    parser = argparse.ArgumentParser(description='Replay a HID recording')
+    parser.add_argument('recording', metavar='recording.hid',
+                        type=str, help='Path to device recording')
+    args = parser.parse_args()
     try:
-        with HIDReplay(argv[0]) as replay:
+        with HIDReplay(args.recording) as replay:
             while uhid.UHIDDevice.process_one_event(1000):
                 if replay.ready:
                     break
@@ -154,4 +159,4 @@ def main(argv):
 
 
 if __name__ == '__main__':
-    main(sys.argv[1:])
+    main()
