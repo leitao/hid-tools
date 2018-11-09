@@ -27,6 +27,9 @@ import select
 import struct
 import uuid
 
+import logging
+logger = logging.getLogger('hid.uhid')
+
 
 class UHIDUncompleteException(Exception):
     pass
@@ -273,27 +276,27 @@ class UHIDDevice(object):
         os.write(self._fd, buf)
 
     def start(self, flags):
-        print('start')
+        logger.debug('start')
 
     def stop(self):
-        print('stop')
+        logger.debug('stop')
 
     def open(self):
-        print('open', self.sys_path)
+        logger.debug('open {}'.format(self.sys_path))
 
     def close(self):
-        print('close')
+        logger.debug('close')
 
     def set_report(self, req, rnum, rtype, size, data):
-        print('set report', req, rtype, size, [f'{d:02x}' for d in data[:size]])
+        logger.debug('set report {} {} {} {} '.format(req, rtype, size, [f'{d:02x}' for d in data[:size]]))
         self.call_set_report(req, 1)
 
     def get_report(self, req, rnum, rtype):
-        print('get report', req, rnum, rtype)
+        logger.debug('get report {} {} {}'.format(req, rnum, rtype))
         self.call_get_report(req, [], 1)
 
     def output_report(self, data, size, rtype):
-        print('output', rtype, size, [f'{d:02x}' for d in data[:size]])
+        logger.debug('output {} {} {}'.format(rtype, size, [f'{d:02x}' for d in data[:size]]))
 
     def _process_one_event(self):
         buf = os.read(self._fd, 4380)

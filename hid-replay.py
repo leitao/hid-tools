@@ -27,6 +27,12 @@ import time
 import uhid
 from parse import parse, findall
 
+import logging
+logging.basicConfig(format='%(levelname)s: %(name)s: %(message)s',
+                    level=logging.INFO)
+base_logger = logging.getLogger('hid')
+logger = logging.getLogger('hid.replay')
+
 
 class HIDReplay(object):
     def __init__(self, filename):
@@ -144,7 +150,12 @@ def main():
     parser = argparse.ArgumentParser(description='Replay a HID recording')
     parser.add_argument('recording', metavar='recording.hid',
                         type=str, help='Path to device recording')
+    parser.add_argument('--verbose', action='store_true',
+                        default=False, help='Show debugging information')
     args = parser.parse_args()
+    if args.verbose:
+        base_logger.setLevel(logging.DEBUG)
+
     try:
         with HIDReplay(args.recording) as replay:
             while uhid.UHIDDevice.process_one_event(1000):
