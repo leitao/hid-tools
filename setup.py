@@ -14,7 +14,7 @@ setup(name='hid-tools',
       entry_points={
           "console_scripts": [
               'hid-replay = hidtools.replay:main',
-              'parse-hid = hidtools.parse_hid:main',
+              'hid-parse= hidtools.parse_hid:main',
               'parse-rdesc = hidtools.parse_rdesc:main',
               ]
       },

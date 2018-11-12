@@ -20,6 +20,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
 import sys
 import hidtools.hid
 from parse import parse as _parse
@@ -111,11 +112,13 @@ def parse_hid(f_in, f_out):
 
 
 def main():
-    f = sys.stdin
-    if len(sys.argv) > 1:
-        f = open(sys.argv[1])
-    parse_hid(f, sys.stdout)
-    f.close()
+    parser = argparse.ArgumentParser(description='Parse a HID recording and display it in human-readable format')
+    parser.add_argument('recording', metavar='recording.hid', nargs='?',
+                        help='Path to device recording (stdin if missing)',
+                        type=argparse.FileType('r'), default=sys.stdin)
+    args = parser.parse_args()
+    with args.recording as f:
+        parse_hid(f, sys.stdout)
 
 
 if __name__ == "__main__":
