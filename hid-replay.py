@@ -41,7 +41,7 @@ class HIDReplay(object):
         self.replayed_count = 0
         with open(filename) as f:
             idx = 0
-            for l in f.readlines():
+            for l in f:
                 l = l.strip()
                 if l.startswith('D:'):
                     r = parse('D: {idx:d}', l)
@@ -95,7 +95,7 @@ class HIDReplay(object):
             dev = None
             if idx in self._devices:
                 dev = self._devices[idx]
-            for l in f.readlines():
+            for l in f:
                 if l.startswith('D:'):
                     r = parse('D: {idx:d}', l)
                     assert r is not None
