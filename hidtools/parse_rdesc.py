@@ -23,10 +23,8 @@
 import sys
 import hidtools.hid
 
-type_output = "default"
 
-
-def parse_rdesc(rdesc, dump_file=None):
+def parse_rdesc(rdesc, type_output, dump_file=None):
     """
     Parse the given report descriptor and outputs it to stdout if show is True.
     Returns:
@@ -43,12 +41,12 @@ def parse_rdesc(rdesc, dump_file=None):
 
 def main():
     f = open(sys.argv[1])
+    type_output = "default"
     if len(sys.argv) > 2:
-        global type_output
         type_output = sys.argv[2]
     for line in f.readlines():
         if line.startswith("R:"):
-            parse_rdesc(line.lstrip("R: "), sys.stdout)
+            parse_rdesc(line.lstrip("R: "), type_output, sys.stdout)
             break
     f.close()
 
