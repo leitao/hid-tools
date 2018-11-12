@@ -20,11 +20,12 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import argparse
 import sys
 import hidtools.hid
 
 
-def parse_rdesc(rdesc, type_output, dump_file=None):
+def parse_rdesc(rdesc, type_output, dump_file):
     """
     Parse the given report descriptor and outputs it to stdout if show is True.
     Returns:
@@ -40,15 +41,22 @@ def parse_rdesc(rdesc, type_output, dump_file=None):
 
 
 def main():
-    f = open(sys.argv[1])
-    type_output = "default"
-    if len(sys.argv) > 2:
-        type_output = sys.argv[2]
-    for line in f.readlines():
-        if line.startswith("R:"):
-            parse_rdesc(line.lstrip("R: "), type_output, sys.stdout)
-            break
-    f.close()
+    parser = argparse.ArgumentParser(description='Parse a HID recording and display the descriptor in a variety of formats')
+    parser.add_argument('recording', nargs='?',
+                        help='Path to device recording (stdin if missing)',
+                        type=argparse.FileType('r'), default=sys.stdin)
+    parser.add_argument('--output', metavar='output-file',
+                        help='Path to output file (stdout if missing)',
+                        nargs='?', type=argparse.FileType('w'), default=sys.stdout)
+    parser.add_argument('--format', type=str, default='default',
+                        choices=['default', 'kernel'],
+                        help='Only display the HID descriptor')
+    args = parser.parse_args()
+    with args.recording as f:
+        for line in f:
+            if line.startswith("R:"):
+                parse_rdesc(line.lstrip("R: "), args.format, args.output)
+                break
 
 
 if __name__ == "__main__":
