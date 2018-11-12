@@ -15,7 +15,7 @@ setup(name='hid-tools',
           "console_scripts": [
               'hid-replay = hidtools.replay:main',
               'hid-parse= hidtools.parse_hid:main',
-              'parse-rdesc = hidtools.parse_rdesc:main',
+              'hid-parse-rdesc = hidtools.parse_rdesc:main',
               ]
       },
       classifiers=[
