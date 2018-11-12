@@ -81,10 +81,7 @@ def parse_hid(f_in, f_out):
     rdesc_dict = {}
     d = 0
     while True:
-        try:
-            line = f_in.readline()
-        except KeyboardInterrupt:
-            break
+        line = f_in.readline()
         if line.startswith("R:"):
             rdesc_object = hidtools.hid.ReportDescriptor.parse_rdesc(line.lstrip("R: "))
             rdesc_object.dump(f_out)
@@ -118,7 +115,10 @@ def main():
                         type=argparse.FileType('r'), default=sys.stdin)
     args = parser.parse_args()
     with args.recording as f:
-        parse_hid(f, sys.stdout)
+        try:
+            parse_hid(f, sys.stdout)
+        except KeyboardInterrupt:
+            pass
 
 
 if __name__ == "__main__":
