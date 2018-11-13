@@ -142,7 +142,7 @@ class HIDReplay(object):
         re = '' if count == 0 else 're'
         print(f'Hit enter to {re}start replaying the events')
         while count == self.replayed_count:
-            hidtools.uhid.UHIDDevice.dispatch(None)
+            hidtools.uhid.UHIDDevice.dispatch()
         hidtools.uhid.UHIDDevice.remove_fd_from_poll(sys.stdin.fileno())
 
 
