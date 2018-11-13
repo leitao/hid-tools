@@ -99,7 +99,7 @@ class UHIDDevice(object):
             return
 
         for d in cls.devices:
-            if d.udev is not None and d.udev.sys_path in event.sys_path:
+            if d.udev_device is not None and d.udev_device.sys_path in event.sys_path:
                 d.udev_event(event)
 
     def __init__(self):
@@ -116,7 +116,7 @@ class UHIDDevice(object):
         self._set_report = self.set_report
         self._get_report = self.get_report
         self._output_report = self.output_report
-        self._udev = None
+        self._udev_device = None
         self.ready = False
         self.device_node = None
         self.uniq = f'uhid_{str(uuid.uuid4())}'
@@ -230,20 +230,20 @@ class UHIDDevice(object):
         os.write(self._fd, buf)
 
     @property
-    def udev(self):
-        if self._udev is None:
+    def udev_device(self):
+        if self._udev_device is None:
             for device in self.pyudev_context.list_devices(subsystem='hid'):
                 try:
                     if self.uniq == device.properties['HID_UNIQ']:
-                        self._udev = device
+                        self._udev_device = device
                         break
                 except KeyError:
                     pass
-        return self._udev
+        return self._udev_device
 
     @property
     def sys_path(self):
-        return self.udev.sys_path
+        return self.udev_device.sys_path
 
     def create_kernel_device(self):
         if (self._name is None or
