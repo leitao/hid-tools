@@ -511,7 +511,7 @@ class BaseTest:
             descriptors."""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 # some sanity checking for the quirks
                 if uhdev.quirks is not None:
@@ -531,7 +531,7 @@ class BaseTest:
 
                 uhdev.destroy()
                 while uhdev.opened:
-                    if uhdev.process_one_event(100) == 0:
+                    if uhdev.dispatch(100) == 0:
                         break
                 with self.assertRaises(OSError):
                     uhdev.evdev.fd.read()
@@ -555,7 +555,7 @@ class BaseTest:
             and release it."""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 50, 100)
                 r = uhdev.event([t0])
@@ -588,7 +588,7 @@ class BaseTest:
             Note: PTP will send here BTN_DOUBLETAP emulation"""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 50, 100)
                 t1 = Touch(2, 150, 200)
@@ -664,7 +664,7 @@ class BaseTest:
                     uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible')
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 50, 100)
                 t1 = Touch(2, 150, 200)
@@ -714,7 +714,7 @@ class BaseTest:
                     raise unittest.SkipTest('Device not compatible')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 touches = [Touch(i, (i + 3) * 20, (i + 3) * 20 + 5) for i in range(uhdev.max_contacts)]
                 if uhdev.quirks is not None and 'SLOT_IS_CONTACTID_MINUS_ONE' in uhdev.quirks:
@@ -760,7 +760,7 @@ class BaseTest:
                     raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 50, 100)
                 t1 = Touch(2, 150, 200)
@@ -808,7 +808,7 @@ class BaseTest:
                     raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 5, 10)
                 t0.cx = 50
@@ -841,7 +841,7 @@ class BaseTest:
                     raise unittest.SkipTest('Device not compatible, missing In Range usage')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 150, 200)
                 t0.tipswitch = False
@@ -890,7 +890,7 @@ class BaseTest:
             like that"""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 5, 10)
                 t1 = Touch(1, 15, 20)
@@ -920,7 +920,7 @@ class BaseTest:
             considers it as a separate touch (different tracking ID)"""
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 5, 10)
                 r = uhdev.event([t0])
@@ -951,7 +951,7 @@ class BaseTest:
                     raise unittest.SkipTest('Device not compatible, missing Azimuth usage')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 5, 10)
                 t0.azimuth = 270
@@ -981,7 +981,7 @@ class BaseTest:
             """
             with self.__create_device() as uhdev:
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 if uhdev.type == 'clickpad':
                     r = uhdev.event(click=True)
@@ -1033,7 +1033,7 @@ class BaseTest:
                     raise unittest.SkipTest('Device not compatible, missing Confidence usage')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 150, 200)
                 r = uhdev.event([t0])
@@ -1073,7 +1073,7 @@ class BaseTest:
                     raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 touches = [Touch(i, i * 10, i * 10 + 5) for i in range(uhdev.max_contacts)]
                 contact_count = uhdev.max_contacts
@@ -1137,7 +1137,7 @@ class TestActionStar_2101_1011(BaseTest.TestMultitouch):
         """Special sequence that might not be handled properly"""
         with self.__create_device() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
-                uhdev.process_one_event(10)
+                uhdev.dispatch(10)
 
             sequence = [
                 # t0 = Touch(1, 6999, 2441) | t1 = Touch(2, 15227, 2026)
@@ -1614,7 +1614,7 @@ class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
                     raise unittest.SkipTest('Device not compatible, missing Confidence usage')
 
                 while uhdev.application not in uhdev.input_nodes:
-                    uhdev.process_one_event(10)
+                    uhdev.dispatch(10)
 
                 t0 = Touch(1, 150, 200)
                 r = uhdev.event([t0])

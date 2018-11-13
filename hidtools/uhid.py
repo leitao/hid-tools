@@ -64,7 +64,7 @@ class UHIDDevice(object):
     pyudev_monitor = None
 
     @classmethod
-    def process_one_event(cls, timeout=None):
+    def dispatch(cls, timeout=None):
         devices = cls.poll.poll(timeout)
         for fd, mask in devices:
             if mask & select.POLLIN:
