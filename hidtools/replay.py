@@ -73,6 +73,9 @@ class HIDReplay(object):
         for d in self._devices.values():
             d.create_kernel_device()
 
+        while not self.ready:
+            hidtools.uhid.UHIDDevice.dispatch(1000)
+
     @property
     def ready(self):
         for d in self._devices.values():
@@ -151,9 +154,6 @@ def main():
 
     try:
         with HIDReplay(args.recording) as replay:
-            while hidtools.uhid.UHIDDevice.dispatch(1000):
-                if replay.ready:
-                    break
             while True:
                 replay.replay_one_sequence()
     except PermissionError:
