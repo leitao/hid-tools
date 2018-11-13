@@ -76,7 +76,7 @@ class HIDReplay(object):
     @property
     def ready(self):
         for d in self._devices.values():
-            if not d.has_evdev_node:
+            if d.device_node is None:
                 return False
         return True
 
