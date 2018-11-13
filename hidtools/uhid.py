@@ -236,6 +236,7 @@ class UHIDDevice(object):
                 try:
                     if self.uniq == device.properties['HID_UNIQ']:
                         self._udev = device
+                        break
                 except KeyError:
                     pass
         return self._udev
