@@ -143,14 +143,12 @@ class UHIDDevice(object):
 
         device = event
 
-        if 'DEVNAME' not in device.properties:
-            return
-
-        devname = device.properties['DEVNAME']
-        if not devname.startswith('/dev/input/event'):
-            return
-
-        self.device_node = devname
+        try:
+            devname = device.properties['DEVNAME']
+            if devname.startswith('/dev/input/event'):
+                self.device_node = devname
+        except KeyError:
+            pass
 
     @property
     def fd(self):
