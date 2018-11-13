@@ -31,7 +31,7 @@ import logging
 logger = logging.getLogger('hidtools.hid.uhid')
 
 
-class UHIDUncompleteException(Exception):
+class UHIDIncompleteException(Exception):
     pass
 
 
@@ -250,7 +250,7 @@ class UHIDDevice(object):
         if (self._name is None or
            self._rdesc is None or
            self._info is None):
-            raise UHIDUncompleteException("missing uhid initialization")
+            raise UHIDIncompleteException("missing uhid initialization")
 
         buf = struct.pack('< L 128s 64s 64s H H L L L L 4096s',
                           UHIDDevice.UHID_CREATE2,
