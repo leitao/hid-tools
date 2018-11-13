@@ -73,12 +73,12 @@ class UHIDDevice(object):
         return len(devices)
 
     @classmethod
-    def append_fd_to_poll(cls, fd, read_function, mask=select.POLLIN):
+    def _append_fd_to_poll(cls, fd, read_function, mask=select.POLLIN):
         cls.poll.register(fd, mask)
         cls.polling_functions[fd] = read_function
 
     @classmethod
-    def remove_fd_from_poll(cls, fd):
+    def _remove_fd_from_poll(cls, fd):
         cls.poll.unregister(fd)
 
     @classmethod
@@ -89,8 +89,8 @@ class UHIDDevice(object):
             cls.pyudev_monitor.filter_by('input')
             cls.pyudev_monitor.start()
 
-            cls.append_fd_to_poll(cls.pyudev_monitor.fileno(),
-                                  cls._cls_udev_event_callback)
+            cls._append_fd_to_poll(cls.pyudev_monitor.fileno(),
+                                   cls._cls_udev_event_callback)
 
     @classmethod
     def _cls_udev_event_callback(cls):
@@ -121,7 +121,7 @@ class UHIDDevice(object):
         self.ready = False
         self.device_node = None
         self.uniq = f'uhid_{str(uuid.uuid4())}'
-        self.append_fd_to_poll(self._fd, self._process_one_event)
+        self._append_fd_to_poll(self._fd, self._process_one_event)
         self._init_pyudev()
         UHIDDevice.devices.append(self)
 
@@ -130,7 +130,7 @@ class UHIDDevice(object):
 
     def __exit__(self, *exc_details):
         UHIDDevice.devices.remove(self)
-        self.remove_fd_from_poll(self._fd)
+        self._remove_fd_from_poll(self._fd)
         os.close(self._fd)
 
     def udev_event(self, event):
