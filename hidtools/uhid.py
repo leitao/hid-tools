@@ -82,17 +82,17 @@ class UHIDDevice(object):
         cls.poll.unregister(fd)
 
     @classmethod
-    def init_pyudev(cls):
+    def _init_pyudev(cls):
         if cls.pyudev_context is None:
             cls.pyudev_context = pyudev.Context()
             cls.pyudev_monitor = pyudev.Monitor.from_netlink(cls.pyudev_context)
             cls.pyudev_monitor.filter_by('input')
             cls.pyudev_monitor.start()
 
-            cls.append_fd_to_poll(cls.pyudev_monitor.fileno(), cls.cls_udev_event)
+            cls.append_fd_to_poll(cls.pyudev_monitor.fileno(), cls._cls_udev_event)
 
     @classmethod
-    def cls_udev_event(cls):
+    def _cls_udev_event(cls):
         event = cls.pyudev_monitor.poll()
 
         if event is None:
@@ -121,7 +121,7 @@ class UHIDDevice(object):
         self.has_evdev_node = False
         self.uniq = f'uhid_{str(uuid.uuid4())}'
         self.append_fd_to_poll(self._fd, self._process_one_event)
-        self.init_pyudev()
+        self._init_pyudev()
         UHIDDevice.devices.append(self)
 
     def __enter__(self):
