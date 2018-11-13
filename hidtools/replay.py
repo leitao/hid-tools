@@ -128,10 +128,7 @@ class HIDReplay(object):
                     dev.call_input_event(data)
         self.replayed_count += 1
 
-    def replay_one_sequence(self, wait=False):
-        if not wait:
-            self.inject_events()
-            return
+    def replay_one_sequence(self):
         count = self.replayed_count
         re = '' if count == 0 else 're'
         print(f'Hit enter to {re}start replaying the events')
@@ -158,7 +155,7 @@ def main():
                 if replay.ready:
                     break
             while True:
-                replay.replay_one_sequence(wait=True)
+                replay.replay_one_sequence()
     except PermissionError:
         print('Insufficient permissions, please run me as root.')
     except KeyboardInterrupt:
