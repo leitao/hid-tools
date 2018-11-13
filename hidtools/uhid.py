@@ -89,10 +89,11 @@ class UHIDDevice(object):
             cls.pyudev_monitor.filter_by('input')
             cls.pyudev_monitor.start()
 
-            cls.append_fd_to_poll(cls.pyudev_monitor.fileno(), cls._cls_udev_event)
+            cls.append_fd_to_poll(cls.pyudev_monitor.fileno(),
+                                  cls._cls_udev_event_callback)
 
     @classmethod
-    def _cls_udev_event(cls):
+    def _cls_udev_event_callback(cls):
         event = cls.pyudev_monitor.poll()
 
         if event is None:

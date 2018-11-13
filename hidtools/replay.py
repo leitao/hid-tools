@@ -128,7 +128,7 @@ class HIDReplay(object):
                     dev.call_input_event(data)
         self.replayed_count += 1
 
-    def start_injecting_event(self):
+    def start_injecting_event_callback(self):
         sys.stdin.readline()
         self.inject_events()
 
@@ -138,7 +138,7 @@ class HIDReplay(object):
             return
         count = self.replayed_count
         hidtools.uhid.UHIDDevice.append_fd_to_poll(sys.stdin.fileno(),
-                                                   self.start_injecting_event)
+                                                   self.start_injecting_event_callback)
         re = '' if count == 0 else 're'
         print(f'Hit enter to {re}start replaying the events')
         while count == self.replayed_count:
