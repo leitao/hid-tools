@@ -22,6 +22,7 @@
 
 import copy
 import hidtools.parse_hut
+from hidtools.util import twos_comp, to_twos_comp
 from parse import parse as _parse
 
 
@@ -99,25 +100,6 @@ for type, items in hid_items.items():
 USAGES = hidtools.parse_hut.parse()
 
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
-
-
-def twos_comp(val, bits):
-    """compute the 2's complement of val.
-
-    :param int val:
-        the value to compute the two's complement for
-
-    :param int bits:
-        size of val in bits
-    """
-    if (val & (1 << (bits - 1))) != 0:
-        val = val - (1 << bits)
-    return val
-
-
-def to_twos_comp(val, bits):
-    return val & ((1 << bits) - 1)
-
 
 class ParseError(Exception):
     pass

@@ -32,18 +32,8 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/..')
 
 import hidtools.hid as hid # noqa
+from hidtools.util import twos_comp, to_twos_comp # noqa
 from hidtools.uhid import UHIDDevice  # noqa
-
-
-def twos_comp(val, bits):
-    """compute the 2's compliment of int value val"""
-    if (val & (1 << (bits - 1))) != 0:
-        val = val - (1 << bits)
-    return val
-
-
-def to_twos_comp(val, bits):
-    return val & ((1 << bits) - 1)
 
 
 class UHIDTest(UHIDDevice):
