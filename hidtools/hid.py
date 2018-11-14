@@ -95,16 +95,18 @@ for type, items in hid_items.items():
         inv_hid[v] = k
         hid_type[k] = type
 
+
 USAGES = hidtools.parse_hut.parse()
 
 USAGE_PAGES = {}
 INV_USAGE_PAGES = {}
 INV_USAGES = {}
-for usage, (name, usage_list, inv_usages_list) in USAGES.items():
-    INV_USAGE_PAGES[usage] = name
-    USAGE_PAGES[name] = usage
-    for k, v in list(usage_list.items()):
-        INV_USAGES[(usage << 16) | k] = v
+for page_id, usage_page in USAGES.items():
+    INV_USAGE_PAGES[page_id] = usage_page.page_name
+    USAGE_PAGES[usage_page.page_name] = page_id
+    for k, v in list(usage_page.items()):
+        print(page_id, k)
+        INV_USAGES[(page_id << 16) | k] = v
 
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
@@ -321,7 +323,7 @@ class HidRDescItem(object):
                 value = USAGE_PAGES[data]
                 usage_page = value
             elif name == "Usage":
-                value = USAGES[usage_page][2][data]
+                value = USAGES[usage_page].from_name[data]
             elif name == "Collection":
                 value = collections[data.upper()]
             elif name in 'Input Output Feature':

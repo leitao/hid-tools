@@ -22,6 +22,7 @@
 
 import os
 from parse import parse as _parse
+from hidtools import HidUsagePage
 
 DATA_DIRNAME = "data"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -39,11 +40,13 @@ def parse_usages(f):
 
     All numbers in hex.
 
+    Only one Usage Page per file
+
     Usages are parsed into a dictionary[number] = name.
-    The return value is tuple of (Usage Page, Usage Page name, Usages)
+
+    The return value is a single HidUsagePage where page[idx] = idx-name.
     """
-    usages = {}
-    idx, page_name = None, None
+    usage_page = None
     for line in f:
         line = line.strip()
         if not line:
@@ -51,11 +54,16 @@ def parse_usages(f):
 
         # Usage Page, e.g. '(01)	Generic Desktop'
         if line.startswith('('):
+            assert usage_page is None
+
             r = _parse('({idx:x})\t{page_name}', line)
             assert(r is not None)
-            idx = r['idx']
-            page_name = r['page_name']
+            usage_page = HidUsagePage()
+            usage_page.page_id = r['idx']
+            usage_page.page_name = r['page_name']
             continue
+
+        assert usage_page is not None
 
         # Reserved ranges, e.g  '0B-1F	Reserved'
         r = _parse('{:x}-{:x}\t{name}', line)
@@ -73,12 +81,9 @@ def parse_usages(f):
         if 'reserved' in r['name'].lower():
             continue
 
-        usages[int(r['usage'], 16)] = r['name']
+        usage_page[int(r['usage'], 16)] = r['name']
 
-    assert idx is not None
-    assert page_name is not None
-
-    return idx, page_name, usages
+    return usage_page
 
 
 def parse():
@@ -91,9 +96,8 @@ def parse():
         if filename.endswith('.hut'):
             with open(os.path.join(DATA_DIR, filename), 'r') as f:
                 try:
-                    idx, name, usages_list = parse_usages(f)
-                    inv_usages_list = dict([(v, k) for k, v, in usages_list.items()])
-                    usages[idx] = (name, usages_list, inv_usages_list)
+                    usage_page = parse_usages(f)
+                    usages[usage_page.page_id] = usage_page
                 except:
                     print(filename)
                     raise
