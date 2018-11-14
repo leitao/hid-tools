@@ -98,11 +98,6 @@ for type, items in hid_items.items():
 
 USAGES = hidtools.parse_hut.parse()
 
-INV_USAGES = {}
-for page_id, usage_page in USAGES.items():
-    for k, v in list(usage_page.items()):
-        INV_USAGES[(page_id << 16) | k] = v
-
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
 
@@ -216,18 +211,20 @@ class HidRDescItem(object):
                 descr += f' (Vendor Usage Page 0x{value:02x})'
         elif item == "Usage":
             usage = value | up
-            if usage in INV_USAGES:
-                descr += f' ({INV_USAGES[usage]})'
-            elif up == USAGES.usage_page_from_name('Sensor').page_id << 16:
-                mod = (usage & 0xF000) >> 8
-                usage &= ~0xF000
-                mod_descr = sensor_mods[mod]
-                try:
-                    descr += f' ({INV_USAGES[usage]}  | {mod_descr})'
-                except:
-                    descr += f' (Unknown Usage 0x{value:02x})'
-            else:
-                descr += f' (Vendor Usage 0x{value:02x})'
+            try:
+                descr += f' ({USAGES[up >> 16][value]})'
+            except KeyError:
+                if (up >> 16) == USAGES.usage_page_from_name('Sensor').page_id:
+                    mod = (usage & 0xF000) >> 8
+                    usage &= ~0xF000
+                    mod_descr = sensor_mods[mod]
+                    page_id = (usage & 0xFF00) >> 16
+                    try:
+                        descr += f' ({USAGES[page_id][usage & 0xFF]}  | {mod_descr})'
+                    except KeyError:
+                        descr += f' (Unknown Usage 0x{value:02x})'
+                else:
+                    descr += f' (Vendor Usage 0x{value:02x})'
         elif item == "Input" \
                 or item == "Output" \
                 or item == "Feature":
@@ -455,9 +452,11 @@ class HidRDescItem(object):
             data += f' ] {value}'
         dump_file.write(f'            Item({hid_type[item]:6s}): {item}, data={data}\n')
         if item == "Usage":
-            usage = up | value
-            if usage in list(INV_USAGES.keys()):
-                dump_file.write(f'                 {INV_USAGES[usage]}\n')
+            try:
+                page_id = up >> 16
+                dump_file.write(f'                 {USAGES[page_id][value]}\n')
+            except KeyError:
+                pass
 
 
 class HidField(object):
@@ -497,11 +496,15 @@ class HidField(object):
 
     def _usage_name(self, usage):
         usage_page = usage >> 16
-        if usage_page in USAGES and \
-            USAGES[usage_page].page_name == "Button":
-            name = f'B{str(usage & 0xFF)}'
-        elif usage in INV_USAGES:
-            name = INV_USAGES[usage]
+        value = usage & 0x00FF
+        if usage_page in USAGES:
+            if USAGES[usage_page].page_name == "Button":
+                name = f'B{str(value)}'
+            else:
+                try:
+                    name = USAGES[usage_page][value]
+                except KeyError:
+                    name = f'0x{usage:04x}'
         else:
             name = f'0x{usage:04x}'
         return name
@@ -516,9 +519,14 @@ class HidField(object):
     @property
     def physical_name(self):
         phys = self.physical
-        if self.physical in INV_USAGES:
-            phys = INV_USAGES[self.physical]
-        else:
+        if phys is None:
+            return phys
+
+        try:
+            page_id = phys >> 16
+            value = phys & 0xFF
+            phys = USAGES[page_id][value]
+        except KeyError:
             try:
                 phys = f'0x{phys:04x}'
             except:
@@ -688,8 +696,13 @@ class HidReport(object):
 
     @property
     def application_name(self):
+        if self.application is None:
+            return 'Vendor'
+
         try:
-            return INV_USAGES[self.application]
+            page_id = self.application >> 16
+            value = self.application & 0xff
+            return USAGES[page_id][value]
         except KeyError:
             return 'Vendor'
 

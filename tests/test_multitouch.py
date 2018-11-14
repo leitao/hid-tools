@@ -543,10 +543,21 @@ class BaseTest:
                 rdesc = uhdev.parsed_rdesc
                 for feature in rdesc.feature_reports.values():
                     for field in feature:
-                        if field.usage in hid.INV_USAGES and hid.INV_USAGES[field.usage] == 'Contact Max':
-                            self.assertIn(hid.INV_USAGES[field.application], ['Touch Screen', 'Touch Pad', 'System Multi-Axis Controller'])
-                        if field.usage in hid.INV_USAGES and hid.INV_USAGES[field.usage] == 'Inputmode':
-                            self.assertIn(hid.INV_USAGES[field.application], ['Touch Screen', 'Touch Pad', 'Device Configuration'])
+                        page_id = field.usage >> 16
+                        value = field.usage & 0xFF
+                        try:
+                            if hid.USAGES[page_id][value] == 'Contact Max':
+                                self.assertIn(hid.USAGES[page_id][field.application],
+                                              ['Touch Screen', 'Touch Pad', 'System Multi-Axis Controller'])
+                        except KeyError:
+                            pass
+
+                        try:
+                            if hid.USAGES[page_id][value] == 'Inputmode':
+                                self.assertIn(hid.USAGES[page_id][field.application],
+                                              ['Touch Screen', 'Touch Pad', 'Device Configuration'])
+                        except KeyError:
+                            pass
 
                 uhdev.destroy()
 
@@ -793,8 +804,13 @@ class BaseTest:
                 rdesc = uhdev.parsed_rdesc
                 for feature in rdesc.feature_reports.values():
                     for field in feature:
-                        if field.usage in hid.INV_USAGES and hid.INV_USAGES[field.usage] == 'Inputmode':
-                            self.assertNotIn(hid.INV_USAGES[field.application], ['Touch Screen'])
+                        page_id = field.usage >> 16
+                        value = field.usage & 0xFF
+                        try:
+                            if hid.USAGES[page_id][value] == 'Inputmode':
+                                self.assertNotIn(hid.USAGES[field.application], ['Touch Screen'])
+                        except KeyError:
+                            pass
 
                 uhdev.destroy()
 
