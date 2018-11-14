@@ -95,18 +95,18 @@ for type, items in hid_items.items():
         inv_hid[v] = k
         hid_type[k] = type
 
-usages = hidtools.parse_hut.parse()
+USAGES = hidtools.parse_hut.parse()
 
-usage_pages = {}
-inv_usage_pages = {}
-inv_usages = {}
-for usage, (name, usage_list, inv_usages_list) in usages.items():
-    inv_usage_pages[usage] = name
-    usage_pages[name] = usage
+USAGE_PAGES = {}
+INV_USAGE_PAGES = {}
+INV_USAGES = {}
+for usage, (name, usage_list, inv_usages_list) in USAGES.items():
+    INV_USAGE_PAGES[usage] = name
+    USAGE_PAGES[name] = usage
     for k, v in list(usage_list.items()):
-        inv_usages[(usage << 16) | k] = v
+        INV_USAGES[(usage << 16) | k] = v
 
-inv_collections = dict([(v, k) for k, v in collections.items()])
+INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
 
 def twos_comp(val, bits):
@@ -208,25 +208,25 @@ class HidRDescItem(object):
                     "Unit Exponent"):
             descr += f' ({str(value)})'
         elif item == "Collection":
-            descr += f' ({inv_collections[value].capitalize()})'
+            descr += f' ({INV_COLLECTIONS[value].capitalize()})'
             indent += 1
         elif item == "End Collection":
             indent -= 1
         elif item == "Usage Page":
-            if value in inv_usage_pages:
-                descr += f' ({inv_usage_pages[value]})'
+            if value in INV_USAGE_PAGES:
+                descr += f' ({INV_USAGE_PAGES[value]})'
             else:
                 descr += f' (Vendor Usage Page 0x{value:02x})'
         elif item == "Usage":
             usage = value | up
-            if usage in inv_usages:
-                descr += f' ({inv_usages[usage]})'
-            elif up == usage_pages['Sensor'] << 16:
+            if usage in INV_USAGES:
+                descr += f' ({INV_USAGES[usage]})'
+            elif up == USAGE_PAGES['Sensor'] << 16:
                 mod = (usage & 0xF000) >> 8
                 usage &= ~0xF000
                 mod_descr = sensor_mods[mod]
                 try:
-                    descr += f' ({inv_usages[usage]}  | {mod_descr})'
+                    descr += f' ({INV_USAGES[usage]}  | {mod_descr})'
                 except:
                     descr += f' (Unknown Usage 0x{value:02x})'
             else:
@@ -318,10 +318,10 @@ class HidRDescItem(object):
 
         if isinstance(data, str):
             if name == "Usage Page":
-                value = usage_pages[data]
+                value = USAGE_PAGES[data]
                 usage_page = value
             elif name == "Usage":
-                value = usages[usage_page][2][data]
+                value = USAGES[usage_page][2][data]
             elif name == "Collection":
                 value = collections[data.upper()]
             elif name in 'Input Output Feature':
@@ -459,8 +459,8 @@ class HidRDescItem(object):
         dump_file.write(f'            Item({hid_type[item]:6s}): {item}, data={data}\n')
         if item == "Usage":
             usage = up | value
-            if usage in list(inv_usages.keys()):
-                dump_file.write(f'                 {inv_usages[usage]}\n')
+            if usage in list(INV_USAGES.keys()):
+                dump_file.write(f'                 {INV_USAGES[usage]}\n')
 
 
 class HidField(object):
@@ -500,11 +500,11 @@ class HidField(object):
 
     def _usage_name(self, usage):
         usage_page = usage >> 16
-        if usage_page in inv_usage_pages and \
-                inv_usage_pages[usage_page] == "Button":
+        if usage_page in INV_USAGE_PAGES and \
+                INV_USAGE_PAGES[usage_page] == "Button":
             usage = f'B{str(usage & 0xFF)}'
-        elif usage in inv_usages:
-            usage = inv_usages[usage]
+        elif usage in INV_USAGES:
+            usage = INV_USAGES[usage]
         else:
             usage = f'0x{usage:04x}'
         return usage
@@ -519,8 +519,8 @@ class HidField(object):
     @property
     def physical_name(self):
         phys = self.physical
-        if self.physical in inv_usages:
-            phys = inv_usages[self.physical]
+        if self.physical in INV_USAGES:
+            phys = INV_USAGES[self.physical]
         else:
             try:
                 phys = f'0x{phys:04x}'
@@ -598,8 +598,8 @@ class HidField(object):
     def usage_page_name(self):
         usage_page_name = ''
         usage_page = self.usage_page >> 16
-        if usage_page in inv_usage_pages:
-            usage_page_name = inv_usage_pages[usage_page]
+        if usage_page in INV_USAGE_PAGES:
+            usage_page_name = INV_USAGE_PAGES[usage_page]
         return usage_page_name
 
     @classmethod
@@ -690,7 +690,7 @@ class HidReport(object):
     @property
     def application_name(self):
         try:
-            return inv_usages[self.application]
+            return INV_USAGES[self.application]
         except KeyError:
             return 'Vendor'
 
@@ -978,7 +978,7 @@ class ReportDescriptor(object):
             self.usage_min = 0
             self.usage_max = 0
         elif item == "Collection":
-            c = inv_collections[value]
+            c = INV_COLLECTIONS[value]
             try:
                 if c == 'PHYSICAL':
                     self.collection[1] += 1
