@@ -28,10 +28,10 @@ SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(SCRIPT_DIR, DATA_DIRNAME)
 
 
-def parse_usages(usage_list):
+def parse_usages(f):
     usages = {}
     idx, page_name = None, None
-    for line in usage_list:
+    for line in f:
         line = line.strip()
         if not line:
             continue
@@ -66,7 +66,7 @@ def parse():
         if filename.endswith('.hut'):
             with open(os.path.join(DATA_DIR, filename), 'r') as f:
                 try:
-                    idx, name, usages_list = parse_usages(f.readlines())
+                    idx, name, usages_list = parse_usages(f)
                     inv_usages_list = dict([(v, k) for k, v, in usages_list.items()])
                     usages[idx] = (name, filename, usages_list, inv_usages_list)
                 except:
