@@ -1183,7 +1183,7 @@ class ReportDescriptor(object):
         return " ".join([str(i) for i in self.rdesc_items])
 
     @classmethod
-    def parse_rdesc(cls, rdesc):
+    def from_bytes(cls, rdesc):
         """
         Parse the given report descriptor.
         Returns:
@@ -1199,7 +1199,7 @@ class ReportDescriptor(object):
         return rdesc_object
 
     @classmethod
-    def from_rdesc_str(cls, rdesc_str):
+    def from_human_descr(cls, rdesc_str):
         usage_page = 0
         rdesc_object = ReportDescriptor()
         for line in rdesc_str.splitlines():

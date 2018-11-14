@@ -48,7 +48,7 @@ class UHIDTest(UHIDDevice):
         self.input_nodes = {}
         self._opened_files = []
         if rdesc is None:
-            self.rdesc = hid.ReportDescriptor.from_rdesc_str(rdesc_str)
+            self.rdesc = hid.ReportDescriptor.from_human_descr(rdesc_str)
         else:
             self.rdesc = rdesc
 

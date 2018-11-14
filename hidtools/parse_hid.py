@@ -83,7 +83,7 @@ def parse_hid(f_in, f_out):
     while True:
         line = f_in.readline()
         if line.startswith("R:"):
-            rdesc_object = hidtools.hid.ReportDescriptor.parse_rdesc(line.lstrip("R: "))
+            rdesc_object = hidtools.hid.ReportDescriptor.from_bytes(line.lstrip("R: "))
             rdesc_object.dump(f_out)
 
             rdesc_dict[d] = rdesc_object
