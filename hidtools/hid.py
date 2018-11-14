@@ -188,11 +188,11 @@ class HidRDescItem(object):
                          # "Logical Maximum",
                          # "Physical Maximum",
                          ):
-            self.twos_comp()
+            self._twos_comp()
         if self.item == "Unit Exponent" and self.value > 7:
             self.value -= 16
 
-    def twos_comp(self):
+    def _twos_comp(self):
         self.value = twos_comp(self.value, (self.size - 1) * 8)
         return self.value
 
