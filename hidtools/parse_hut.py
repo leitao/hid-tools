@@ -29,12 +29,27 @@ DATA_DIR = os.path.join(SCRIPT_DIR, DATA_DIRNAME)
 
 
 def parse_usages(f):
+    """
+    Parse a single HUT file. The file format is a set of lines in three
+    formats:
+
+        (01)<tab>Usage Page name
+        A0<tab>Name
+        F0-FF<tab>Reserved for somerange
+
+    All numbers in hex.
+
+    Usages are parsed into a dictionary[number] = name.
+    The return value is tuple of (Usage Page, Usage Page name, Usages)
+    """
     usages = {}
     idx, page_name = None, None
     for line in f:
         line = line.strip()
         if not line:
             continue
+
+        # Usage Page, e.g. '(01)	Generic Desktop'
         if line.startswith('('):
             r = _parse('({idx:x})\t{page_name}', line)
             assert(r is not None)
@@ -42,14 +57,17 @@ def parse_usages(f):
             page_name = r['page_name']
             continue
 
+        # Reserved ranges, e.g  '0B-1F	Reserved'
         r = _parse('{:x}-{:x}\t{name}', line)
         if r:
             if 'reserved' not in r['name'].lower():
                 print(line)
             continue
 
-        # we are hitting https://github.com/r1chardj0n3s/parse/issues/65
-        # so we can not use {usage:x} or the value '0B' will be converted to 0
+        # Single usage, e.g. 36	Slider
+        # we can not use {usage:x} or the value '0B' will be converted to 0
+        # See https://github.com/r1chardj0n3s/parse/issues/65
+        # fixed in parse 1.8.4 (May 2018)
         r = _parse('{usage}\t{name}', line)
         assert r is not None
         if 'reserved' in r['name'].lower():
@@ -61,6 +79,10 @@ def parse_usages(f):
 
 
 def parse():
+    """
+    Parse all .hut files in the data directory, return a dictionary using
+    the Usage Page number and the Usage as dict.
+    """
     usages = {}
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.hut'):
