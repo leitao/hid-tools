@@ -499,12 +499,12 @@ class HidField(object):
         usage_page = usage >> 16
         if usage_page in USAGES and \
             USAGES[usage_page].page_name == "Button":
-            usage = f'B{str(usage & 0xFF)}'
+            name = f'B{str(usage & 0xFF)}'
         elif usage in INV_USAGES:
-            usage = INV_USAGES[usage]
+            name = INV_USAGES[usage]
         else:
-            usage = f'0x{usage:04x}'
-        return usage
+            name = f'0x{usage:04x}'
+        return name
 
     @property
     def usage_name(self):
