@@ -375,7 +375,6 @@ class HidRDescItem(object):
                 usage_page = data
             value = data
 
-        size = 0
         bit_size = 0
         if value is not None:
             bit_size = len(f'{value + 1:x}') * 4
