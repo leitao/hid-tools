@@ -134,21 +134,21 @@ class HidRDescItem(object):
                 raise ParseError(error)
             else:
                 raise KeyError(error)
-        self.rsize = r & 0x3
-        if self.rsize == 3:
-            self.rsize = 4
-        self.pending_bytes = self.rsize
+        self._rsize = r & 0x3
+        if self._rsize == 3:
+            self._rsize = 4
+        self._pending_bytes = self._rsize
         self.value = 0
 
     def feed(self, value):
         "return True if the value was accepted by the item"
-        if self.pending_bytes <= 0:
+        if self._pending_bytes <= 0:
             raise ParseError("this item is already full")
         self.raw_value.append(value)
-        self.value |= value << (self.rsize - self.pending_bytes) * 8
-        self.pending_bytes -= 1
+        self.value |= value << (self._rsize - self._pending_bytes) * 8
+        self._pending_bytes -= 1
 
-        if self.pending_bytes == 0:
+        if self._pending_bytes == 0:
             if self.item in ("Logical Minimum",
                              "Physical Minimum",
                              # "Logical Maximum",
@@ -160,11 +160,11 @@ class HidRDescItem(object):
 
     def completed(self):
         # if index is null, then we have consumed all the incoming data
-        return self.pending_bytes == 0
+        return self._pending_bytes == 0
 
     def twos_comp(self):
-        if self.rsize:
-            self.value = twos_comp(self.value, self.rsize * 8)
+        if self._rsize:
+            self.value = twos_comp(self.value, self._rsize * 8)
         return self.value
 
     def size(self):
