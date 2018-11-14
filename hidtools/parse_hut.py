@@ -75,6 +75,9 @@ def parse_usages(f):
 
         usages[int(r['usage'], 16)] = r['name']
 
+    assert idx is not None
+    assert page_name is not None
+
     return idx, page_name, usages
 
 
