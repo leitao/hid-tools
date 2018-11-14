@@ -1166,7 +1166,6 @@ class ReportDescriptor(object):
     def data_txt(self):
         return " ".join([str(i) for i in self.rdesc_items])
 
-
     @classmethod
     def parse_rdesc(cls, rdesc):
         """
