@@ -102,7 +102,14 @@ INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
 
 def twos_comp(val, bits):
-    """compute the 2's complement of int value val"""
+    """compute the 2's complement of val.
+
+    :param int val:
+        the value to compute the two's complement for
+
+    :param int bits:
+        size of val in bits
+    """
     if (val & (1 << (bits - 1))) != 0:
         val = val - (1 << bits)
     return val
@@ -220,6 +227,11 @@ class HidRDescItem(object):
         return data
 
     def get_human_descr(self, indent):
+        """
+        Return a human-readable description of this item
+
+        :param int indent: The indentation to prefix
+        """
         item = self.item
         value = self.value
         up = self.usage_page
@@ -399,6 +411,25 @@ class HidRDescItem(object):
 
     @classmethod
     def from_human_descr(cls, line, usage_page):
+        """
+        Parses a line from human-readable HID report descriptor e.g.::
+
+            Usage Page (Digitizers)
+            Usage (Finger)
+            Collection (Logical)
+             Report Size (1)
+             Report Count (1)
+             Logical Minimum (0)
+             Logical Maximum (1)
+             Usage (Tip Switch)
+             Input (Data,Var,Abs)
+
+
+        :param str line: a single line in the report descriptor
+        :param int usage_page: the usage page to set for this item
+
+        :returns: a single item representing the current line
+        """
         data = None
         if '(' in line:
             r = _parse('{ws:s}{name} ({data})', line)
@@ -518,7 +549,10 @@ class HidRDescItem(object):
 
     def dump_rdesc_kernel(self, indent, dump_file):
         """
-        Format the hid item in a C-style format.
+        Write the HID item to the file a C-style format.
+
+        :param int indent: indentation to prefix
+        :param File dump_file: file to write to
         """
         # offset = self.index_in_report
         line = self._get_raw_values()
