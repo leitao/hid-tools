@@ -163,8 +163,7 @@ class HidRDescItem(object):
         return self._pending_bytes == 0
 
     def twos_comp(self):
-        if self._rsize:
-            self.value = twos_comp(self.value, self._rsize * 8)
+        self.value = twos_comp(self.value, (self.size - 1) * 8)
         return self.value
 
     @property
