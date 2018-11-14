@@ -66,3 +66,61 @@ class HidUsagePage(dict):
         based on a page ID . This is the same as using the object itself.
         """
         return self
+
+
+class HidUsages(dict):
+    """
+    This is a dictionary wrapper that all HID Usages known to man. Or to
+    this module at least.
+
+    This dict is laid out as ``{page_id : usage_page_object}``
+    (:class:`hidtools.HidUsagePage`)
+
+    This object a dictionary, use like this: ::
+
+        > print(usages[0x01].page_name)
+        Generic Desktop
+        > print(usages.usage_pages[0x01].page_name)
+        Generic Desktop
+        > print(usages[0x01].page_id)
+        1
+        > print(usages.usage_page_from_name('Generic Desktop').page_id)
+        1
+        > print(usages.usage_page_from_page_id(0x01).page_name)
+        Generic Desktop
+    """
+
+    @property
+    def usage_pages(self):
+        """
+        A dictionary mapping `{page_id : object}`.
+        """
+        return self
+
+    def usage_page_from_name(self, page_name):
+        """
+        Look up the usage page based on the page name (e.g. "Generic
+        Desktop").
+
+        :return: the :meth:`hidtools.hid.HidUsagePage` or None
+        """
+        for k, v in self.items():
+            if v.page_name == page_name:
+                return v
+        return None
+
+    def usage_page_from_page_id(self, page_id):
+        """
+        Look up the usage page based on the page ID. This is identical to
+        calling::
+
+                self.usage_pages[page_id]
+
+        except that this function returns None if the page ID is unknown.
+
+        :return: the :meth:`hidtools.hid.HidUsagePage` or None
+        """
+        try:
+            return self[page_id]
+        except KeyError:
+            return None

@@ -98,14 +98,11 @@ for type, items in hid_items.items():
 
 USAGES = hidtools.parse_hut.parse()
 
-USAGE_PAGES = {}
 INV_USAGE_PAGES = {}
 INV_USAGES = {}
 for page_id, usage_page in USAGES.items():
     INV_USAGE_PAGES[page_id] = usage_page.page_name
-    USAGE_PAGES[usage_page.page_name] = page_id
     for k, v in list(usage_page.items()):
-        print(page_id, k)
         INV_USAGES[(page_id << 16) | k] = v
 
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
@@ -223,7 +220,7 @@ class HidRDescItem(object):
             usage = value | up
             if usage in INV_USAGES:
                 descr += f' ({INV_USAGES[usage]})'
-            elif up == USAGE_PAGES['Sensor'] << 16:
+            elif up == USAGES.usage_page_from_name('Sensor').page_id << 16:
                 mod = (usage & 0xF000) >> 8
                 usage &= ~0xF000
                 mod_descr = sensor_mods[mod]
@@ -320,7 +317,7 @@ class HidRDescItem(object):
 
         if isinstance(data, str):
             if name == "Usage Page":
-                value = USAGE_PAGES[data]
+                value = USAGES.usage_page_from_name(data).page_id
                 usage_page = value
             elif name == "Usage":
                 value = USAGES[usage_page].from_name[data]

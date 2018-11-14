@@ -22,7 +22,7 @@
 
 import os
 from parse import parse as _parse
-from hidtools import HidUsagePage
+from hidtools import HidUsagePage, HidUsages
 
 DATA_DIRNAME = "data"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
@@ -91,7 +91,7 @@ def parse():
     Parse all .hut files in the data directory, return a dictionary using
     the Usage Page number and the Usage as dict.
     """
-    usages = {}
+    usages = HidUsages()
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.hut'):
             with open(os.path.join(DATA_DIR, filename), 'r') as f:
