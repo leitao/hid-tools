@@ -212,7 +212,8 @@ class HidRDescItem(object):
             return r
         return f'{r} {" ".join(data)}'
 
-    def get_raw_values(self):
+    def _get_raw_values(self):
+        """The raw values as comma-separated hex numbers"""
         data = str(self)
         # prefix each individual value by "0x" and insert "," in between
         data = f'0x{data.replace(" ", ", 0x")},'
@@ -520,7 +521,7 @@ class HidRDescItem(object):
         Format the hid item in a C-style format.
         """
         # offset = self.index_in_report
-        line = self.get_raw_values()
+        line = self._get_raw_values()
         line += "\t" * (int((40 - len(line)) / 8))
 
         descr, indent = self.get_human_descr(indent)
@@ -535,7 +536,7 @@ class HidRDescItem(object):
         Format the hid item in a C-style format.
         """
         offset = self.index_in_report
-        line = self.get_raw_values()
+        line = self._get_raw_values()
         line += " " * (30 - len(line))
 
         descr, indent = self.get_human_descr(indent)
