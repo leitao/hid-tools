@@ -117,50 +117,80 @@ class ParseError(Exception):
 
 
 class HidRDescItem(object):
+    """Represents one item in the Report Descriptor. This is a variable-sized
+    element with one header byte and 0, 1, 2, 4 payload bytes.
 
-    def __init__(self, value):
-        self.__parse(value)
-        self.index_in_report = 0
+    :param int index_in_report:
+        The index within the report descritor
+    :param int hid:
+        The numerical hid type (e.g. ``0b00000100`` for Usage Page)
+    :param int value:
+        The 8, 16, or 32 bit value
+    :param list raw_values:
+        The payload bytes' raw values, LSB first
 
-    def __parse(self, value):
-        self.r = r = value
-        self.raw_value = []
-        self.hid = r & 0xfc
+
+    These items are usually parsted from a report descriptor, see
+    :meth:`hidtools.hid.HidRDescItem.from_bytes`. The report descriptor
+    bytes are::
+
+                H P P H H P H P
+
+    where each header byte looks like this
+
+    +---------+---+---+---+---+---+---+---+---+
+    | bit     | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+    +=========+===+===+===+===+===+===+===+===+
+    |         |   hid item type       | size  |
+    +---------+-----------------------+-------+
+
+    .. note:: a size of 0x3 means payload size 4
+
+    To create a HidRDescItem from a human-readable description, use
+    :meth:`hidtools.hid.HidRDescItem.from_human_descr`.
+
+
+
+    .. attribute:: index_in_report
+
+        The numerical index of this item in the report descriptor.
+
+    .. attribute:: raw_value
+
+        A list of the payload's raw values
+
+    .. attribute:: hid
+
+        The hid item as number (e.g. ``0b00000100`` for Usage Page)
+
+    .. attribute:: item
+
+        The hid item as string (e.g. "Usage Page")
+
+    .. attribute:: value
+
+        The payload value as single number
+
+    """
+    def __init__(self, index_in_report, hid, value, raw_values):
+        self.index_in_report = index_in_report
+        self.raw_value = raw_values
+        self.hid = hid
+        self.value = value
         try:
             self.item = inv_hid[self.hid]
         except:
-            error = f'error while parsing {value:02x}'
-            if self.hid == 0:
-                raise ParseError(error)
-            else:
-                raise KeyError(error)
-        self._rsize = r & 0x3
-        if self._rsize == 3:
-            self._rsize = 4
-        self._pending_bytes = self._rsize
-        self.value = 0
+            error = f'error while parsing {hid:02x}'
+            raise KeyError(error)
 
-    def feed(self, value):
-        "return True if the value was accepted by the item"
-        if self._pending_bytes <= 0:
-            raise ParseError("this item is already full")
-        self.raw_value.append(value)
-        self.value |= value << (self._rsize - self._pending_bytes) * 8
-        self._pending_bytes -= 1
-
-        if self._pending_bytes == 0:
-            if self.item in ("Logical Minimum",
-                             "Physical Minimum",
-                             # "Logical Maximum",
-                             # "Physical Maximum",
-                             ):
-                self.twos_comp()
-            if self.item == "Unit Exponent" and self.value > 7:
-                self.value -= 16
-
-    def completed(self):
-        # if index is null, then we have consumed all the incoming data
-        return self._pending_bytes == 0
+        if self.item in ("Logical Minimum",
+                         "Physical Minimum",
+                         # "Logical Maximum",
+                         # "Physical Maximum",
+                         ):
+            self.twos_comp()
+        if self.item == "Unit Exponent" and self.value > 7:
+            self.value -= 16
 
     def twos_comp(self):
         self.value = twos_comp(self.value, (self.size - 1) * 8)
@@ -168,11 +198,16 @@ class HidRDescItem(object):
 
     @property
     def size(self):
+        """The size in bytes, including header byte"""
         return 1 + len(self.raw_value)
 
     def __repr__(self):
         data = [f'{i:02x}' for i in self.raw_value]
-        r = f'{self.r:02x}'
+        if len(self.raw_value) == 4:
+            h = self.hid | 0x3
+        else:
+            h = self.hid | len(self.raw_value)
+        r = f'{h:02x}'
         if not len(data):
             return r
         return f'{r} {" ".join(data)}'
@@ -288,6 +323,80 @@ class HidRDescItem(object):
         return ' ' * eff_indent + descr, indent
 
     @classmethod
+    def _one_item_from_bytes(cls, rdesc):
+        """
+        Parses a single (the first) item from the given report descriptor.
+
+        :param rdesc: a series of bytes representing the report descriptor
+
+        :returns: a single HidRDescItem from the first ``item.size`` bytes
+                of the descriptor
+
+        .. note:: ``item.index_in_report`` is always 0 when using this function
+        """
+        idx = 0
+        header = rdesc[idx]
+        if header == 0 and idx == len(rdesc) - 1:
+            # some devices present a trailing 0, skipping it
+            return None
+
+        index_in_report = 0  # always zero, oh well
+        size = header & 0x3
+        if size == 3:
+            size = 4
+        hid = header & 0xfc
+        if hid == 0:
+            raise ParseError(f'Unexpected HID type 0 in {header:02x}')
+
+        value = 0
+        raw_values = []
+
+        idx += 1
+        if size >= 1:
+            v = rdesc[idx]
+            idx += 1
+            raw_values.append(v)
+            value |= v
+        if size >= 2:
+            v = rdesc[idx]
+            idx += 1
+            raw_values.append(v)
+            value |= v << 8
+        if size >= 4:
+            v = rdesc[idx]
+            idx += 1
+            raw_values.append(v)
+            value |= v << 16
+            v = rdesc[idx]
+            idx += 1
+            raw_values.append(v)
+            value |= v << 24
+
+        return HidRDescItem(index_in_report, hid, value, raw_values)
+
+    @classmethod
+    def from_bytes(cls, rdesc):
+        """
+        Parses a series of bytes into items.
+
+        :param list rdesc: a series of bytes that are a HID report
+                descriptor
+
+        :returns: a list of items representing this report descriptor
+        """
+        items = []
+        idx = 0
+        while idx < len(rdesc):
+            item = HidRDescItem._one_item_from_bytes(rdesc[idx:])
+            if item is None:
+                break
+            item.index_in_report = idx
+            items.append(item)
+            idx += item.size
+
+        return items
+
+    @classmethod
     def from_human_descr(cls, line, usage_page):
         data = None
         if '(' in line:
@@ -381,29 +490,28 @@ class HidRDescItem(object):
         else:
             value = 0
         tag = hid_items[hid_type[name]][name]
-        size = 0
         v_count = 0
         if bit_size == 0:
             pass
         elif bit_size <= 8:
-            size = 1
             v_count = 1
         elif bit_size <= 16:
-            size = 2
             v_count = 2
         else:
-            size = 3
             v_count = 4
 
         if name == "Unit Exponent" and value < 0:
             value += 16
             value = to_twos_comp(value, v_count * 8)
 
-        item = HidRDescItem(tag | size)
-        item.usage_page = usage_page << 16
-
+        v = value
+        vs = []
         for i in range(v_count):
-            item.feed((value >> (i * 8)) & 0xff)
+            vs.append(v & 0xff)
+            v >>= 8
+
+        item = HidRDescItem(0, tag, value, vs)
+        item.usage_page = usage_page << 16
 
         return item
 
@@ -907,23 +1015,11 @@ class ReportDescriptor(object):
         item.index_in_report = self.rdesc_size
         self.rdesc_size += item.size
 
-    def consume(self, value):
-        """ item is an int8 """
-        if not self.current_item:
-            # initial state
-            self.current_item = HidRDescItem(value)
-        else:
-            # try to feed the value to the current item
-            self.current_item.feed(value)
-        if self.current_item.completed():
-            rdesc_item = self.current_item
+    def consume(self, items):
+        # FIXME: move to constructor?
+        for rdesc_item in items:
             self.append(rdesc_item)
-
             self.parse_item(rdesc_item)
-            self.current_item = None
-
-            return rdesc_item
-        return None
 
     def get(self, reportID, reportSize):
         try:
@@ -1069,6 +1165,7 @@ class ReportDescriptor(object):
     def data_txt(self):
         return " ".join([str(i) for i in self.rdesc_items])
 
+
     @classmethod
     def parse_rdesc(cls, rdesc):
         """
@@ -1079,14 +1176,10 @@ class ReportDescriptor(object):
 
         if isinstance(rdesc, str):
             rdesc = [int(r, 16) for r in rdesc.split()[1:]]
+        items = HidRDescItem.from_bytes(rdesc)
 
         rdesc_object = ReportDescriptor()
-        for i, v in enumerate(rdesc):
-            if i == len(rdesc) - 1 and v == 0:
-                # some device present a trailing 0, skipping it
-                break
-            rdesc_object.consume(v)
-
+        rdesc_object.consume(items)
         return rdesc_object
 
     @classmethod
