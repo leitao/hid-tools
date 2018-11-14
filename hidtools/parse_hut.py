@@ -68,7 +68,7 @@ def parse():
                 try:
                     idx, name, usages_list = parse_usages(f)
                     inv_usages_list = dict([(v, k) for k, v, in usages_list.items()])
-                    usages[idx] = (name, filename, usages_list, inv_usages_list)
+                    usages[idx] = (name, usages_list, inv_usages_list)
                 except:
                     print(filename)
                     raise

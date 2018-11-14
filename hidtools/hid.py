@@ -100,7 +100,7 @@ usages = hidtools.parse_hut.parse()
 usage_pages = {}
 inv_usage_pages = {}
 inv_usages = {}
-for usage, (name, filename, usage_list, inv_usages_list) in usages.items():
+for usage, (name, usage_list, inv_usages_list) in usages.items():
     inv_usage_pages[usage] = name
     usage_pages[name] = usage
     for k, v in list(usage_list.items()):
@@ -321,7 +321,7 @@ class HidRDescItem(object):
                 value = usage_pages[data]
                 usage_page = value
             elif name == "Usage":
-                value = usages[usage_page][3][data]
+                value = usages[usage_page][2][data]
             elif name == "Collection":
                 value = collections[data.upper()]
             elif name in 'Input Output Feature':
