@@ -98,10 +98,8 @@ for type, items in hid_items.items():
 
 USAGES = hidtools.parse_hut.parse()
 
-INV_USAGE_PAGES = {}
 INV_USAGES = {}
 for page_id, usage_page in USAGES.items():
-    INV_USAGE_PAGES[page_id] = usage_page.page_name
     for k, v in list(usage_page.items()):
         INV_USAGES[(page_id << 16) | k] = v
 
@@ -212,9 +210,9 @@ class HidRDescItem(object):
         elif item == "End Collection":
             indent -= 1
         elif item == "Usage Page":
-            if value in INV_USAGE_PAGES:
-                descr += f' ({INV_USAGE_PAGES[value]})'
-            else:
+            try:
+                descr += f' ({USAGES[value].page_name})'
+            except KeyError:
                 descr += f' (Vendor Usage Page 0x{value:02x})'
         elif item == "Usage":
             usage = value | up
@@ -499,8 +497,8 @@ class HidField(object):
 
     def _usage_name(self, usage):
         usage_page = usage >> 16
-        if usage_page in INV_USAGE_PAGES and \
-                INV_USAGE_PAGES[usage_page] == "Button":
+        if usage_page in USAGES and \
+            USAGES[usage_page].page_name == "Button":
             usage = f'B{str(usage & 0xFF)}'
         elif usage in INV_USAGES:
             usage = INV_USAGES[usage]
@@ -597,8 +595,10 @@ class HidField(object):
     def usage_page_name(self):
         usage_page_name = ''
         usage_page = self.usage_page >> 16
-        if usage_page in INV_USAGE_PAGES:
-            usage_page_name = INV_USAGE_PAGES[usage_page]
+        try:
+            usage_page_name = USAGES[usage_page].page_name
+        except KeyError:
+            pass
         return usage_page_name
 
     @classmethod
