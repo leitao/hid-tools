@@ -167,6 +167,7 @@ class HidRDescItem(object):
             self.value = twos_comp(self.value, self._rsize * 8)
         return self.value
 
+    @property
     def size(self):
         return 1 + len(self.raw_value)
 
@@ -906,7 +907,7 @@ class ReportDescriptor(object):
     def append(self, item):
         self.rdesc_items.append(item)
         item.index_in_report = self.rdesc_size
-        self.rdesc_size += item.size()
+        self.rdesc_size += item.size
 
     def consume(self, value):
         """ item is an int8 """
