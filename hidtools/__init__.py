@@ -74,7 +74,7 @@ class HidUsages(dict):
     this module at least.
 
     This dict is laid out as ``{page_id : usage_page_object}``
-    (:class:`hidtools.HidUsagePage`)
+    (:class:`HidUsagePage`)
 
     This object a dictionary, use like this: ::
 
@@ -102,7 +102,7 @@ class HidUsages(dict):
         Look up the usage page based on the page name (e.g. "Generic
         Desktop").
 
-        :return: the :meth:`hidtools.hid.HidUsagePage` or None
+        :return: the :meth:`HidUsagePage` or None
         """
         for k, v in self.items():
             if v.page_name == page_name:
@@ -118,7 +118,7 @@ class HidUsages(dict):
 
         except that this function returns None if the page ID is unknown.
 
-        :return: the :meth:`hidtools.hid.HidUsagePage` or None
+        :return: the :meth:`HidUsagePage` or None
         """
         try:
             return self[page_id]

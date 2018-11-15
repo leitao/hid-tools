@@ -119,7 +119,7 @@ class _HidRDescItem(object):
 
 
     These items are usually parsted from a report descriptor, see
-    :meth:`hidtools.hid._HidRDescItem.from_bytes`. The report descriptor
+    :meth:`from_bytes`. The report descriptor
     bytes are::
 
                 H P P H H P H P
@@ -135,7 +135,7 @@ class _HidRDescItem(object):
     .. note:: a size of 0x3 means payload size 4
 
     To create a _HidRDescItem from a human-readable description, use
-    :meth:`hidtools.hid._HidRDescItem.from_human_descr`.
+    :meth:`from_human_descr`.
 
 
 
@@ -806,9 +806,9 @@ class HidField(object):
 class HidReport(object):
     """
     Represents a HidReport, one of ``Input``, ``Output``, ``Feature``. A
-    :class:`hidtools.hid.ReportDescriptor` may contain one or more
+    :class:`ReportDescriptor` may contain one or more
     HidReports of different types. These comprise of a number of
-    :class:`hidtools.hid.HidField` making up the exact description of a
+    :class:`HidField` making up the exact description of a
     report.
 
     :param int report_ID: the report ID
@@ -830,9 +830,9 @@ class HidReport(object):
 
     def append(self, field):
         """
-        Add a :meth:`hidtools.hid.HidField` to this report
+        Add a :class:`HidField` to this report
 
-        :param hidtools.hid.HidField field: the object to add to this report
+        :param HidField field: the object to add to this report
         """
         self.fields.append(field)
         field.start = self._bitsize
@@ -840,7 +840,7 @@ class HidReport(object):
 
     def extend(self, fields):
         """
-        Extend this report by the list of :meth:`hidtools.hid.HidField`
+        Extend this report by the list of :class:`HidField`
         objects
 
         :param list fields: a list of objects to append to this report
@@ -1036,11 +1036,11 @@ class ReportDescriptor(object):
     When creating a ``ReportDescriptor`` object,
 
     - if your source is a stream of bytes, use
-      :meth:`hidtools.hid.ReportDescriptor.from_bytes`
+      :meth:`from_bytes`
     - if your source is a human-readable descriptor, use
-      :meth:`hidtools.hid.ReportDescriptor.from_human_descr`
+      :meth:`from_human_descr`
 
-    :param hidtools.hid._HidRDescItem items: the items of this report
+    :param _HidRDescItem items: the items of this report
          descriptor
 
     .. attribute:: win8
@@ -1049,15 +1049,15 @@ class ReportDescriptor(object):
 
     .. attribute:: input_reports
 
-        All :class:`hidtools.hid.HidReport` of type ``Input``, addressable by the report ID
+        All :class:`HidReport` of type ``Input``, addressable by the report ID
 
     .. attribute:: output_reports
 
-        All :class:`hidtools.hid.HidReport` of type ``Output``, addressable by the report ID
+        All :class:`HidReport` of type ``Output``, addressable by the report ID
 
     .. attribute:: feature_reports
 
-        All :class:`hidtools.hid.HidReport` of type ``Feature``, addressable by the report ID
+        All :class:`HidReport` of type ``Feature``, addressable by the report ID
     """
     class _Globals(object):
         """

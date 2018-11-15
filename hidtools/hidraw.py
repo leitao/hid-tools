@@ -203,7 +203,7 @@ class HidRawDevice(object):
     def dump(self, file=sys.stdout):
         """
         Dump the state of this device. This resets the offset used in
-        calling :meth:`hidtools.hidraw.HidRawDevice.redump`.
+        calling :meth:`redump`.
 
         After calling ``dump()``, ``redump()`` will continue to print from
         where ``dump()`` left off.
@@ -227,7 +227,7 @@ class HidRawDevice(object):
         The device remembers what has been printed, a subsequent call
         to this function will only print those events not yet printed. 
 
-        To re-start, use :meth:`hidtools.hidraw.HidRawDevice.dump`.
+        To re-start, use :meth:`dump`.
 
         :param File file: the output file to write to
         """
