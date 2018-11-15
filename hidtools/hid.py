@@ -998,7 +998,12 @@ class ReportDescriptor(object):
     :meth:`hidtools.hid.ReportDescriptor.from_human_descr`).
 
     """
-    class Globals(object):
+    class _Globals(object):
+        """
+        HID report descriptors uses a stack-based model where some values
+        are pushed to the global state and apply to all subsequent items
+        until changed or reset.
+        """
         def __init__(self, other=None):
             self.usage_page = 0
             self.logical = None
@@ -1023,7 +1028,7 @@ class ReportDescriptor(object):
         self.feature_reports = {}
         self.output_reports = {}
         self.index = 1  # 0 is the size
-        self.glob = ReportDescriptor.Globals()
+        self.glob = ReportDescriptor._Globals()
         self.global_stack = []
         self.usages = []
         self.usage_min = 0
@@ -1101,7 +1106,7 @@ class ReportDescriptor(object):
             self.report_ID = value
         elif item == "Push":
             self.global_stack.append(self.glob)
-            self.glob = ReportDescriptor.Globals(self.glob)
+            self.glob = ReportDescriptor._Globals(self.glob)
         elif item == "Pop":
             self.glob = self.global_stack.pop()
         elif item == "Usage Page":
