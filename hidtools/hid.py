@@ -1009,6 +1009,22 @@ class ReportDescriptor(object):
 
     :param hidtools.hid.HidRDescItem items: the items of this report
          descriptor
+
+    .. attribute:: win8
+
+        True if the device is Windows8 compatible, False otherwise
+
+    .. attribute:: input_reports
+
+        All input reports addressable by the report ID
+
+    .. attribute:: output_reports
+
+        All output reports addressable by the report ID
+
+    .. attribute:: feature_reports
+
+        All feature reports addressable by the report ID
     """
     class _Globals(object):
         """
