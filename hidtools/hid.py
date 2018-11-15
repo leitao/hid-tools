@@ -101,6 +101,7 @@ USAGES = hidtools.parse_hut.parse()
 
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
+
 class ParseError(Exception):
     pass
 
