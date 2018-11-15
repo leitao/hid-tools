@@ -106,7 +106,7 @@ class ParseError(Exception):
     pass
 
 
-class HidRDescItem(object):
+class _HidRDescItem(object):
     """Represents one item in the Report Descriptor. This is a variable-sized
     element with one header byte and 0, 1, 2, 4 payload bytes.
 
@@ -121,7 +121,7 @@ class HidRDescItem(object):
 
 
     These items are usually parsted from a report descriptor, see
-    :meth:`hidtools.hid.HidRDescItem.from_bytes`. The report descriptor
+    :meth:`hidtools.hid._HidRDescItem.from_bytes`. The report descriptor
     bytes are::
 
                 H P P H H P H P
@@ -136,8 +136,8 @@ class HidRDescItem(object):
 
     .. note:: a size of 0x3 means payload size 4
 
-    To create a HidRDescItem from a human-readable description, use
-    :meth:`hidtools.hid.HidRDescItem.from_human_descr`.
+    To create a _HidRDescItem from a human-readable description, use
+    :meth:`hidtools.hid._HidRDescItem.from_human_descr`.
 
 
 
@@ -332,7 +332,7 @@ class HidRDescItem(object):
 
         :param rdesc: a series of bytes representing the report descriptor
 
-        :returns: a single HidRDescItem from the first ``item.size`` bytes
+        :returns: a single _HidRDescItem from the first ``item.size`` bytes
                 of the descriptor
 
         .. note:: ``item.index_in_report`` is always 0 when using this function
@@ -375,7 +375,7 @@ class HidRDescItem(object):
             raw_values.append(v)
             value |= v << 24
 
-        return HidRDescItem(index_in_report, hid, value, raw_values)
+        return _HidRDescItem(index_in_report, hid, value, raw_values)
 
     @classmethod
     def from_bytes(cls, rdesc):
@@ -390,7 +390,7 @@ class HidRDescItem(object):
         items = []
         idx = 0
         while idx < len(rdesc):
-            item = HidRDescItem._one_item_from_bytes(rdesc[idx:])
+            item = _HidRDescItem._one_item_from_bytes(rdesc[idx:])
             if item is None:
                 break
             item.index_in_report = idx
@@ -532,7 +532,7 @@ class HidRDescItem(object):
             vs.append(v & 0xff)
             v >>= 8
 
-        item = HidRDescItem(0, tag, value, vs)
+        item = _HidRDescItem(0, tag, value, vs)
         item.usage_page = usage_page << 16
 
         return item
@@ -1007,7 +1007,7 @@ class ReportDescriptor(object):
     - if your source is a human-readable descriptor, use
       :meth:`hidtools.hid.ReportDescriptor.from_human_descr`
 
-    :param hidtools.hid.HidRDescItem items: the items of this report
+    :param hidtools.hid._HidRDescItem items: the items of this report
          descriptor
 
     .. attribute:: win8
@@ -1264,7 +1264,7 @@ class ReportDescriptor(object):
 
         if isinstance(rdesc, str):
             rdesc = [int(r, 16) for r in rdesc.split()[1:]]
-        items = HidRDescItem.from_bytes(rdesc)
+        items = _HidRDescItem.from_bytes(rdesc)
 
         return ReportDescriptor(items)
 
@@ -1295,7 +1295,7 @@ class ReportDescriptor(object):
         for line in rdesc_str.splitlines():
             if line.strip() == '':
                 continue
-            item = HidRDescItem.from_human_descr(line, usage_page)
+            item = _HidRDescItem.from_human_descr(line, usage_page)
             usage_page = item.usage_page >> 16
             items.append(item)
 
