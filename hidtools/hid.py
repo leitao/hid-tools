@@ -724,11 +724,11 @@ class HidField(object):
             self._set_value(report, v, idx)
 
     @property
-    def array(self):
+    def is_array(self):
         return not (self.type & (0x1 << 1))  # Variable
 
     @property
-    def const(self):
+    def is_const(self):
         return self.type & (0x1 << 0)
 
     @property
@@ -911,7 +911,7 @@ class HidReport(object):
         return usage
 
     def _format_one_event(self, data, global_data, hidInputItem, r):
-        if hidInputItem.const:
+        if hidInputItem.is_const:
             return
 
         # FIXME: arrays?
@@ -970,14 +970,14 @@ class HidReport(object):
             sep = '/'
         prev = None
         for report_item in self:
-            if report_item.const:
+            if report_item.is_const:
                 output += f'{sep} # '
                 continue
 
             # get the value and consumes bits
             values = report_item.get_values(data)
 
-            if not report_item.array:
+            if not report_item.is_array:
                 value_format = "{:d}"
                 if report_item.size > 1:
                     value_format = f'{{:{str(len(str(1 << report_item.size)) + 1)}d}}'
