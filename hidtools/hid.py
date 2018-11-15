@@ -1181,11 +1181,12 @@ class ReportDescriptor(object):
     def dump_raw(self, dumpfile):
         dumpfile.write(self.data_txt())
 
+    @property
     def size(self):
-        size = 0
-        for rdesc_item in self.rdesc_items:
-            size += rdesc_item.size()
-        return size
+        """
+        Returns the size of the report descriptor in bytes.
+        """
+        return sum([item.size for item in self.rdesc_items])
 
     def data(self):
         string = self.data_txt()
