@@ -25,7 +25,7 @@ import sys
 import hidtools.hid
 
 
-def parse_rdesc(rdesc, type_output, dump_file):
+def parse_rdesc(rdesc, output_type, dump_file):
     """
     Parse the given report descriptor and outputs it to stdout if show is True.
     Returns:

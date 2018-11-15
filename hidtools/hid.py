@@ -1211,12 +1211,20 @@ class ReportDescriptor(object):
             self.local.usage_min = 0
             self.local.usage_max = 0
 
-    def dump(self, dump_file, type_output='default'):
+    def dump(self, dump_file, output_type='default'):
+        """
+        Write this ReportDescriptor into the given file
+
+        :param File dump_file: the file to write to
+        :param str output_type: the output format, one of "default" or "kernel"
+        """
+        assert output_type in ["default", "kernel"]
+
         indent = 0
         for rdesc_item in self.rdesc_items:
-            if type_output == "default":
+            if output_type == "default":
                 indent = rdesc_item.dump_rdesc_array(indent, dump_file)
-            else:
+            elif output_type == "kernel":
                 indent = rdesc_item.dump_rdesc_kernel(indent, dump_file)
 
     @property
