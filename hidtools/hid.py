@@ -1179,7 +1179,7 @@ class ReportDescriptor(object):
                 indent = rdesc_item.dump_rdesc_kernel(indent, dump_file)
 
     def dump_raw(self, dumpfile):
-        dumpfile.write(self.data_txt())
+        dumpfile.write(self._data_txt())
 
     @property
     def size(self):
@@ -1189,11 +1189,11 @@ class ReportDescriptor(object):
         return sum([item.size for item in self.rdesc_items])
 
     def data(self):
-        string = self.data_txt()
+        string = self._data_txt()
         data = [int(i, 16) for i in string.split()]
         return data
 
-    def data_txt(self):
+    def _data_txt(self):
         return " ".join([str(i) for i in self.rdesc_items])
 
     @classmethod
