@@ -178,7 +178,7 @@ class Digitizer(base.UHIDTest):
         return self.input_nodes[self.application]
 
     def get_report(self, req, rnum, rtype):
-        if rtype != self.UHID_FEATURE_REPORT:
+        if rtype != self._UHID_FEATURE_REPORT:
             self.call_get_report(req, [], 1)
             return
 
@@ -200,7 +200,7 @@ class Digitizer(base.UHIDTest):
         self.call_get_report(req, r, 0)
 
     def set_report(self, req, rnum, rtype, size, data):
-        if rtype != self.UHID_FEATURE_REPORT:
+        if rtype != self._UHID_FEATURE_REPORT:
             self.call_set_report(req, 1)
 
         rdesc = None

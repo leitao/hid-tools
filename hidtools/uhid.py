@@ -35,24 +35,24 @@ class UHIDIncompleteException(Exception):
 
 class UHIDDevice(object):
     __UHID_LEGACY_CREATE = 0
-    UHID_DESTROY = 1
-    UHID_START = 2
-    UHID_STOP = 3
-    UHID_OPEN = 4
-    UHID_CLOSE = 5
-    UHID_OUTPUT = 6
+    _UHID_DESTROY = 1
+    _UHID_START = 2
+    _UHID_STOP = 3
+    _UHID_OPEN = 4
+    _UHID_CLOSE = 5
+    _UHID_OUTPUT = 6
     __UHID_LEGACY_OUTPUT_EV = 7
     __UHID_LEGACY_INPUT = 8
-    UHID_GET_REPORT = 9
-    UHID_GET_REPORT_REPLY = 10
-    UHID_CREATE2 = 11
-    UHID_INPUT2 = 12
-    UHID_SET_REPORT = 13
-    UHID_SET_REPORT_REPLY = 14
+    _UHID_GET_REPORT = 9
+    _UHID_GET_REPORT_REPLY = 10
+    _UHID_CREATE2 = 11
+    _UHID_INPUT2 = 12
+    _UHID_SET_REPORT = 13
+    _UHID_SET_REPORT_REPLY = 14
 
-    UHID_FEATURE_REPORT = 0
-    UHID_OUTPUT_REPORT = 1
-    UHID_INPUT_REPORT = 2
+    _UHID_FEATURE_REPORT = 0
+    _UHID_OUTPUT_REPORT = 1
+    _UHID_INPUT_REPORT = 2
 
     polling_functions = {}
     poll = select.poll()
@@ -205,7 +205,7 @@ class UHIDDevice(object):
 
     def call_set_report(self, req, err):
         buf = struct.pack('< L L H',
-                          UHIDDevice.UHID_SET_REPORT_REPLY,
+                          UHIDDevice._UHID_SET_REPORT_REPLY,
                           req,
                           err)
         os.write(self._fd, buf)
@@ -213,7 +213,7 @@ class UHIDDevice(object):
     def call_get_report(self, req, data, err):
         data = bytes(data)
         buf = struct.pack('< L L H H 4096s',
-                          UHIDDevice.UHID_GET_REPORT_REPLY,
+                          UHIDDevice._UHID_GET_REPORT_REPLY,
                           req,
                           err,
                           len(data),
@@ -223,7 +223,7 @@ class UHIDDevice(object):
     def call_input_event(self, data):
         data = bytes(data)
         buf = struct.pack('< L H 4096s',
-                          UHIDDevice.UHID_INPUT2,
+                          UHIDDevice._UHID_INPUT2,
                           len(data),
                           data)
         os.write(self._fd, buf)
@@ -251,7 +251,7 @@ class UHIDDevice(object):
             raise UHIDIncompleteException("missing uhid initialization")
 
         buf = struct.pack('< L 128s 64s 64s H H L L L L 4096s',
-                          UHIDDevice.UHID_CREATE2,
+                          UHIDDevice._UHID_CREATE2,
                           bytes(self._name, 'utf-8'),  # name
                           bytes(self._phys, 'utf-8'),  # phys
                           bytes(self.uniq, 'utf-8'),  # uniq
@@ -270,7 +270,7 @@ class UHIDDevice(object):
     def destroy(self):
         self.ready = False
         buf = struct.pack('< L',
-                          UHIDDevice.UHID_DESTROY)
+                          UHIDDevice._UHID_DESTROY)
         os.write(self._fd, buf)
 
     def start(self, flags):
@@ -300,22 +300,22 @@ class UHIDDevice(object):
         buf = os.read(self._fd, 4380)
         assert len(buf) == 4380
         evtype = struct.unpack_from('< L', buf)[0]
-        if evtype == UHIDDevice.UHID_START:
+        if evtype == UHIDDevice._UHID_START:
             ev, flags = struct.unpack_from('< L Q', buf)
             self.start(flags)
-        elif evtype == UHIDDevice.UHID_OPEN:
+        elif evtype == UHIDDevice._UHID_OPEN:
             self._open()
-        elif evtype == UHIDDevice.UHID_STOP:
+        elif evtype == UHIDDevice._UHID_STOP:
             self._stop()
-        elif evtype == UHIDDevice.UHID_CLOSE:
+        elif evtype == UHIDDevice._UHID_CLOSE:
             self._close()
-        elif evtype == UHIDDevice.UHID_SET_REPORT:
+        elif evtype == UHIDDevice._UHID_SET_REPORT:
             ev, req, rnum, rtype, size, data = struct.unpack_from('< L L B B H 4096s', buf)
             self._set_report(req, rnum, rtype, size, data)
-        elif evtype == UHIDDevice.UHID_GET_REPORT:
+        elif evtype == UHIDDevice._UHID_GET_REPORT:
             ev, req, rnum, rtype = struct.unpack_from('< L L B B', buf)
             self._get_report(req, rnum, rtype)
-        elif evtype == UHIDDevice.UHID_OUTPUT:
+        elif evtype == UHIDDevice._UHID_OUTPUT:
             ev, data, size, rtype = struct.unpack_from('< L 4096s H B', buf)
             self._output_report(data, size, rtype)
 
