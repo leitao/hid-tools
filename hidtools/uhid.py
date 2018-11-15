@@ -144,7 +144,7 @@ class UHIDDevice(object):
         self._get_report = self.get_report
         self._output_report = self.output_report
         self._udev_device = None
-        self.ready = False
+        self._ready = False
         self.device_nodes = []
         self.uniq = f'uhid_{str(uuid.uuid4())}'
         self._append_fd_to_poll(self._fd, self._process_one_event)
@@ -168,7 +168,10 @@ class UHIDDevice(object):
     def _udev_event(self, event):
         # we do not need to process the udev events if the device is being
         # removed
-        if event.action == 'add' and self.ready:
+        if not self._ready:
+            return
+
+        if event.action == 'add':
             device = event
 
             try:
@@ -333,13 +336,13 @@ class UHIDDevice(object):
 
         n = os.write(self._fd, buf)
         assert n == len(buf)
-        self.ready = True
+        self._ready = True
 
     def destroy(self):
         """
         Destroy the device.
         """
-        self.ready = False
+        self._ready = False
         buf = struct.pack('< L',
                           UHIDDevice._UHID_DESTROY)
         os.write(self._fd, buf)
