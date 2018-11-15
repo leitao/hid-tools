@@ -1039,7 +1039,6 @@ class ReportDescriptor(object):
         self.input_reports = {}
         self.feature_reports = {}
         self.output_reports = {}
-        self.index = 1  # 0 is the size
         self.glob = ReportDescriptor._Globals()
         self.global_stack = []
         self.usages = []
