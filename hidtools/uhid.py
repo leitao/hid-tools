@@ -127,7 +127,7 @@ class UHIDDevice(object):
 
         for d in cls.devices:
             if d.udev_device is not None and d.udev_device.sys_path in event.sys_path:
-                d.udev_event(event)
+                d._udev_event(event)
 
     def __init__(self):
         self._name = None
@@ -160,22 +160,25 @@ class UHIDDevice(object):
         os.close(self._fd)
 
     def udev_event(self, event):
-        if event.action != 'add':
-            return
+        """
+        Callback invoked on a udev event.
+        """
+        pass
 
+    def _udev_event(self, event):
         # we do not need to process the udev events if the device is being
         # removed
-        if not self.ready:
-            return
+        if event.action == 'add' and self.ready:
+            device = event
 
-        device = event
+            try:
+                devname = device.properties['DEVNAME']
+                if devname.startswith('/dev/input/event'):
+                    self.device_nodes.append(devname)
+            except KeyError:
+                pass
 
-        try:
-            devname = device.properties['DEVNAME']
-            if devname.startswith('/dev/input/event'):
-                self.device_nodes.append(devname)
-        except KeyError:
-            pass
+        self.udev_event(event)
 
     @property
     def fd(self):
