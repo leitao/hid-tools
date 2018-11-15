@@ -993,11 +993,15 @@ class ReportDescriptor(object):
     """
     Represents a fully parsed HID report descriptor.
 
-    A report descriptor can be loaded from two sources, either a stream of
-    bytes (see :meth:`hidtools.hid.ReportDescriptor.from_bytes`) or from a
-    human-readable descriptor (see
-    :meth:`hidtools.hid.ReportDescriptor.from_human_descr`).
+    When creating a ``ReportDescriptor`` object,
 
+    - if your source is a stream of bytes, use
+      :meth:`hidtools.hid.ReportDescriptor.from_bytes`
+    - if your source is a human-readable descriptor, use
+      :meth:`hidtools.hid.ReportDescriptor.from_human_descr`
+
+    :param hidtools.hid.HidRDescItem items: the items of this report
+         descriptor
     """
     class _Globals(object):
         """
@@ -1024,7 +1028,7 @@ class ReportDescriptor(object):
                 self.count = other.count
                 self.item_size = other.item_size
 
-    def __init__(self):
+    def __init__(self, items):
         self.input_reports = {}
         self.feature_reports = {}
         self.output_reports = {}
@@ -1038,20 +1042,14 @@ class ReportDescriptor(object):
         self.current_report = {}
         self.report_ID = -1
         self.win8 = False
-        self.rdesc_items = []
-        self.rdesc_size = 0
+        self.rdesc_items = items
         self.current_item = None
 
-    def append(self, item):
-        self.rdesc_items.append(item)
-        item.index_in_report = self.rdesc_size
-        self.rdesc_size += item.size
-
-    def consume(self, items):
-        # FIXME: move to constructor?
-        for rdesc_item in items:
-            self.append(rdesc_item)
-            self.parse_item(rdesc_item)
+        index_in_report = 0
+        for item in items:
+            item.index_in_report = index_in_report
+            index_in_report += item.size
+            self._parse_item(item)
 
     def get(self, reportID, reportSize):
         try:
@@ -1097,7 +1095,7 @@ class ReportDescriptor(object):
                 report_lists[type][self.report_ID] = cur
         return cur
 
-    def parse_item(self, rdesc_item):
+    def _parse_item(self, rdesc_item):
         # store current usage_page in rdesc_item
         rdesc_item.usage_page = self.glob.usage_page
         item = rdesc_item.item
@@ -1219,9 +1217,7 @@ class ReportDescriptor(object):
             rdesc = [int(r, 16) for r in rdesc.split()[1:]]
         items = HidRDescItem.from_bytes(rdesc)
 
-        rdesc_object = ReportDescriptor()
-        rdesc_object.consume(items)
-        return rdesc_object
+        return ReportDescriptor(items)
 
     @classmethod
     def from_human_descr(cls, rdesc_str):
@@ -1246,16 +1242,15 @@ class ReportDescriptor(object):
 
         """
         usage_page = 0
-        rdesc_object = ReportDescriptor()
+        items = []
         for line in rdesc_str.splitlines():
             if line.strip() == '':
                 continue
             item = HidRDescItem.from_human_descr(line, usage_page)
             usage_page = item.usage_page >> 16
-            rdesc_object.append(item)
-            rdesc_object.parse_item(item)
+            items.append(item)
 
-        return rdesc_object
+        return ReportDescriptor(items)
 
     def format_report(self, data, global_data=None, reportID=None, application=None):
         # make sure the data is iterable
