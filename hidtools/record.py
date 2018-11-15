@@ -1,8 +1,6 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Hid tools / record.py
-#
 # Copyright (c) 2018 Red Hat, Inc.
 #
 # This program is free software: you can redistribute it and/or modify

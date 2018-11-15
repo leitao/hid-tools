@@ -1,8 +1,6 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Hid tools / tests/base.py: base tools for unittest devices
-#
 # Copyright (c) 2017 Benjamin Tissoires <benjamin.tissoires@gmail.com>
 # Copyright (c) 2017 Red Hat, Inc.
 #

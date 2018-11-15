@@ -1,8 +1,6 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# Hid tools / parse_hid.py
-#
 # Copyright (c) 2012-2017 Benjamin Tissoires <benjamin.tissoires@gmail.com>
 # Copyright (c) 2012-2017 Red Hat, Inc.
 #
