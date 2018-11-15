@@ -191,16 +191,23 @@ class HidRDescItem(object):
         """The size in bytes, including header byte"""
         return 1 + len(self.raw_value)
 
-    def __repr__(self):
-        data = [f'{i:02x}' for i in self.raw_value]
+    @property
+    def bytes(self):
+        """
+        Return this in the original format in bytes, i.e. a header byte
+        followed by (if any) payload bytes.
+
+        :returns: a list of bytes that are this item
+        """
         if len(self.raw_value) == 4:
             h = self.hid | 0x3
         else:
             h = self.hid | len(self.raw_value)
-        r = f'{h:02x}'
-        if not len(data):
-            return r
-        return f'{r} {" ".join(data)}'
+        return [h] + self.raw_value.copy()
+
+    def __repr__(self):
+        data = [f'{i:02x}' for i in self.bytes]
+        return f'{" ".join(data)}'
 
     def _get_raw_values(self):
         """The raw values as comma-separated hex numbers"""
@@ -1189,8 +1196,9 @@ class ReportDescriptor(object):
         return sum([item.size for item in self.rdesc_items])
 
     def data(self):
-        string = self._data_txt()
-        data = [int(i, 16) for i in string.split()]
+        data = []
+        for item in self.rdesc_items:
+            data.extend(item.bytes)
         return data
 
     def _data_txt(self):
