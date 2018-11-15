@@ -13,6 +13,7 @@ setup(name='hid-tools',
       license='GPL',
       entry_points={
           "console_scripts": [
+              'hid-recorder = hidtools.record:main',
               'hid-replay = hidtools.replay:main',
               'hid-parse= hidtools.parse_hid:main',
               'hid-parse-rdesc = hidtools.parse_rdesc:main',
