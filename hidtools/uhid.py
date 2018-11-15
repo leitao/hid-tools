@@ -58,8 +58,8 @@ class UHIDDevice(object):
     poll = select.poll()
     devices = []
 
-    pyudev_context = None
-    pyudev_monitor = None
+    _pyudev_context = None
+    _pyudev_monitor = None
 
     @classmethod
     def dispatch(cls, timeout=None):
@@ -81,18 +81,18 @@ class UHIDDevice(object):
 
     @classmethod
     def _init_pyudev(cls):
-        if cls.pyudev_context is None:
-            cls.pyudev_context = pyudev.Context()
-            cls.pyudev_monitor = pyudev.Monitor.from_netlink(cls.pyudev_context)
-            cls.pyudev_monitor.filter_by('input')
-            cls.pyudev_monitor.start()
+        if cls._pyudev_context is None:
+            cls._pyudev_context = pyudev.Context()
+            cls._pyudev_monitor = pyudev.Monitor.from_netlink(cls._pyudev_context)
+            cls._pyudev_monitor.filter_by('input')
+            cls._pyudev_monitor.start()
 
-            cls._append_fd_to_poll(cls.pyudev_monitor.fileno(),
+            cls._append_fd_to_poll(cls._pyudev_monitor.fileno(),
                                    cls._cls_udev_event_callback)
 
     @classmethod
     def _cls_udev_event_callback(cls):
-        event = cls.pyudev_monitor.poll()
+        event = cls._pyudev_monitor.poll()
 
         if event is None:
             return
@@ -231,7 +231,7 @@ class UHIDDevice(object):
     @property
     def udev_device(self):
         if self._udev_device is None:
-            for device in self.pyudev_context.list_devices(subsystem='hid'):
+            for device in self._pyudev_context.list_devices(subsystem='hid'):
                 try:
                     if self.uniq == device.properties['HID_UNIQ']:
                         self._udev_device = device
