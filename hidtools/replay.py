@@ -79,7 +79,7 @@ class HIDReplay(object):
     @property
     def ready(self):
         for d in self._devices.values():
-            if d.device_node is None:
+            if not d.device_nodes:
                 return False
         return True
 

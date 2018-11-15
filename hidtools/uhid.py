@@ -119,7 +119,7 @@ class UHIDDevice(object):
         self._output_report = self.output_report
         self._udev_device = None
         self.ready = False
-        self.device_node = None
+        self.device_nodes = []
         self.uniq = f'uhid_{str(uuid.uuid4())}'
         self._append_fd_to_poll(self._fd, self._process_one_event)
         self._init_pyudev()
@@ -147,7 +147,7 @@ class UHIDDevice(object):
         try:
             devname = device.properties['DEVNAME']
             if devname.startswith('/dev/input/event'):
-                self.device_node = devname
+                self.device_nodes.append(devname)
         except KeyError:
             pass
 
