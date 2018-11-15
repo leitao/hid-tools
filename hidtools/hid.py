@@ -1035,18 +1035,26 @@ class ReportDescriptor(object):
                 self.count = other.count
                 self.item_size = other.item_size
 
+    class _Locals(object):
+        """
+        HID report descriptors uses a stack-based model where values
+        apply until the next Output/InputReport/FeatureReport item.
+        """
+        def __init__(self):
+            self.usages = []
+            self.usage_min = 0
+            self.usage_max = 0
+            self.report_ID = -1
+
     def __init__(self, items):
         self.input_reports = {}
         self.feature_reports = {}
         self.output_reports = {}
+        self.local = ReportDescriptor._Locals()
         self.glob = ReportDescriptor._Globals()
         self.global_stack = []
-        self.usages = []
-        self.usage_min = 0
-        self.usage_max = 0
         self.collection = [0, 0, 0] # application, physical, logical
         self.current_report = {}
-        self.report_ID = -1
         self.win8 = False
         self.rdesc_items = items
         self.current_item = None
@@ -1090,15 +1098,15 @@ class ReportDescriptor(object):
         except KeyError:
             cur = None
 
-        if cur is not None and cur.report_ID != self.report_ID:
+        if cur is not None and cur.local.report_ID != self.local.report_ID:
             cur = None
 
         if cur is None:
             try:
-                cur = report_lists[type][self.report_ID]
+                cur = report_lists[type][self.local.report_ID]
             except KeyError:
-                cur = HidReport(self.report_ID, self.glob.application)
-                report_lists[type][self.report_ID] = cur
+                cur = HidReport(self.local.report_ID, self.glob.application)
+                report_lists[type][self.local.report_ID] = cur
         return cur
 
     def _parse_item(self, rdesc_item):
@@ -1108,7 +1116,7 @@ class ReportDescriptor(object):
         value = rdesc_item.value
 
         if item == "Report ID":
-            self.report_ID = value
+            self.local.report_ID = value
         elif item == "Push":
             self.global_stack.append(self.glob)
             self.glob = ReportDescriptor._Globals(self.glob)
@@ -1117,37 +1125,37 @@ class ReportDescriptor(object):
         elif item == "Usage Page":
             self.glob.usage_page = value << 16
             # reset the usage list
-            self.usages = []
-            self.usage_min = 0
-            self.usage_max = 0
+            self.local.usages = []
+            self.local.usage_min = 0
+            self.local.usage_max = 0
         elif item == "Collection":
             c = INV_COLLECTIONS[value]
             try:
                 if c == 'PHYSICAL':
                     self.collection[1] += 1
-                    self.glob.physical = self.usages[-1]
+                    self.glob.physical = self.local.usages[-1]
                 elif c == 'APPLICATION':
                     self.collection[0] += 1
-                    self.glob.application = self.usages[-1]
+                    self.glob.application = self.local.usages[-1]
                 else:  # 'LOGICAL'
                     self.collection[2] += 1
-                    self.glob.logical = self.usages[-1]
+                    self.glob.logical = self.local.usages[-1]
             except IndexError:
                 pass
             # reset the usage list
-            self.usages = []
-            self.usage_min = 0
-            self.usage_max = 0
+            self.local.usages = []
+            self.local.usage_min = 0
+            self.local.usage_max = 0
         elif item == "Usage Minimum":
-            self.usage_min = value | self.glob.usage_page
+            self.local.usage_min = value | self.glob.usage_page
         elif item == "Usage Maximum":
-            self.usage_max = value | self.glob.usage_page
+            self.local.usage_max = value | self.glob.usage_page
         elif item == "Logical Minimum":
             self.glob.logical_min = value
         elif item == "Logical Maximum":
             self.glob.logical_max = value
         elif item == "Usage":
-            self.usages.append(value | self.glob.usage_page)
+            self.local.usages.append(value | self.glob.usage_page)
         elif item == "Report Count":
             self.glob.count = value
         elif item == "Report Size":
@@ -1155,26 +1163,27 @@ class ReportDescriptor(object):
         elif item in ("Input", "Feature", "Output"):
             self.current_input_report = self._get_current_report(item)
 
-            inputItems = HidField.getHidFields(self.report_ID,
+            inputItems = HidField.getHidFields(self.local.report_ID,
                                                self.glob.logical,
                                                self.glob.physical,
                                                self.glob.application,
                                                tuple(self.collection),
                                                value,
                                                self.glob.usage_page,
-                                               self.usages,
-                                               self.usage_min,
-                                               self.usage_max,
+                                               self.local.usages,
+                                               self.local.usage_min,
+                                               self.local.usage_max,
                                                self.glob.logical_min,
                                                self.glob.logical_max,
                                                self.glob.item_size,
                                                self.glob.count)
             self.current_input_report.extend(inputItems)
-            if item == "Feature" and len(self.usages) > 0 and self.usages[-1] == 0xff0000c5:
+            if item == "Feature" and len(self.local.usages) > 0 and \
+                    self.local.usages[-1] == 0xff0000c5:
                 self.win8 = True
-            self.usages = []
-            self.usage_min = 0
-            self.usage_max = 0
+            self.local.usages = []
+            self.local.usage_min = 0
+            self.local.usage_max = 0
 
     def dump(self, dump_file, type_output='default'):
         indent = 0
