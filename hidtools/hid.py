@@ -1229,7 +1229,11 @@ class ReportDescriptor(object):
         """
         return sum([item.size for item in self.rdesc_items])
 
-    def data(self):
+    @property
+    def bytes(self):
+        """
+        This report descriptor as a series of bytes.
+        """
         data = []
         for item in self.rdesc_items:
             data.extend(item.bytes)

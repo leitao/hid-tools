@@ -167,7 +167,7 @@ class UHIDDevice(object):
                 rdesc = f'XXX {rdesc}'
             parsed_rdesc = hidtools.hid.ReportDescriptor.from_bytes(rdesc)
         self.parsed_rdesc = parsed_rdesc
-        self._rdesc = parsed_rdesc.data()
+        self._rdesc = parsed_rdesc.bytes
 
     @property
     def phys(self):
