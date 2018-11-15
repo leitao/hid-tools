@@ -806,6 +806,21 @@ class HidField(object):
 
 
 class HidReport(object):
+    """
+    Represents a HidReport, one of ``Input``, ``Output``, ``Feature``. A
+    :class:`hidtools.hid.ReportDescriptor` may contain one or more
+    HidReports of different types. These comprise of a number of
+    :class:`hidtools.hid.HidField` making up the exact description of a
+    report.
+
+    :param int report_ID: the report ID
+    :param int application: the HID application
+
+    .. attribute:: fields
+
+        The HidFields comprising this report
+
+    """
     def __init__(self, report_ID, application):
         self.fields = []
         self.report_ID = report_ID
@@ -816,11 +831,22 @@ class HidReport(object):
             self._bitsize = 8
 
     def append(self, field):
+        """
+        Add a :meth:`hidtools.hid.HidField` to this report
+
+        :param hidtools.hid.HidField field: the object to add to this report
+        """
         self.fields.append(field)
         field.start = self._bitsize
         self._bitsize += field.size
 
     def extend(self, fields):
+        """
+        Extend this report by the list of :meth:`hidtools.hid.HidField`
+        objects
+
+        :param list fields: a list of objects to append to this report
+        """
         self.fields.extend(fields)
         for f in fields:
             f.start = self._bitsize
@@ -840,14 +866,23 @@ class HidReport(object):
 
     @property
     def numbered(self):
+        """
+        True if the HidReport was initialized with a report ID
+        """
         return self.report_ID >= 0
 
     @property
     def bitsize(self):
+        """
+        The size of the HidReport in bits
+        """
         return self._bitsize
 
     @property
     def size(self):
+        """
+        The size of the HidReport in bytes
+        """
         return self._bitsize >> 3
 
     @property
@@ -1016,15 +1051,15 @@ class ReportDescriptor(object):
 
     .. attribute:: input_reports
 
-        All input reports addressable by the report ID
+        All :class:`hidtools.hid.HidReport` of type ``Input``, addressable by the report ID
 
     .. attribute:: output_reports
 
-        All output reports addressable by the report ID
+        All :class:`hidtools.hid.HidReport` of type ``Output``, addressable by the report ID
 
     .. attribute:: feature_reports
 
-        All feature reports addressable by the report ID
+        All :class:`hidtools.hid.HidReport` of type ``Feature``, addressable by the report ID
     """
     class _Globals(object):
         """
