@@ -989,6 +989,15 @@ class HidReport(object):
 
 
 class ReportDescriptor(object):
+    """
+    Represents a fully parsed HID report descriptor.
+
+    A report descriptor can be loaded from two sources, either a stream of
+    bytes (see :meth:`hidtools.hid.ReportDescriptor.from_bytes`) or from a
+    human-readable descriptor (see
+    :meth:`hidtools.hid.ReportDescriptor.from_human_descr`).
+
+    """
     class Globals(object):
         def __init__(self, other=None):
             self.usage_page = 0
@@ -1185,9 +1194,19 @@ class ReportDescriptor(object):
     @classmethod
     def from_bytes(cls, rdesc):
         """
-        Parse the given report descriptor.
-        Returns:
-         - a ReportDescriptor object
+        Parse the given list of bytes. The argument may be a list of bytes
+        or a string.
+
+        If the argument is a string, the format of the string must be a
+        series of hex numbers::
+
+           12 34 ab cd ...
+
+        and the first number in that series is the count of bytes, excluding
+        that first number.
+
+        :param list rdesc: a list of bytes that are this report descriptor
+                or a string that represents the list of bytes
         """
 
         if isinstance(rdesc, str):
@@ -1200,6 +1219,26 @@ class ReportDescriptor(object):
 
     @classmethod
     def from_human_descr(cls, rdesc_str):
+        """
+        Parse the given human-readable report descriptor, e.g. ::
+
+            Usage Page (Digitizers)
+            Usage (Finger)
+            Collection (Logical)
+             Report Size (1)
+             Report Count (1)
+             Logical Minimum (0)
+             Logical Maximum (1)
+             Usage (Tip Switch)
+             Input (Data,Var,Abs)
+             Report Size (7)
+             Logical Maximum (127)
+             Input (Cnst,Var,Abs)
+             Report Size (8)
+             Logical Maximum (255)
+             Usage (Contact Id)
+
+        """
         usage_page = 0
         rdesc_object = ReportDescriptor()
         for line in rdesc_str.splitlines():
