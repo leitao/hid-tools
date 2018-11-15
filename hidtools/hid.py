@@ -1050,13 +1050,15 @@ class ReportDescriptor(object):
         self.input_reports = {}
         self.feature_reports = {}
         self.output_reports = {}
-        self.local = ReportDescriptor._Locals()
-        self.glob = ReportDescriptor._Globals()
-        self.global_stack = []
-        self.collection = [0, 0, 0] # application, physical, logical
-        self.current_report = {}
         self.win8 = False
         self.rdesc_items = items
+
+        # variables only used during parsing
+        self.global_stack = []
+        self.collection = [0, 0, 0] # application, physical, logical
+        self.local = ReportDescriptor._Locals()
+        self.glob = ReportDescriptor._Globals()
+        self.current_report = {}
         self.current_item = None
 
         index_in_report = 0
@@ -1064,6 +1066,14 @@ class ReportDescriptor(object):
             item.index_in_report = index_in_report
             index_in_report += item.size
             self._parse_item(item)
+
+        # Drop the parsing-only variables so we don't leak them later
+        del self.current_item
+        del self.glob
+        del self.global_stack
+        del self.local
+        del self.current_report
+        del self.collection
 
     def get(self, reportID, reportSize):
         try:
