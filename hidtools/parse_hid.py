@@ -117,6 +117,8 @@ def main():
             parse_hid(f, sys.stdout)
         except KeyboardInterrupt:
             pass
+        except BrokenPipeError:
+            pass
 
 
 if __name__ == "__main__":
