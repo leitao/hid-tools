@@ -77,7 +77,7 @@ def dump_report(line, rdesc_object, f_out):
 
 def parse_hid(f_in, f_out):
     rdesc_dict = {}
-    d = 0
+    device_index = 0
     while True:
         line = f_in.readline()
         if line.startswith("#"):
@@ -86,7 +86,7 @@ def parse_hid(f_in, f_out):
             rdesc_object = hidtools.hid.ReportDescriptor.from_bytes(line.lstrip("R: "))
             rdesc_object.dump(f_out)
 
-            rdesc_dict[d] = rdesc_object
+            rdesc_dict[device_index] = rdesc_object
 
             win8 = rdesc_object.win8
             if win8:
@@ -94,9 +94,9 @@ def parse_hid(f_in, f_out):
         elif line.startswith("D:"):
             r = _parse('D:{d:d}', line)
             assert(r is not None)
-            d = r['d']
+            device_index = r['d']
         elif line.startswith("E:"):
-            dump_report(line, rdesc_dict[d], f_out)
+            dump_report(line, rdesc_dict[device_index], f_out)
         elif line == '':
             # End of file
             break
