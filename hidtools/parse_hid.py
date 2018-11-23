@@ -80,7 +80,9 @@ def parse_hid(f_in, f_out):
     d = 0
     while True:
         line = f_in.readline()
-        if line.startswith("R:"):
+        if line.startswith("#"):
+            continue
+        elif line.startswith("R:"):
             rdesc_object = hidtools.hid.ReportDescriptor.from_bytes(line.lstrip("R: "))
             rdesc_object.dump(f_out)
 
