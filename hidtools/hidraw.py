@@ -236,9 +236,9 @@ class HidRawDevice(object):
             sz = len(self.report_descriptor)
             print(f'R: {sz} {rd}', file=file)
             print(f'N: {self.name}', file=file)
-            print(f'I: {self.bustype:x} {self.vendor_id:04x} {self.product_id:04x}', file=file)
+            print(f'I: {self.bustype:x} {self.vendor_id:04x} {self.product_id:04x}', file=file, flush=True)
 
         for e in self.events[self._dump_offset:]:
             data = map(lambda x: f'{x:02x}', e.bytes)
-            print(f'E: {e.sec:06d}.{e.usec:06d} {len(e.bytes)} {" ".join(data)}')
+            print(f'E: {e.sec:06d}.{e.usec:06d} {len(e.bytes)} {" ".join(data)}', flush=True)
         self._dump_offset = len(self.events)
