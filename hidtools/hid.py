@@ -101,6 +101,7 @@ INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
 
 class ParseError(Exception):
+    """Exception thrown during report descriptor parsing"""
     pass
 
 
@@ -118,7 +119,7 @@ class _HidRDescItem(object):
         The payload bytes' raw values, LSB first
 
 
-    These items are usually parsted from a report descriptor, see
+    These items are usually parsed from a report descriptor, see
     :meth:`from_bytes`. The report descriptor
     bytes are::
 
@@ -1125,6 +1126,9 @@ class ReportDescriptor(object):
         del self.collection
 
     def get(self, reportID, reportSize):
+        """
+        Return the input report with the given Report ID or None.
+        """
         try:
             report = self.input_reports[reportID]
         except KeyError:
@@ -1140,6 +1144,9 @@ class ReportDescriptor(object):
         return None
 
     def get_report_from_application(self, application):
+        """
+        Return the Input report that matches the application or None
+        """
         for r in self.input_reports.values():
             if r.application == application or r.application_name == application:
                 return r
@@ -1289,7 +1296,11 @@ class ReportDescriptor(object):
            12 34 ab cd ...
 
         and the first number in that series is the count of bytes, excluding
-        that first number.
+        that first number. This is the format returned by your
+        ``/dev/hidraw`` event node, so just pass it along.
+
+        If the argument is a list of bytes, the bytes must not contain this
+        count. Just provide the report descriptor itself.
 
         :param list rdesc: a list of bytes that are this report descriptor
                 or a string that represents the list of bytes
