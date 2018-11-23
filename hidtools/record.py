@@ -75,7 +75,7 @@ def main():
     try:
         while True:
             device.read_events()
-            device.redump(args.output)
+            device.dump(args.output)
     except KeyboardInterrupt:
         pass
 

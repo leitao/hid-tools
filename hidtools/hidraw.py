@@ -200,20 +200,7 @@ class HidRawDevice(object):
 
         return len(data)
 
-    def dump(self, file=sys.stdout):
-        """
-        Dump the state of this device. This resets the offset used in
-        calling :meth:`redump`.
-
-        After calling ``dump()``, ``redump()`` will continue to print from
-        where ``dump()`` left off.
-
-        :param File file: the output file to write to
-        """
-        self._dump_offset = 0
-        self.redump(file)
-
-    def redump(self, file=sys.stdout):
+    def dump(self, file=sys.stdout, from_the_beginning=False):
         """
         Format this device in a file format in the form of ::
 
@@ -224,13 +211,18 @@ class HidRawDevice(object):
             E: 00001.000002 AB 12 34 56 # sec, usec, length, data
             ...
 
-        The device remembers what has been printed, a subsequent call
-        to this function will only print those events not yet printed. 
-
-        To re-start, use :meth:`dump`.
+        This method is designed to be called repeatedly and only print the
+        new events on each call. To repeat the dump from the beginning, set
+        ``from_the_beginning`` to True.
 
         :param File file: the output file to write to
+        :param bool from_the_beginning: if True, print everything again
+             instead of continuing where we left off
         """
+
+        if from_the_beginning:
+            self._dump_offset = 0
+
         if self._dump_offset == 0:
             rd = " ".join([f'{b:02x}' for b in self.report_descriptor])
             sz = len(self.report_descriptor)
