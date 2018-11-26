@@ -942,7 +942,7 @@ class BaseTest:
                 self.debug_reports(r, uhdev); print(events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 0)
 
-                time.sleep(0.12)
+                time.sleep(0.2)
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
