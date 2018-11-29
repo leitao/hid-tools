@@ -28,8 +28,7 @@ from base import main, setUpModule, tearDownModule  # noqa
 class MouseData(object):
     pass
 
-
-class BaseMouse(base.UHIDTest):
+class BaseMouse(base.UHIDTestDevice):
     def __init__(self, name, rdesc, info):
         super().__init__(name, rdesc=rdesc)
         self.info = info

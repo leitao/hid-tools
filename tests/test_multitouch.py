@@ -85,7 +85,7 @@ class Pen(Touch):
         self.twist = 0
 
 
-class Digitizer(base.UHIDTest):
+class Digitizer(base.UHIDTestDevice):
     @classmethod
     def msCertificationBlob(cls, reportID):
         return f'''

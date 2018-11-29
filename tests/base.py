@@ -34,7 +34,7 @@ from hidtools.util import twos_comp, to_twos_comp # noqa
 from hidtools.uhid import UHIDDevice  # noqa
 
 
-class UHIDTest(UHIDDevice):
+class UHIDTestDevice(UHIDDevice):
     def __init__(self, name, rdesc_str=None, rdesc=None):
         if rdesc_str is None and rdesc is None:
             raise Exception('Please provide at least a rdesc or rdesc_str')
