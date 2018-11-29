@@ -929,7 +929,7 @@ class HidReport(object):
         field = usage.replace(' ', '').lower()
         if len(data) > 0 and hasattr(data[0], field):
             value = getattr(data[0], field)
-        elif hasattr(global_data, field):
+        elif global_data is not None and hasattr(global_data, field):
             value = getattr(global_data, field)
 
         hidInputItem.set_values(r, [value])
