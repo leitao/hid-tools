@@ -423,4 +423,21 @@ class UHIDDevice(object):
             self._output_report(data, size, rtype)
 
     def format_report(self, data, global_data=None, reportID=None, application=None):
+        """
+        Convert the data object to an array of ints representing the report.
+        Each property of the given data object is matched against the field
+        usage name (think ``hasattr``) and filled in accordingly.::
+
+            mouse = MouseData()
+            mouse.b1 = int(l)
+            mouse.b2 = int(r)
+            mouse.b3 = int(m)
+            mouse.x = x
+            mouse.y = y
+
+            data_bytes = uhid_device.format_report(data)
+
+        The UHIDDevice will order the report according to the device's report
+        descriptor.
+        """
         return self.parsed_rdesc.format_report(data, global_data, reportID, application)

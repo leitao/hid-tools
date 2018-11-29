@@ -937,6 +937,23 @@ class HidReport(object):
         self.prev_seen_usages.append(usage)
 
     def format_report(self, data, global_data):
+        """
+        Convert the data object to an array of ints representing this report.
+        Each property of the given data object is matched against the field
+        usage name (using ``hasattr``) and filled in accordingly.::
+
+            mouse = MouseData()
+            mouse.b1 = int(l)
+            mouse.b2 = int(r)
+            mouse.b3 = int(m)
+            mouse.x = x
+            mouse.y = y
+
+            data_bytes = hid_report.format_report(data)
+
+        The HidReport will order the report according to the device's report
+        descriptor.
+        """
         self.prev_seen_usages = []
         self.prev_collection = None
         r = [0] * self.size
@@ -1346,6 +1363,23 @@ class ReportDescriptor(object):
         return ReportDescriptor(items)
 
     def format_report(self, data, global_data=None, reportID=None, application=None):
+        """
+        Convert the data object to an array of ints representing the report.
+        Each property of the given data object is matched against the field
+        usage name (think ``hasattr``) and filled in accordingly.::
+
+            mouse = MouseData()
+            mouse.b1 = int(l)
+            mouse.b2 = int(r)
+            mouse.b3 = int(m)
+            mouse.x = x
+            mouse.y = y
+
+            data_bytes = uhid_device.format_report(data)
+
+        The UHIDDevice will order the report according to the device's report
+        descriptor.
+        """
         # make sure the data is iterable
         try:
             iter(data)
