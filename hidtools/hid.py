@@ -939,7 +939,7 @@ class HidReport(object):
     def format_report(self, data, global_data):
         self.prev_seen_usages = []
         self.prev_collection = None
-        r = [0 for i in range(self.size)]
+        r = [0] * self.size
 
         if self.numbered:
             r[0] = self.report_ID
