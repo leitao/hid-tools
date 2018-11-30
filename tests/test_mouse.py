@@ -49,27 +49,6 @@ class BaseMouse(GenericDevice):
         self.right = False
         self.middle = False
 
-    def fake_report(self, x, y, buttons):
-        if buttons is not None:
-            l, r, m = buttons
-            if l is None:
-                l = self.left
-            if r is None:
-                r = self.right
-            if m is None:
-                m = self.middle
-        else:
-            l = self.left
-            r = self.right
-            m = self.middle
-
-        button_mask = sum(1 << i for i, b in enumerate([l, r, m]) if b)
-        x = max(-127, min(127, x))
-        y = max(-127, min(127, y))
-        x = base.to_twos_comp(x, 8)
-        y = base.to_twos_comp(y, 8)
-        return [button_mask, x, y]
-
     def format_report(self, x, y, buttons=None, wheels=None, reportID=None):
         """
         Return an input report for this device.
@@ -172,6 +151,27 @@ class ButtonMouse(BaseMouse):
                              0xc0,        # ..End Collection                     53
                              0xc0,        # .End Collection                      54
                          ])
+
+    def fake_report(self, x, y, buttons):
+        if buttons is not None:
+            l, r, m = buttons
+            if l is None:
+                l = self.left
+            if r is None:
+                r = self.right
+            if m is None:
+                m = self.middle
+        else:
+            l = self.left
+            r = self.right
+            m = self.middle
+
+        button_mask = sum(1 << i for i, b in enumerate([l, r, m]) if b)
+        x = max(-127, min(127, x))
+        y = max(-127, min(127, y))
+        x = base.to_twos_comp(x, 8)
+        y = base.to_twos_comp(y, 8)
+        return [button_mask, x, y]
 
 
 class WheelMouse(BaseMouse):
