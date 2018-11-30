@@ -177,6 +177,71 @@ class WheelMouse(BaseMouse):
                         ])
 
 
+class TwoWheelMouse(BaseMouse):
+    def __init__(self):
+        super().__init__(rdesc=[
+                            0x05, 0x01,  # Usage Page (Generic Desktop)        83
+                            0x09, 0x02,  # Usage (Mouse)                       85
+                            0xa1, 0x01,  # Collection (Application)            87
+                            0x05, 0x01,  #  Usage Page (Generic Desktop)       89
+                            0x09, 0x02,  #  Usage (Mouse)                      91
+                            0xa1, 0x02,  #  Collection (Logical)               93
+                            0x85, 0x11,  #   Report ID (17)                    95
+                            0x09, 0x01,  #   Usage (Pointer)                   97
+                            0xa1, 0x00,  #   Collection (Physical)             99
+                            0x05, 0x09,  #    Usage Page (Button)              101
+                            0x19, 0x01,  #    Usage Minimum (1)                103
+                            0x29, 0x03,  #    Usage Maximum (3)                105
+                            0x95, 0x03,  #    Report Count (3)                 107
+                            0x75, 0x01,  #    Report Size (1)                  109
+                            0x25, 0x01,  #    Logical Maximum (1)              111
+                            0x81, 0x02,  #    Input (Data,Var,Abs)             113
+                            0x95, 0x01,  #    Report Count (1)                 115
+                            0x81, 0x01,  #    Input (Cnst,Arr,Abs)             117
+                            0x09, 0x05,  #    Usage (Vendor Usage 0x05)        119
+                            0x81, 0x02,  #    Input (Data,Var,Abs)             121
+                            0x95, 0x03,  #    Report Count (3)                 123
+                            0x81, 0x01,  #    Input (Cnst,Arr,Abs)             125
+                            0x05, 0x01,  #    Usage Page (Generic Desktop)     127
+                            0x09, 0x30,  #    Usage (X)                        129
+                            0x09, 0x31,  #    Usage (Y)                        131
+                            0x95, 0x02,  #    Report Count (2)                 133
+                            0x75, 0x08,  #    Report Size (8)                  135
+                            0x15, 0x81,  #    Logical Minimum (-127)           137
+                            0x25, 0x7f,  #    Logical Maximum (127)            139
+                            0x81, 0x06,  #    Input (Data,Var,Rel)             141
+                            0xa1, 0x02,  #    Collection (Logical)             143
+                            0x85, 0x12,  #     Report ID (18)                  145
+                            0x09, 0x48,  #     Usage (Resolution Multiplier)   147
+                            0x95, 0x01,  #     Report Count (1)                149
+                            0x75, 0x02,  #     Report Size (2)                 151
+                            0x15, 0x00,  #     Logical Minimum (0)             153
+                            0x25, 0x01,  #     Logical Maximum (1)             155
+                            0x35, 0x01,  #     Physical Minimum (1)            157
+                            0x45, 0x04,  #     Physical Maximum (4)            159
+                            0xb1, 0x02,  #     Feature (Data,Var,Abs)          161
+                            0x35, 0x00,  #     Physical Minimum (0)            163
+                            0x45, 0x00,  #     Physical Maximum (0)            165
+                            0x75, 0x06,  #     Report Size (6)                 167
+                            0xb1, 0x01,  #     Feature (Cnst,Arr,Abs)          169
+                            0x85, 0x11,  #     Report ID (17)                  171
+                            0x09, 0x38,  #     Usage (Wheel)                   173
+                            0x15, 0x81,  #     Logical Minimum (-127)          175
+                            0x25, 0x7f,  #     Logical Maximum (127)           177
+                            0x75, 0x08,  #     Report Size (8)                 179
+                            0x81, 0x06,  #     Input (Data,Var,Rel)            181
+                            0xc0,        #    End Collection                   183
+                            0x05, 0x0c,  #    Usage Page (Consumer Devices)    184
+                            0x75, 0x08,  #    Report Size (8)                  186
+                            0x0a, 0x38, 0x02, # Usage (AC Pan)                   188
+                            0x81, 0x06,  #    Input (Data,Var,Rel)             191
+                            0xc0,        #   End Collection                    193
+                            0xc0,        #  End Collection                     194
+                            0xc0,        # End Collection                      195
+                        ])
+        self.default_reportID = 0x11
+
+
 class MIDongleMIWirelessMouse(BaseMouse):
     def __init__(self, name):
         super().__init__(name=name,
@@ -431,6 +496,48 @@ class TestWheelMouse(BaseTest.TestMouse):
             self.debug_reports(r, uhdev); print(events)
             self.assertInputEvents((syn_event, expected_event0, expected_event1, expected_event2), events)
 
+
+class TestTwoWheelMouse(TestWheelMouse):
+    def create_mouse(self):
+        return TwoWheelMouse()
+
+    def test_ac_pan(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            syn_event = self.syn_event
+
+            r = uhdev.event(0, 0, wheels=(0, 1))
+            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev); print(events)
+            self.assertInputEvents((syn_event, expected_event), events)
+            return
+
+            r = uhdev.event(0, 0, wheels=(0, -1))
+            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev); print(events)
+            self.assertInputEvents((syn_event, expected_event), events)
+
+            r = uhdev.event(-1, 2, wheels=(0, 3))
+            expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
+            expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
+            expected_event2 = libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev); print(events)
+            self.assertInputEvents((syn_event, expected_event0, expected_event1, expected_event2), events)
+
+            r = uhdev.event(-1, 2, wheels=(-3, 4))
+            expected = [syn_event]
+            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)]
+            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)]
+            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -3)]
+            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4)]
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev); print(events)
+            self.assertInputEvents(expected, events)
 
 class TestMiMouse(BaseTest.TestMouse):
     def create_mouse(self):
