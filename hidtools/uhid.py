@@ -155,6 +155,8 @@ class UHIDDevice(object):
         return self
 
     def __exit__(self, *exc_details):
+        if self._ready:
+            self.destroy()
         UHIDDevice.devices.remove(self)
         self._remove_fd_from_poll(self._fd)
         os.close(self._fd)
