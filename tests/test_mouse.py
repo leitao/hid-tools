@@ -21,6 +21,7 @@
 import base
 import libevdev
 import sys
+import hidtools.hid
 from base import main, setUpModule, tearDownModule  # noqa
 
 
@@ -263,42 +264,46 @@ class TestSimpleMouse(BaseTest.TestMouse):
                          ],
                          info=(3, 1, 2))
 
-        def test_rdesc(self):
-            """Check that the testsuite actually manages to format the
-            reports according to the report descriptors.
-            No kernel device is used here"""
-            with self.create_mouse() as uhdev:
-                event = (0, 0, (None, None, None))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+    def test_rdesc(self):
+        """Check that the testsuite actually manages to format the
+        reports according to the report descriptors.
+        No kernel device is used here"""
+        with self.create_mouse() as uhdev:
+            event = (0, 0, (None, None, None))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
 
-                event = (0, 0, (None, True, None))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+            event = (0, 0, (None, True, None))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
 
-                event = (0, 0, (True, True, None))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+            event = (0, 0, (True, True, None))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
 
-                event = (0, 0, (False, False, False))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+            event = (0, 0, (False, False, False))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
 
-                event = (1, 0, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+            event = (1, 0, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
 
-                event = (-1, 0, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+            event = (-1, 0, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
 
-                event = (-5, 5, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+            event = (-5, 5, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
 
-                event = (0, -128, (True, False, True))
-                self.assertEqual(uhdev.format_report(*event, True),
-                                 uhdev.format_report(*event, False))
+            event = (-127, 127, (True, False, True))
+            self.assertEqual(uhdev.format_report(*event, True),
+                             uhdev.format_report(*event, False))
+
+            event = (0, -128, (True, False, True))
+            with self.assertRaises(hidtools.hid.RangeError):
+                uhdev.format_report(*event, True)
 
 
 class TestMiMouse(BaseTest.TestMouse):
