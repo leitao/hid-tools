@@ -627,7 +627,7 @@ class HidField(object):
 
     def _usage_name(self, usage):
         usage_page = usage >> 16
-        value = usage & 0x00FF
+        value = usage & 0x0000FFFF
         if usage_page in USAGES:
             if USAGES[usage_page].page_name == "Button":
                 name = f'B{str(value)}'
