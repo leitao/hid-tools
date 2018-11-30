@@ -931,7 +931,22 @@ class HidReport(object):
 
         return usage
 
-    def _format_one_event(self, data, global_data, hidInputItem, r):
+    def _format_one_event(self, data, global_data, hidInputItem, r_out):
+        """
+        Fill in the report array ``r_out`` with the data for this input
+        item. ``r_out`` is modified in place with the values from ``data``
+        or ``global_data`` (as fallback) that apply to this input item.
+
+        :param object data: an object with attributes matching the HID usage names
+            in this report. Where an attribute is undefined, the
+            `global_data` is used instead.
+        :param object global_data: an object with attributes matching the
+            HID usage names, used whenever the `data` doesn't have an
+            attribute defined.
+        :param HidField hidInputItem: the input item of this report to set
+        :param list r_out: the integer array of values for this report,
+            modified in-place.
+        """
         if hidInputItem.is_const:
             return
 
@@ -948,13 +963,15 @@ class HidReport(object):
             self.prev_seen_usages.clear()
 
         value = 0
+        # Match the HID usage with our attributes, so
+        # Contact Count -> contactcount, etc.
         field = usage.replace(' ', '').lower()
         if len(data) > 0 and hasattr(data[0], field):
             value = getattr(data[0], field)
         elif global_data is not None and hasattr(global_data, field):
             value = getattr(global_data, field)
 
-        hidInputItem.fill_values(r, [value])
+        hidInputItem.fill_values(r_out, [value])
         self.prev_collection = hidInputItem.collection
         self.prev_seen_usages.append(usage)
 
