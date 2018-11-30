@@ -38,6 +38,7 @@ class GenericDevice(base.UHIDTestDevice):
         super().__init__(name, rdesc=rdesc)
         self.info = info
         self.create_kernel_device()
+        self.default_reportID = None
 
 
 class BaseMouse(GenericDevice):
@@ -102,6 +103,8 @@ class BaseMouse(GenericDevice):
                 acpan = wheels[1]
             else:
                 wheel = wheels
+
+        reportID = reportID or self.default_reportID
 
         mouse = MouseData()
         mouse.b1 = int(l)
