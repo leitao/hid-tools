@@ -76,7 +76,7 @@ class Touch(object):
 
 class Pen(Touch):
     def __init__(self, x, y):
-        super(Pen, self).__init__(0, x, y)
+        super().__init__(0, x, y)
         self.barrel = False
         self.invert = False
         self.eraser = False
@@ -104,7 +104,7 @@ class Digitizer(base.UHIDTest):
     '''
 
     def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', physical='Finger', max_contacts=None, info=(3, 1, 2), quirks=None):
-        super(Digitizer, self).__init__(name, rdesc_str, rdesc)
+        super().__init__(name, rdesc_str, rdesc)
         self.info = info
         self.scantime = 0
         self.quirks = quirks
@@ -250,7 +250,7 @@ class PTP(Digitizer):
         self.clickpad_state = False
         self.left_state = False
         self.right_state = False
-        super(PTP, self).__init__(name, rdesc_str, rdesc, application, physical, max_contacts)
+        super().__init__(name, rdesc_str, rdesc, application, physical, max_contacts)
 
     def event(self, slots=None, click=None, left=None, right=None, contact_count=None, incr_scantime=True):
         # update our internal state
@@ -270,7 +270,7 @@ class PTP(Digitizer):
         if slots is None:
             slots = [Data()]
 
-        return super(PTP, self).event(slots, global_data, contact_count, incr_scantime)
+        return super().event(slots, global_data, contact_count, incr_scantime)
 
 
 class MinWin8TSParallel(Digitizer):
@@ -338,7 +338,7 @@ class MinWin8TSParallel(Digitizer):
           End Collection
           {Digitizer.msCertificationBlob(68)}
 '''
-        super(MinWin8TSParallel, self).__init__(f'uhid test parallel {self.max_slots}',
+        super().__init__(f'uhid test parallel {self.max_slots}',
                                                 rdesc_str)
 
 
@@ -401,7 +401,7 @@ class MinWin8TSHybrid(Digitizer):
           End Collection
           {Digitizer.msCertificationBlob(68)}
 '''
-        super(MinWin8TSHybrid, self).__init__('uhid test hybrid',
+        super().__init__('uhid test hybrid',
                                               rdesc_str)
 
 
@@ -472,14 +472,14 @@ class Win8TSConfidence(Digitizer):
           End Collection
           {Digitizer.msCertificationBlob(68)}
 '''
-        super(Win8TSConfidence, self).__init__(f'uhid test confidence {self.max_slots}',
+        super().__init__(f'uhid test confidence {self.max_slots}',
                                                rdesc_str)
 
 
 class BaseTest:
     class TestMultitouch(base.BaseTestCase.TestUhid):
         def __init__(self, methodName='runTest'):
-            super(BaseTest.TestMultitouch, self).__init__(methodName)
+            super().__init__(methodName)
             self.__create_device = self._create_device
             self.__assertName = self.assertName
 
@@ -792,7 +792,7 @@ class BaseTest:
 
     class TestWin8Multitouch(TestMultitouch):
         def __init__(self, methodName='runTest'):
-            super(BaseTest.TestWin8Multitouch, self).__init__(methodName)
+            super().__init__(methodName)
             self.__create_device = self._create_device
 
         def test_required_usages8(self):
@@ -982,7 +982,7 @@ class BaseTest:
 
     class TestPTP(TestWin8Multitouch):
         def __init__(self, methodName='runTest'):
-            super(BaseTest.TestPTP, self).__init__(methodName)
+            super().__init__(methodName)
             self.__create_device = self._create_device
 
         def assertName(self, uhdev):
@@ -1139,7 +1139,7 @@ class Test3m_0596_0506(BaseTest.TestMultitouch):
 
 class TestActionStar_2101_1011(BaseTest.TestMultitouch):
     def __init__(self, methodName='runTest'):
-        super(TestActionStar_2101_1011, self).__init__(methodName)
+        super().__init__(methodName)
         self.__create_device = self._create_device
 
     def _create_device(self):
@@ -1609,7 +1609,7 @@ class TestMinWin8TSHybrid(BaseTest.TestWin8Multitouch):
 
 class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
     def __init__(self, methodName='runTest'):
-        super(TestWin8TSConfidence, self).__init__(methodName)
+        super().__init__(methodName)
         self.__create_device = self._create_device
 
     def _create_device(self):

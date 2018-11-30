@@ -31,7 +31,7 @@ class MouseData(object):
 
 class BaseMouse(base.UHIDTest):
     def __init__(self, name, rdesc, info):
-        super(BaseMouse, self).__init__(name, rdesc=rdesc)
+        super().__init__(name, rdesc=rdesc)
         self.info = info
         self.application = 'Mouse'
         self.left = False
@@ -79,7 +79,7 @@ class BaseMouse(base.UHIDTest):
         mouse.b3 = int(m)
         mouse.x = x
         mouse.y = y
-        return super(BaseMouse, self).format_report(mouse, reportID=reportID)
+        return super().format_report(mouse, reportID=reportID)
 
     def event(self, x, y, buttons=None):
         r = self.format_report(x, y, buttons)
@@ -96,9 +96,9 @@ class BaseMouse(base.UHIDTest):
 
 class MIDongleMIWirelessMouse(BaseMouse):
     def __init__(self, name):
-        super(MIDongleMIWirelessMouse, self).__init__(name,
-                                                      rdesc='05 01 09 02 a1 01 85 01 09 01 a1 00 95 05 75 01 05 09 19 01 29 05 15 00 25 01 81 02 95 01 75 03 81 01 75 08 95 01 05 01 09 38 15 81 25 7f 81 06 05 0c 0a 38 02 95 01 81 06 c0 85 02 09 01 a1 00 75 0c 95 02 05 01 09 30 09 31 16 01 f8 26 ff 07 81 06 c0 c0 05 0c 09 01 a1 01 85 03 15 00 25 01 75 01 95 01 09 cd 81 06 0a 83 01 81 06 09 b5 81 06 09 b6 81 06 09 ea 81 06 09 e9 81 06 0a 25 02 81 06 0a 24 02 81 06 c0',
-                                                      info=(0x3, 0x2717, 0x003b))
+        super().__init__(name,
+                         rdesc='05 01 09 02 a1 01 85 01 09 01 a1 00 95 05 75 01 05 09 19 01 29 05 15 00 25 01 81 02 95 01 75 03 81 01 75 08 95 01 05 01 09 38 15 81 25 7f 81 06 05 0c 0a 38 02 95 01 81 06 c0 85 02 09 01 a1 00 75 0c 95 02 05 01 09 30 09 31 16 01 f8 26 ff 07 81 06 c0 c0 05 0c 09 01 a1 01 85 03 15 00 25 01 75 01 95 01 09 cd 81 06 0a 83 01 81 06 09 b5 81 06 09 b6 81 06 09 ea 81 06 09 e9 81 06 0a 25 02 81 06 0a 24 02 81 06 c0',
+                         info=(0x3, 0x2717, 0x003b))
 
     def event(self, x, y, buttons=None):
         # this mouse spreads the relative pointer and the mouse buttons

@@ -38,7 +38,7 @@ class UHIDTest(UHIDDevice):
     def __init__(self, name, rdesc_str=None, rdesc=None):
         if rdesc_str is None and rdesc is None:
             raise Exception('Please provide at least a rdesc or rdesc_str')
-        super(UHIDTest, self).__init__()
+        super().__init__()
         self.name = name
         if not name.startswith('uhid test '):
             self.name = 'uhid test ' + self.name
