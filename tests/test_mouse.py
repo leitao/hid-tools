@@ -351,11 +351,11 @@ class MIDongleMIWirelessMouse(BaseMouse):
                          ],
                          info=(0x3, 0x2717, 0x003b))
 
-    def event(self, x, y, buttons=None):
+    def event(self, x, y, buttons=None, wheels=None):
         # this mouse spreads the relative pointer and the mouse buttons
         # onto 2 distinct reports
         rs = []
-        r = self.format_report(x, y, buttons, reportID=1)
+        r = self.format_report(x, y, buttons, wheels, reportID=1)
         self.call_input_event(r)
         rs.append(r)
         r = self.format_report(x, y, buttons, reportID=2)
@@ -611,10 +611,17 @@ class TestTwoWheelMouse(TestWheelMouse):
             self.debug_reports(r, uhdev); print(events)
             self.assertInputEvents(expected, events)
 
-class TestMiMouse(BaseTest.TestMouse):
+class TestMiMouse(TestWheelMouse):
     def create_mouse(self):
         return MIDongleMIWirelessMouse("uhid test MI Dongle MI Wireless Mouse")
 
+    def assertInputEvents(self, expected_events, effective_events):
+        # Buttons and x/y are spread over two HID reports, so we can get two
+        # event frames for this device.
+        r = self.assertInputEventsIn(expected_events, effective_events)
+        if r:
+            r.remove(libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0))
+        self.assertEqual(len(r), 0)
 
 if __name__ == "__main__":
     main(sys.argv[1:])
