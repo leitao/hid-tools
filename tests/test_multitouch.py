@@ -557,7 +557,6 @@ class BaseTest:
                         except KeyError:
                             pass
 
-                uhdev.destroy()
 
         def test_mt_single_touch(self):
             """send a single touch in the first slot of the device,
@@ -587,7 +586,6 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
         def test_mt_dual_touch(self):
             """Send 2 touches in the first 2 slots.
@@ -660,7 +658,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
                 self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
         def test_mt_triple_tap(self):
             """Send 3 touches in the first 3 slots.
@@ -670,7 +667,6 @@ class BaseTest:
             Note: PTP will send here BTN_TRIPLETAP emulation"""
             with self.__create_device() as uhdev:
                 if uhdev.max_contacts <= 2:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible')
                 while uhdev.application not in uhdev.input_nodes:
                     uhdev.dispatch(10)
@@ -711,7 +707,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
                 self.assertEqual(uhdev.evdev.slots[slot2][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
         def test_mt_max_contact(self):
             """send the maximum number of contact as reported by the device.
@@ -719,7 +714,6 @@ class BaseTest:
             Release and check."""
             with self.__create_device() as uhdev:
                 if uhdev.max_contacts <= 2:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -752,7 +746,6 @@ class BaseTest:
 
                     self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
         def test_mt_contact_count_accurate(self):
             """Test the MT_QUIRK_CONTACT_CNT_ACCURATE from the kernel.
@@ -761,11 +754,9 @@ class BaseTest:
             contact count."""
             with self.__create_device() as uhdev:
                 if uhdev.quirks is not None and 'CONTACT_CNT_ACCURATE' not in uhdev.quirks:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible')
 
                 if uhdev.touches_in_a_report == 1:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -788,7 +779,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
                 self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
     class TestWin8Multitouch(TestMultitouch):
         def __init__(self, methodName='runTest'):
@@ -810,7 +800,6 @@ class BaseTest:
                         except KeyError:
                             pass
 
-                uhdev.destroy()
 
         def test_mt_tx_cx(self):
             """send a single touch in the first slot of the device, with
@@ -818,7 +807,6 @@ class BaseTest:
             with self.__create_device() as uhdev:
                 if uhdev.fields.count('X') == uhdev.touches_in_a_report:
                     # there is not point testing those
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -837,7 +825,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 10)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TOOL_Y], 100)
 
-                uhdev.destroy()
 
         def test_mt_inrange(self):
             """Send one contact that has the InRange bit set before/after
@@ -851,7 +838,6 @@ class BaseTest:
             when the inrange bit is set to 0."""
             with self.__create_device() as uhdev:
                 if 'In Range' not in uhdev.fields:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, missing In Range usage')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -893,7 +879,6 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
         def test_mt_duplicates(self):
             """Test the MT_QUIRK_IGNORE_DUPLICATES from the kernel.
@@ -923,7 +908,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
                 self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
 
-                uhdev.destroy()
 
         def test_mt_release_miss(self):
             """send a single touch in the first slot of the device, and
@@ -952,7 +936,6 @@ class BaseTest:
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
-                uhdev.destroy()
 
         def test_mt_azimuth(self):
             """Check for the azimtuh information bit.
@@ -961,7 +944,6 @@ class BaseTest:
             of circle."""
             with self.__create_device() as uhdev:
                 if 'Azimuth' not in uhdev.fields:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, missing Azimuth usage')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -977,7 +959,6 @@ class BaseTest:
                 # orientation is clockwise, while Azimuth is counter clockwise
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_ORIENTATION, 90), events)
 
-                uhdev.destroy()
 
 
     class TestPTP(TestWin8Multitouch):
@@ -1043,7 +1024,6 @@ class BaseTest:
             the touch but instead convert it to ABS_MT_TOOL_PALM."""
             with self.__create_device() as uhdev:
                 if 'Confidence' not in uhdev.fields:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, missing Confidence usage')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -1072,7 +1052,6 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
         def test_ptp_non_touch_data(self):
             """Some single finger hybrid touchpads might not provide the
@@ -1083,7 +1062,6 @@ class BaseTest:
             with self.__create_device() as uhdev:
                 if uhdev.touches_in_a_report >= uhdev.max_contacts:
                     # there is not point testing those
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -1110,7 +1088,6 @@ class BaseTest:
                 self.assertNotIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
-                uhdev.destroy()
 
 
 ################################################################################
@@ -1173,7 +1150,6 @@ class TestActionStar_2101_1011(BaseTest.TestMultitouch):
                 if num == 2:
                     self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-            uhdev.destroy()
 
 
 class TestAsus_computers_0486_0185(BaseTest.TestMultitouch):
@@ -1624,7 +1600,6 @@ class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
             the touch but instead convert it to ABS_MT_TOOL_PALM."""
             with self.__create_device() as uhdev:
                 if 'Confidence' not in uhdev.fields:
-                    uhdev.destroy()
                     raise unittest.SkipTest('Device not compatible, missing Confidence usage')
 
                 while uhdev.application not in uhdev.input_nodes:
@@ -1648,7 +1623,6 @@ class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-                uhdev.destroy()
 
 
 class TestElanXPS9360(BaseTest.TestWin8Multitouch):

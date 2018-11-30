@@ -211,7 +211,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
-                uhdev.destroy()
 
         def test_relative(self):
             """Check for relative events."""
@@ -240,7 +239,6 @@ class BaseTest:
                 self.debug_reports(r, uhdev); print(events)
                 self.assertInputEvents((syn_event, expected_event0, expected_event1), events)
 
-                uhdev.destroy()
 
 
 class TestSimpleMouse(BaseTest.TestMouse):
