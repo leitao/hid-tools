@@ -28,15 +28,25 @@ from base import main, setUpModule, tearDownModule  # noqa
 class MouseData(object):
     pass
 
-class BaseMouse(base.UHIDTestDevice):
-    def __init__(self, name, rdesc, info):
+
+class GenericDevice(base.UHIDTestDevice):
+    def __init__(self, rdesc, name=None, info=None):
+        if name is None:
+            name = f'uhid test {self.__class__.__name__}'
+        if info is None:
+            info = (3, 1, 2)
         super().__init__(name, rdesc=rdesc)
         self.info = info
+        self.create_kernel_device()
+
+
+class BaseMouse(GenericDevice):
+    def __init__(self, rdesc, name=None, info=None):
+        super().__init__(rdesc, name, info)
         self.application = 'Mouse'
         self.left = False
         self.right = False
         self.middle = False
-        self.create_kernel_device()
 
     def fake_report(self, x, y, buttons):
         if buttons is not None:
@@ -92,10 +102,9 @@ class BaseMouse(base.UHIDTestDevice):
 
         return self.input_nodes[self.application]
 
-
 class MIDongleMIWirelessMouse(BaseMouse):
     def __init__(self, name):
-        super().__init__(name,
+        super().__init__(name=name,
                          rdesc='05 01 09 02 a1 01 85 01 09 01 a1 00 95 05 75 01 05 09 19 01 29 05 15 00 25 01 81 02 95 01 75 03 81 01 75 08 95 01 05 01 09 38 15 81 25 7f 81 06 05 0c 0a 38 02 95 01 81 06 c0 85 02 09 01 a1 00 75 0c 95 02 05 01 09 30 09 31 16 01 f8 26 ff 07 81 06 c0 c0 05 0c 09 01 a1 01 85 03 15 00 25 01 75 01 95 01 09 cd 81 06 0a 83 01 81 06 09 b5 81 06 09 b6 81 06 09 ea 81 06 09 e9 81 06 0a 25 02 81 06 0a 24 02 81 06 c0',
                          info=(0x3, 0x2717, 0x003b))
 
@@ -243,8 +252,7 @@ class BaseTest:
 
 class TestSimpleMouse(BaseTest.TestMouse):
     def create_mouse(self):
-        return BaseMouse("uhid test simple",
-                         rdesc=[
+        return BaseMouse(rdesc=[
                              0x05, 0x01,  # .Usage Page (Generic Desktop)        0
                              0x09, 0x02,  # .Usage (Mouse)                       2
                              0xa1, 0x01,  # .Collection (Application)            4
@@ -274,8 +282,7 @@ class TestSimpleMouse(BaseTest.TestMouse):
                              0xc0,        # ...End Collection                    52
                              0xc0,        # ..End Collection                     53
                              0xc0,        # .End Collection                      54
-                         ],
-                         info=(3, 1, 2))
+                         ])
 
     def test_rdesc(self):
         """Check that the testsuite actually manages to format the
