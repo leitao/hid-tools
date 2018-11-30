@@ -220,19 +220,19 @@ class BaseTest:
 
                 syn_event = self.syn_event
 
-                r = uhdev.event(0, -1, (None, None, None))
+                r = uhdev.event(0, -1)
                 expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_Y, -1)
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertInputEvents((syn_event, expected_event), events)
 
-                r = uhdev.event(1, 0, (None, None, None))
+                r = uhdev.event(1, 0)
                 expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_X, 1)
                 events = uhdev.next_sync_events()
                 self.debug_reports(r, uhdev); print(events)
                 self.assertInputEvents((syn_event, expected_event), events)
 
-                r = uhdev.event(-1, 2, (None, None, None))
+                r = uhdev.event(-1, 2)
                 expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
                 expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
                 events = uhdev.next_sync_events()
