@@ -1016,7 +1016,7 @@ class HidReport(object):
             mouse.x = x
             mouse.y = y
 
-            data_bytes = hid_report.format_report(data)
+            data_bytes = hid_report.format_report(mouse)
 
         The HidReport will order the report according to the device's report
         descriptor.
@@ -1442,7 +1442,7 @@ class ReportDescriptor(object):
             mouse.x = x
             mouse.y = y
 
-            data_bytes = uhid_device.format_report(data)
+            data_bytes = uhid_device.format_report(mouse)
 
         The UHIDDevice will order the report according to the device's report
         descriptor.
