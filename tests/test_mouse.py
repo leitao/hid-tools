@@ -138,6 +138,45 @@ class BaseMouse(GenericDevice):
 
         return self.input_nodes[self.application]
 
+
+class WheelMouse(BaseMouse):
+    def __init__(self):
+        super().__init__(rdesc=[
+                            0x05, 0x01,  # Usage Page (Generic Desktop)        0
+                            0x09, 0x02,  # Usage (Mouse)                       2
+                            0xa1, 0x01,  # Collection (Application)            4
+                            0x05, 0x09,  #  Usage Page (Button)                6
+                            0x19, 0x01,  #  Usage Minimum (1)                  8
+                            0x29, 0x03,  #  Usage Maximum (3)                  10
+                            0x15, 0x00,  #  Logical Minimum (0)                12
+                            0x25, 0x01,  #  Logical Maximum (1)                14
+                            0x95, 0x03,  #  Report Count (3)                   16
+                            0x75, 0x01,  #  Report Size (1)                    18
+                            0x81, 0x02,  #  Input (Data,Var,Abs)               20
+                            0x95, 0x01,  #  Report Count (1)                   22
+                            0x75, 0x05,  #  Report Size (5)                    24
+                            0x81, 0x03,  #  Input (Cnst,Var,Abs)               26
+                            0x05, 0x01,  #  Usage Page (Generic Desktop)       28
+                            0x09, 0x01,  #  Usage (Pointer)                    30
+                            0xa1, 0x00,  #  Collection (Physical)              32
+                            0x09, 0x30,  #   Usage (X)                         34
+                            0x09, 0x31,  #   Usage (Y)                         36
+                            0x15, 0x81,  #   Logical Minimum (-127)            38
+                            0x25, 0x7f,  #   Logical Maximum (127)             40
+                            0x75, 0x08,  #   Report Size (8)                   42
+                            0x95, 0x02,  #   Report Count (2)                  44
+                            0x81, 0x06,  #   Input (Data,Var,Rel)              46
+                            0xc0,        #  End Collection                     48
+                            0x09, 0x38,  #  Usage (Wheel)                      49
+                            0x15, 0x81,  #  Logical Minimum (-127)             51
+                            0x25, 0x7f,  #  Logical Maximum (127)              53
+                            0x75, 0x08,  #  Report Size (8)                    55
+                            0x95, 0x01,  #  Report Count (1)                   57
+                            0x81, 0x06,  #  Input (Data,Var,Rel)               59
+                            0xc0,        # End Collection                      61
+                        ])
+
+
 class MIDongleMIWirelessMouse(BaseMouse):
     def __init__(self, name):
         super().__init__(name=name,
@@ -360,6 +399,37 @@ class TestSimpleMouse(BaseTest.TestMouse):
             event = (0, -128, (True, False, True))
             with self.assertRaises(hidtools.hid.RangeError):
                 uhdev.format_report(*event)
+
+class TestWheelMouse(BaseTest.TestMouse):
+    def create_mouse(self):
+        return WheelMouse()
+
+    def test_wheel(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            syn_event = self.syn_event
+
+            r = uhdev.event(0, 0, wheels=1)
+            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev); print(events)
+            self.assertInputEvents((syn_event, expected_event), events)
+
+            r = uhdev.event(0, 0, wheels=-1)
+            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev); print(events)
+            self.assertInputEvents((syn_event, expected_event), events)
+
+            r = uhdev.event(-1, 2, wheels=3)
+            expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
+            expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
+            expected_event2 = libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev); print(events)
+            self.assertInputEvents((syn_event, expected_event0, expected_event1, expected_event2), events)
 
 
 class TestMiMouse(BaseTest.TestMouse):
