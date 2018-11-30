@@ -685,7 +685,7 @@ class HidField(object):
     def get_values(self, report):
         return [self._get_value(report, i) for i in range(self.count)]
 
-    def _set_value(self, report, value, idx):
+    def _fill_value(self, report, value, idx):
         start_bit = self.start + self.size * idx
         n = self.size
 
@@ -712,7 +712,29 @@ class HidField(object):
             report[byte_idx] &= ~(bit_mask << bit_shift)
             report[byte_idx] |= value << bit_shift
 
-    def set_values(self, report, data):
+    def fill_values(self, report, data):
+        """
+        Fill in the report with the value from data. This method takes a
+        list of bytes that represent the report and a list of data values to
+        be filled in. It then fills in the report at the required bits with
+        the value from data.
+
+        ``data`` must have sufficient elements for this field's Report
+        Count.
+
+        Example:
+
+        - if this field is usage X , use ``fill_values(report, [x-value])``
+        - if this field is Usage X,Y, use ``fill_values(report, [x, y])``
+        - if this field is a button mask, use
+          ``fill_values(report, [1, 0, 1...]``, i.e. one value for each
+          button
+
+        :param list report: an integer array representing this report,
+            modified in place
+        :param list data: the data for this hid field with one element for
+            each Usage.
+        """
         if len(data) != self.count:
             raise Exception("-EINVAL")
 
@@ -720,7 +742,7 @@ class HidField(object):
             v = data[idx]
             if self.logical_min < 0:
                 v = to_twos_comp(v, self.size)
-            self._set_value(report, v, idx)
+            self._fill_value(report, v, idx)
 
     @property
     def is_array(self):
@@ -932,7 +954,7 @@ class HidReport(object):
         elif global_data is not None and hasattr(global_data, field):
             value = getattr(global_data, field)
 
-        hidInputItem.set_values(r, [value])
+        hidInputItem.fill_values(r, [value])
         self.prev_collection = hidInputItem.collection
         self.prev_seen_usages.append(usage)
 
