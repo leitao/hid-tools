@@ -50,8 +50,6 @@ class BaseMouse(base.UHIDTest):
         l = self.left
         r = self.right
         m = self.middle
-        x = max(-127, min(127, x))
-        y = max(-127, min(127, y))
         if use_rdesc:
             mouse = MouseData()
             mouse.b1 = int(l)

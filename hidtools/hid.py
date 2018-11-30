@@ -105,6 +105,31 @@ class ParseError(Exception):
     pass
 
 
+class RangeError(Exception):
+    """Exception thrown for an out-of-range value
+
+    .. attribute:: value
+
+        The invalid value
+
+    .. attribute:: range
+
+        A ``(min, max)`` tuple for the allowed logical range
+
+    .. attribute:: field
+
+        The :class:`HidField` that triggered this exception
+    """
+    def __init__(self, field, value):
+        self.field = field
+        self.range = field.logical_min, field.logical_min
+        self.value = value
+
+    def __str__(self):
+        min, max = self.range
+        return f'Value {self.value} is outside range {min}, {max} for {self.field.usage_name}'
+
+
 class _HidRDescItem(object):
     """Represents one item in the Report Descriptor. This is a variable-sized
     element with one header byte and 0, 1, 2, 4 payload bytes.
@@ -740,6 +765,9 @@ class HidField(object):
 
         for idx in range(self.count):
             v = data[idx]
+            if self.usage_name not in ['Contact Id', 'Contact Max', 'Contact Count']:
+                if v < self.logical_min or v > self.logical_max:
+                    raise RangeError(self, v)
             if self.logical_min < 0:
                 v = to_twos_comp(v, self.size)
             self._fill_value(report, v, idx)
