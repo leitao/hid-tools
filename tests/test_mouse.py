@@ -69,7 +69,18 @@ class BaseMouse(GenericDevice):
         y = base.to_twos_comp(y, 8)
         return [button_mask, x, y]
 
-    def format_report(self, x, y, buttons=None, reportID=None):
+    def format_report(self, x, y, buttons=None, wheels=None, reportID=None):
+        """
+        Return an input report for this device.
+
+        :param x: relative x
+        :param y: relative y
+        :param buttons: a (l, r, m) tuple of bools for the button states,
+            where ``None`` is "leave unchanged"
+        :param wheels: a single value for the vertical wheel or a (vertical, horizontal) tuple for
+            the two wheels
+        :param reportID: the numeric report ID for this report, if needed
+        """
         if buttons is not None:
             l, r, m = buttons
             if l is not None:
@@ -81,6 +92,16 @@ class BaseMouse(GenericDevice):
         l = self.left
         r = self.right
         m = self.middle
+        # Note: the BaseMouse doesn't actually have a wheel but the
+        # format_report magic only fills in those fields exist, so let's
+        # make this generic here.
+        wheel, acpan = 0, 0
+        if wheels is not None:
+            if isinstance(wheels, tuple):
+                wheel = wheels[0]
+                acpan = wheels[1]
+            else:
+                wheel = wheels
 
         mouse = MouseData()
         mouse.b1 = int(l)
@@ -88,10 +109,22 @@ class BaseMouse(GenericDevice):
         mouse.b3 = int(m)
         mouse.x = x
         mouse.y = y
+        mouse.wheel = wheel
+        mouse.acpan = acpan
         return super().format_report(mouse, reportID=reportID)
 
-    def event(self, x, y, buttons=None):
-        r = self.format_report(x, y, buttons)
+    def event(self, x, y, buttons=None, wheels=None):
+        """
+        Send an input event on the default report ID.
+
+        :param x: relative x
+        :param y: relative y
+        :param buttons: a (l, r, m) tuple of bools for the button states,
+            where ``None`` is "leave unchanged"
+        :param wheels: a single value for the vertical wheel or a (vertical, horizontal) tuple for
+            the two wheels
+        """
+        r = self.format_report(x, y, buttons, wheels)
         self.call_input_event(r)
         return [r]
 
