@@ -691,7 +691,7 @@ class HidField(object):
 
         max = (1 << n) - 1
         if value > max:
-            raise Exception(f'_set_value() called with too large value {value} for size {self.size}')
+            raise Exception(f'_set_value(): value {value} is larger than size {self.size}')
 
         byte_idx = int(start_bit / 8)
         bit_shift = start_bit % 8
