@@ -215,6 +215,7 @@ class WheelMouse(ButtonMouse):
 
     def __init__(self, rdesc=report_descriptor, name=None, info=None):
         super().__init__(rdesc, name, info)
+        self.wheel_multiplier = 1
 
 
 class TwoWheelMouse(WheelMouse):
@@ -256,6 +257,7 @@ class TwoWheelMouse(WheelMouse):
 
     def __init__(self, rdesc=report_descriptor, name=None, info=None):
         super().__init__(rdesc, name, info)
+        self.hwheel_multiplier = 1
 
 
 class MIDongleMIWirelessMouse(TwoWheelMouse):
@@ -412,6 +414,7 @@ class ResolutionMultiplierMouse(WheelMouse):
     def __init__(self, rdesc=report_descriptor, name=None, info=None):
         super().__init__(rdesc, name, info)
         self.default_reportID = 0x11
+        self.wheel_multiplier = 4
 
 
 class ResolutionMultiplierHWheelMouse(TwoWheelMouse):
@@ -494,6 +497,8 @@ class ResolutionMultiplierHWheelMouse(TwoWheelMouse):
     def __init__(self, rdesc=report_descriptor, name=None, info=None):
         super().__init__(rdesc, name, info)
         self.default_reportID = 0x1a
+        self.wheel_multiplier = 12
+        self.hwheel_multiplier = 12
 
 
 class BaseTest:
@@ -679,26 +684,32 @@ class TestWheelMouse(BaseTest.TestMouse):
                 uhdev.dispatch(10)
 
             syn_event = self.syn_event
+            # The Resolution Multiplier is applied to the HID reports, so we
+            # need to pre-multiply too.
+            mult = uhdev.wheel_multiplier
 
-            r = uhdev.event(0, 0, wheels=1)
+            r = uhdev.event(0, 0, wheels=1 * mult)
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
-            r = uhdev.event(0, 0, wheels=-1)
+            r = uhdev.event(0, 0, wheels=-1 * mult)
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
-            r = uhdev.event(-1, 2, wheels=3)
+            r = uhdev.event(-1, 2, wheels=3 * mult)
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 360))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -714,36 +725,45 @@ class TestTwoWheelMouse(TestWheelMouse):
                 uhdev.dispatch(10)
 
             syn_event = self.syn_event
+            # The Resolution Multiplier is applied to the HID reports, so we
+            # need to pre-multiply too.
+            hmult = uhdev.hwheel_multiplier
+            vmult = uhdev.wheel_multiplier
 
-            r = uhdev.event(0, 0, wheels=(0, 1))
+            r = uhdev.event(0, 0, wheels=(0, 1 * hmult))
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
-            r = uhdev.event(0, 0, wheels=(0, -1))
+            r = uhdev.event(0, 0, wheels=(0, -1 * hmult))
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
-            r = uhdev.event(-1, 2, wheels=(0, 3))
+            r = uhdev.event(-1, 2, wheels=(0, 3 * hmult))
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
-            r = uhdev.event(-1, 2, wheels=(-3, 4))
+            r = uhdev.event(-1, 2, wheels=(-3 * vmult, 4 * hmult))
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -360))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 480))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -753,10 +773,108 @@ class TestResolutionMultiplierMouse(TestTwoWheelMouse):
     def create_mouse(self):
         return ResolutionMultiplierMouse()
 
+    def test_resolution_multiplier_wheel(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            self.assertGreater(uhdev.wheel_multiplier, 1)
+            self.assertEqual(120 % uhdev.wheel_multiplier, 0)
+
+    def test_wheel_with_multiplier(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            assert uhdev.wheel_multiplier > 1
+
+            syn_event = self.syn_event
+            mult = uhdev.wheel_multiplier
+
+            r = uhdev.event(0, 0, wheels=1)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120 / mult))
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents(expected, events)
+
+            r = uhdev.event(0, 0, wheels=-1)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120 / mult))
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents(expected, events)
+
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, 1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, -2))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120 / mult))
+
+            for _ in range(mult - 1):
+                r = uhdev.event(1, -2, wheels=1)
+                events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev, events)
+                self.assertInputEvents(expected, events)
+
+            r = uhdev.event(1, -2, wheels=1)
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents(expected, events)
+
 
 class TestResolutionMultiplierMouse(TestResolutionMultiplierMouse):
     def create_mouse(self):
         return ResolutionMultiplierHWheelMouse()
+
+    def test_resolution_multiplier_ac_pan(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            self.assertGreater(uhdev.hwheel_multiplier, 1)
+            self.assertEqual(120 % uhdev.hwheel_multiplier, 0)
+
+    def test_ac_pan_with_multiplier(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            assert uhdev.hwheel_multiplier > 1
+
+            syn_event = self.syn_event
+            hmult = uhdev.hwheel_multiplier
+
+            r = uhdev.event(0, 0, wheels=(0, 1))
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120 / hmult))
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents(expected, events)
+
+            r = uhdev.event(0, 0, wheels=(0, -1))
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120 / hmult))
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents(expected, events)
+
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, 1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, -2))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120 / hmult))
+
+            for _ in range(hmult - 1):
+                r = uhdev.event(1, -2, wheels=(0, 1))
+                events = uhdev.next_sync_events()
+                self.debug_reports(r, uhdev, events)
+                self.assertInputEvents(expected, events)
+
+            r = uhdev.event(1, -2, wheels=(0, 1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents(expected, events)
 
 
 class TestMiMouse(TestWheelMouse):
