@@ -142,8 +142,8 @@ class BaseTestCase:
             return effective_events
 
         def assertInputEvents(self, expected_events, effective_events):
-            r = self.assertInputEventsIn(expected_events, effective_events)
-            self.assertEqual(len(r), 0)
+            remaining = self.assertInputEventsIn(expected_events, effective_events)
+            self.assertEqual(remaining, [])
 
         @classmethod
         def debug_reports(cls, reports, uhdev=None):
