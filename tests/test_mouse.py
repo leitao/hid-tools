@@ -549,24 +549,27 @@ class TestWheelMouse(BaseTest.TestMouse):
             syn_event = self.syn_event
 
             r = uhdev.event(0, 0, wheels=1)
-            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
-            self.assertInputEvents((syn_event, expected_event), events)
+            self.assertInputEvents(expected, events)
 
             r = uhdev.event(0, 0, wheels=-1)
-            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
-            self.assertInputEvents((syn_event, expected_event), events)
+            self.assertInputEvents(expected, events)
 
             r = uhdev.event(-1, 2, wheels=3)
-            expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
-            expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
-            expected_event2 = libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
-            self.assertInputEvents((syn_event, expected_event0, expected_event1, expected_event2), events)
+            self.assertInputEvents(expected, events)
 
 
 class TestTwoWheelMouse(TestWheelMouse):
@@ -581,31 +584,35 @@ class TestTwoWheelMouse(TestWheelMouse):
             syn_event = self.syn_event
 
             r = uhdev.event(0, 0, wheels=(0, 1))
-            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
-            self.assertInputEvents((syn_event, expected_event), events)
+            self.assertInputEvents(expected, events)
 
             r = uhdev.event(0, 0, wheels=(0, -1))
-            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
-            self.assertInputEvents((syn_event, expected_event), events)
+            self.assertInputEvents(expected, events)
 
             r = uhdev.event(-1, 2, wheels=(0, 3))
-            expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
-            expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
-            expected_event2 = libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3)
+            expected = [syn_event]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
-            self.assertInputEvents((syn_event, expected_event0, expected_event1, expected_event2), events)
+            self.assertInputEvents(expected, events)
 
             r = uhdev.event(-1, 2, wheels=(-3, 4))
             expected = [syn_event]
-            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)]
-            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)]
-            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3)]
-            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4)]
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3))
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
             self.assertInputEvents(expected, events)
