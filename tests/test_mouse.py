@@ -518,7 +518,6 @@ class TestTwoWheelMouse(TestWheelMouse):
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
             self.assertInputEvents((syn_event, expected_event), events)
-            return
 
             r = uhdev.event(0, 0, wheels=(0, -1))
             expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1)
@@ -538,7 +537,7 @@ class TestTwoWheelMouse(TestWheelMouse):
             expected = [syn_event]
             expected += [libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)]
             expected += [libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)]
-            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -3)]
+            expected += [libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3)]
             expected += [libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4)]
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev); print(events)
