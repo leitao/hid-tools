@@ -399,42 +399,42 @@ class BaseTest:
                 r = uhdev.event(0, 0, (None, True, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
 
                 r = uhdev.event(0, 0, (None, False, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
 
                 r = uhdev.event(0, 0, (None, None, True))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 1)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 1)
 
                 r = uhdev.event(0, 0, (None, None, False))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 0)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 0)
 
                 r = uhdev.event(0, 0, (True, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
                 r = uhdev.event(0, 0, (False, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
@@ -442,7 +442,7 @@ class BaseTest:
                 expected_event0 = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
                 expected_event1 = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event0, expected_event1), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
@@ -450,7 +450,7 @@ class BaseTest:
                 r = uhdev.event(0, 0, (False, None, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
@@ -458,7 +458,7 @@ class BaseTest:
                 r = uhdev.event(0, 0, (None, False, None))
                 expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEventsIn((syn_event, expected_event), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
@@ -474,20 +474,20 @@ class BaseTest:
                 r = uhdev.event(0, -1)
                 expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_Y, -1)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEvents((syn_event, expected_event), events)
 
                 r = uhdev.event(1, 0)
                 expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_X, 1)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEvents((syn_event, expected_event), events)
 
                 r = uhdev.event(-1, 2)
                 expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
                 expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
                 events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev); print(events)
+                self.debug_reports(r, uhdev, events)
                 self.assertInputEvents((syn_event, expected_event0, expected_event1), events)
 
 
@@ -552,14 +552,14 @@ class TestWheelMouse(BaseTest.TestMouse):
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
             events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev); print(events)
+            self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
             r = uhdev.event(0, 0, wheels=-1)
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1))
             events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev); print(events)
+            self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
             r = uhdev.event(-1, 2, wheels=3)
@@ -568,7 +568,7 @@ class TestWheelMouse(BaseTest.TestMouse):
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3))
             events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev); print(events)
+            self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
 
@@ -587,14 +587,14 @@ class TestTwoWheelMouse(TestWheelMouse):
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
             events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev); print(events)
+            self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
             r = uhdev.event(0, 0, wheels=(0, -1))
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1))
             events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev); print(events)
+            self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
             r = uhdev.event(-1, 2, wheels=(0, 3))
@@ -604,7 +604,7 @@ class TestTwoWheelMouse(TestWheelMouse):
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
             events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev); print(events)
+            self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
             r = uhdev.event(-1, 2, wheels=(-3, 4))
@@ -614,7 +614,7 @@ class TestTwoWheelMouse(TestWheelMouse):
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4))
             events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev); print(events)
+            self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
 
 class TestMiMouse(TestWheelMouse):

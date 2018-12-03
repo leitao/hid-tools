@@ -146,7 +146,7 @@ class BaseTestCase:
             self.assertEqual(remaining, [])
 
         @classmethod
-        def debug_reports(cls, reports, uhdev=None):
+        def debug_reports(cls, reports, uhdev=None, events=None):
             data = [' '.join([f'{v:02x}' for v in r]) for r in reports]
 
             if uhdev is not None:
@@ -166,6 +166,9 @@ class BaseTestCase:
                 print(f'sending {len(reports)} reports:')
             for report in reports:
                 print('\t', report)
+
+            if events is not None:
+                print('events received:', events)
 
 
 def reload_udev_rules():
