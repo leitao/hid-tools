@@ -605,10 +605,14 @@ class TestMiMouse(TestWheelMouse):
     def assertInputEvents(self, expected_events, effective_events):
         # Buttons and x/y are spread over two HID reports, so we can get two
         # event frames for this device.
-        r = self.assertInputEventsIn(expected_events, effective_events)
-        if r:
-            r.remove(libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0))
-        self.assertEqual(len(r), 0)
+        remaining = self.assertInputEventsIn(expected_events, effective_events)
+        try:
+            remaining.remove(libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0))
+        except ValueError:
+            # If there's no SYN_REPORT in the list, continue and let the
+            # assert below print out the real error
+            pass
+        self.assertEqual(remaining, [])
 
 
 if __name__ == "__main__":
