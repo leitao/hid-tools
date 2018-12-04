@@ -628,5 +628,6 @@ class TestMiMouse(TestWheelMouse):
             r.remove(libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0))
         self.assertEqual(len(r), 0)
 
+
 if __name__ == "__main__":
     main(sys.argv[1:])

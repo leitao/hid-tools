@@ -338,8 +338,7 @@ class MinWin8TSParallel(Digitizer):
           End Collection
           {Digitizer.msCertificationBlob(68)}
 '''
-        super().__init__(f'uhid test parallel {self.max_slots}',
-                                                rdesc_str)
+        super().__init__(f'uhid test parallel {self.max_slots}', rdesc_str)
 
 
 class MinWin8TSHybrid(Digitizer):
@@ -401,8 +400,7 @@ class MinWin8TSHybrid(Digitizer):
           End Collection
           {Digitizer.msCertificationBlob(68)}
 '''
-        super().__init__('uhid test hybrid',
-                                              rdesc_str)
+        super().__init__('uhid test hybrid', rdesc_str)
 
 
 class Win8TSConfidence(Digitizer):
@@ -472,8 +470,7 @@ class Win8TSConfidence(Digitizer):
           End Collection
           {Digitizer.msCertificationBlob(68)}
 '''
-        super().__init__(f'uhid test confidence {self.max_slots}',
-                                               rdesc_str)
+        super().__init__(f'uhid test confidence {self.max_slots}', rdesc_str)
 
 
 class BaseTest:
@@ -557,7 +554,6 @@ class BaseTest:
                         except KeyError:
                             pass
 
-
         def test_mt_single_touch(self):
             """send a single touch in the first slot of the device,
             and release it."""
@@ -586,7 +582,6 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-
         def test_mt_dual_touch(self):
             """Send 2 touches in the first 2 slots.
             Make sure the kernel sees this as a dual touch.
@@ -601,8 +596,8 @@ class BaseTest:
                 t1 = Touch(2, 150, 200)
 
                 if (uhdev.quirks is not None and
-                   ('SLOT_IS_CONTACTID' in uhdev.quirks or
-                    'SLOT_IS_CONTACTNUMBER' in uhdev.quirks)):
+                    ('SLOT_IS_CONTACTID' in uhdev.quirks or
+                     'SLOT_IS_CONTACTNUMBER' in uhdev.quirks)):
                     t1.contactid = 0
 
                 slot0 = self.get_slot(uhdev, t0, 0)
@@ -658,7 +653,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
                 self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-
         def test_mt_triple_tap(self):
             """Send 3 touches in the first 3 slots.
             Make sure the kernel sees this as a triple touch.
@@ -707,7 +701,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
                 self.assertEqual(uhdev.evdev.slots[slot2][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-
         def test_mt_max_contact(self):
             """send the maximum number of contact as reported by the device.
             Make sure all contacts are forwarded and that there is no miss.
@@ -746,7 +739,6 @@ class BaseTest:
 
                     self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-
         def test_mt_contact_count_accurate(self):
             """Test the MT_QUIRK_CONTACT_CNT_ACCURATE from the kernel.
             A report should forward an accurate contact count and the kernel
@@ -779,7 +771,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
                 self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-
     class TestWin8Multitouch(TestMultitouch):
         def __init__(self, methodName='runTest'):
             super().__init__(methodName)
@@ -799,7 +790,6 @@ class BaseTest:
                                 self.assertNotIn(hid.USAGES[field.application], ['Touch Screen'])
                         except KeyError:
                             pass
-
 
         def test_mt_tx_cx(self):
             """send a single touch in the first slot of the device, with
@@ -824,7 +814,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TOOL_X], 50)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 10)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TOOL_Y], 100)
-
 
         def test_mt_inrange(self):
             """Send one contact that has the InRange bit set before/after
@@ -879,7 +868,6 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-
         def test_mt_duplicates(self):
             """Test the MT_QUIRK_IGNORE_DUPLICATES from the kernel.
             If a touch is reported more than once with the same Contact ID,
@@ -907,7 +895,6 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
                 self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_POSITION_X], 50)
                 self.assertEqual(uhdev.evdev.slots[1][libevdev.EV_ABS.ABS_MT_POSITION_Y], 100)
-
 
         def test_mt_release_miss(self):
             """send a single touch in the first slot of the device, and
@@ -958,8 +945,6 @@ class BaseTest:
 
                 # orientation is clockwise, while Azimuth is counter clockwise
                 self.assertIn(libevdev.InputEvent(libevdev.EV_ABS.ABS_MT_ORIENTATION, 90), events)
-
-
 
     class TestPTP(TestWin8Multitouch):
         def __init__(self, methodName='runTest'):
@@ -1052,7 +1037,6 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
-
         def test_ptp_non_touch_data(self):
             """Some single finger hybrid touchpads might not provide the
             button information in subsequent reports (only in the first report).
@@ -1089,13 +1073,11 @@ class BaseTest:
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
 
-
 ################################################################################
 #
 # Windows 7 compatible devices
 #
 ################################################################################
-
 class Test3m_0596_0500(BaseTest.TestMultitouch):
     def _create_device(self):
         return Digitizer('uhid test 3m_0596_0500',
@@ -1145,11 +1127,11 @@ class TestActionStar_2101_1011(BaseTest.TestMultitouch):
                 r = [int(i, 16) for i in r_str.split()]
                 uhdev.call_input_event(r)
                 events = uhdev.next_sync_events()
-                self.debug_reports([r], uhdev);
-                for e in events: print(e)
+                self.debug_reports([r], uhdev)
+                for e in events:
+                    print(e)
                 if num == 2:
                     self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
-
 
 
 class TestAsus_computers_0486_0185(BaseTest.TestMultitouch):
@@ -1622,7 +1604,6 @@ class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
 
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
                 self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
-
 
 
 class TestElanXPS9360(BaseTest.TestWin8Multitouch):
