@@ -176,7 +176,7 @@ class ButtonMouse(BaseMouse):
         return [button_mask, x, y]
 
 
-class WheelMouse(BaseMouse):
+class WheelMouse(ButtonMouse):
     report_descriptor = [
         0x05, 0x01,  # Usage Page (Generic Desktop)        0
         0x09, 0x02,  # Usage (Mouse)                       2
@@ -216,7 +216,7 @@ class WheelMouse(BaseMouse):
         super().__init__(rdesc, name, info)
 
 
-class TwoWheelMouse(BaseMouse):
+class TwoWheelMouse(WheelMouse):
     report_descriptor = [
         0x05, 0x01,  # Usage Page (Generic Desktop)        0
         0x09, 0x02,  # Usage (Mouse)                       2
@@ -257,7 +257,7 @@ class TwoWheelMouse(BaseMouse):
         super().__init__(rdesc, name, info)
 
 
-class MIDongleMIWirelessMouse(BaseMouse):
+class MIDongleMIWirelessMouse(TwoWheelMouse):
     report_descriptor = [
         0x05, 0x01,         # Usage Page (Generic Desktop)
         0x09, 0x02,         # Usage (Mouse)
