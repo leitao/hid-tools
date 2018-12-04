@@ -31,6 +31,7 @@ class MouseData(object):
 
 class GenericDevice(base.UHIDTestDevice):
     def __init__(self, rdesc, name=None, info=None):
+        assert rdesc is not None
         if name is None:
             name = f'uhid test {self.__class__.__name__}'
         if info is None:
