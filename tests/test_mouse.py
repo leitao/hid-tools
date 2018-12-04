@@ -602,7 +602,6 @@ class TestTwoWheelMouse(TestWheelMouse):
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
