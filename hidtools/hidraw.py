@@ -163,6 +163,8 @@ class HidRawDevice(object):
         self.device = device
         self.name = _HIDIOCGRAWNAME(fd)
         self.bustype, self.vendor_id, self.product_id = _HIDIOCGRAWINFO(fd)
+        self.vendor_id &= 0xFFFF
+        self.product_id &= 0xFFFF
         size = _HIDIOCGRDESCSIZE(fd)
         rsize, desc = _HIDIOCGRDESC(fd, size)
         assert rsize == size
