@@ -24,12 +24,14 @@ import os
 import struct
 import sys
 
-def _ioctl(fd, EVIOC, code, return_type, buf = None):
-	size = struct.calcsize(return_type)
-	if buf == None:
-		buf = size*'\x00'
-	abs = fcntl.ioctl(fd, EVIOC(code, size), buf)
-	return struct.unpack(return_type, abs)
+
+def _ioctl(fd, EVIOC, code, return_type, buf=None):
+    size = struct.calcsize(return_type)
+    if buf is None:
+        buf = size * '\x00'
+    abs = fcntl.ioctl(fd, EVIOC(code, size), buf)
+    return struct.unpack(return_type, abs)
+
 
 # extracted from <asm-generic/ioctl.h>
 _IOC_WRITE = 1
@@ -45,66 +47,76 @@ _IOC_TYPESHIFT = _IOC_NRSHIFT + _IOC_NRBITS
 _IOC_SIZESHIFT = _IOC_TYPESHIFT + _IOC_TYPEBITS
 _IOC_DIRSHIFT = _IOC_SIZESHIFT + _IOC_SIZEBITS
 
-#define _IOC(dir,type,nr,size) \
-#	(((dir)  << _IOC_DIRSHIFT) | \
-#	 ((type) << _IOC_TYPESHIFT) | \
-#	 ((nr)   << _IOC_NRSHIFT) | \
-#	 ((size) << _IOC_SIZESHIFT))
+
+# define _IOC(dir,type,nr,size) \
+# 	(((dir)  << _IOC_DIRSHIFT) | \
+# 	 ((type) << _IOC_TYPESHIFT) | \
+# 	 ((nr)   << _IOC_NRSHIFT) | \
+# 	 ((size) << _IOC_SIZESHIFT))
 def _IOC(dir, type, nr, size):
-    return ( (dir << _IOC_DIRSHIFT) |
+    return ((dir << _IOC_DIRSHIFT) |
             (ord(type) << _IOC_TYPESHIFT) |
             (nr << _IOC_NRSHIFT) |
             (size << _IOC_SIZESHIFT))
 
-    #define _IOR(type,nr,size)	_IOC(_IOC_READ,(type),(nr),(_IOC_TYPECHECK(size)))
-def _IOR(type,nr,size):
+
+# define _IOR(type,nr,size)	_IOC(_IOC_READ,(type),(nr),(_IOC_TYPECHECK(size)))
+def _IOR(type, nr, size):
     return _IOC(_IOC_READ, type, nr, size)
 
-#define _IOW(type,nr,size)	_IOC(_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
-def _IOW(type,nr,size):
+
+# define _IOW(type,nr,size)	_IOC(_IOC_WRITE,(type),(nr),(_IOC_TYPECHECK(size)))
+def _IOW(type, nr, size):
     return _IOC(_IOC_WRITE, type, nr, size)
 
 
-#define HIDIOCGRDESCSIZE	_IOR('H', 0x01, int)
+# define HIDIOCGRDESCSIZE	_IOR('H', 0x01, int)
 def _IOC_HIDIOCGRDESCSIZE(none, len):
     return _IOR('H', 0x01, len)
+
 
 def _HIDIOCGRDESCSIZE(fd):
     """ get report descriptors size """
     type = 'i'
     return int(*_ioctl(fd, _IOC_HIDIOCGRDESCSIZE, None, type))
 
-#define HIDIOCGRDESC		_IOR('H', 0x02, struct hidraw_report_descriptor)
+
+# define HIDIOCGRDESC		_IOR('H', 0x02, struct hidraw_report_descriptor)
 def _IOC_HIDIOCGRDESC(none, len):
     return _IOR('H', 0x02, len)
+
 
 def _HIDIOCGRDESC(fd, size):
     """ get report descriptors """
     format = "I4096c"
-    value = '\0'*4096
+    value = '\0' * 4096
     tmp = struct.pack("i", size) + value[:4096].encode('utf-8').ljust(4096, b'\0')
     _buffer = array.array('B', tmp)
     fcntl.ioctl(fd, _IOC_HIDIOCGRDESC(None, struct.calcsize(format)), _buffer)
     size, = struct.unpack("i", _buffer[:4])
-    value = _buffer[4:size+4]
+    value = _buffer[4:size + 4]
     return size, value
 
-#define HIDIOCGRAWINFO		_IOR('H', 0x03, struct hidraw_devinfo)
+
+# define HIDIOCGRAWINFO		_IOR('H', 0x03, struct hidraw_devinfo)
 def _IOC_HIDIOCGRAWINFO(none, len):
     return _IOR('H', 0x03, len)
+
 
 def _HIDIOCGRAWINFO(fd):
     """ get hidraw device infos """
     type = 'ihh'
     return _ioctl(fd, _IOC_HIDIOCGRAWINFO, None, type)
 
-#define HIDIOCGRAWNAME(len)     _IOC(_IOC_READ, 'H', 0x04, len)
+
+# define HIDIOCGRAWNAME(len)     _IOC(_IOC_READ, 'H', 0x04, len)
 def _IOC_HIDIOCGRAWNAME(none, len):
     return _IOC(_IOC_READ, 'H', 0x04, len)
 
+
 def _HIDIOCGRAWNAME(fd):
     """ get device name """
-    type = 1024*'c'
+    type = 1024 * 'c'
     cstring = _ioctl(fd, _IOC_HIDIOCGRAWNAME, None, type)
     string = map(lambda x: x.decode('utf-8'), cstring)
     return "".join(string).rstrip('\x00')
@@ -131,6 +143,7 @@ class HidRawEvent(object):
         self.sec, self.usec = sec, usec
         self.bytes = bytes
 
+
 class HidRawDevice(object):
     """
     A hidraw device .
@@ -152,7 +165,7 @@ class HidRawDevice(object):
     .. attribute:: product_id
 
         16-bit numerical product ID
-    
+
     .. attribute:: report_descriptor
 
         A list of 8-bit integers that is this device's report descriptor
@@ -179,7 +192,6 @@ class HidRawDevice(object):
     def __repr__(self):
         return f'{self.name} bus: {self.bustype:02x} vendor: {self.vendor_id:04x} product: {self.product_id:04x}'
 
-
     def read_events(self):
         """
         Read events from the device and store them locally.
@@ -196,7 +208,7 @@ class HidRawDevice(object):
         if self._time_offset is None:
             self._time_offset = now
         tdelta = now - self._time_offset
-        bytes = struct.unpack('B'*len(data), data)
+        bytes = struct.unpack('B' * len(data), data)
 
         self.events.append(HidRawEvent(tdelta.seconds, tdelta.microseconds, bytes))
 

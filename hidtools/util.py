@@ -18,6 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+
 def twos_comp(val, bits):
     """compute the 2's complement of val.
 
@@ -34,4 +35,3 @@ def twos_comp(val, bits):
 
 def to_twos_comp(val, bits):
     return val & ((1 << bits) - 1)
-

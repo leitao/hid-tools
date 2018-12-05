@@ -1189,7 +1189,7 @@ class ReportDescriptor(object):
 
         # variables only used during parsing
         self.global_stack = []
-        self.collection = [0, 0, 0] # application, physical, logical
+        self.collection = [0, 0, 0]  # application, physical, logical
         self.local = ReportDescriptor._Locals()
         self.glob = ReportDescriptor._Globals()
         self.current_report = {}
