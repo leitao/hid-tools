@@ -1465,8 +1465,8 @@ class ReportDescriptor(object):
         return rdesc.format_report(data, global_data)
 
     def get_str(self, data, split_lines=True):
-        rdesc = self.get(data[0], len(data))
-        if rdesc is None:
+        report = self.get(data[0], len(data))
+        if report is None:
             return None
 
-        return rdesc.get_str(data, split_lines)
+        return report.get_str(data, split_lines)
