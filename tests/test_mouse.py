@@ -678,6 +678,14 @@ class TestWheelMouse(BaseTest.TestMouse):
     def create_mouse(self):
         return WheelMouse()
 
+    def test_wheel_hires_exists(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_WHEEL))
+            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_0B))
+
     def test_wheel(self):
         with self.create_mouse() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
@@ -718,6 +726,14 @@ class TestWheelMouse(BaseTest.TestMouse):
 class TestTwoWheelMouse(TestWheelMouse):
     def create_mouse(self):
         return TwoWheelMouse()
+
+    def test_hwheel_hires_exists(self):
+        with self.create_mouse() as uhdev:
+            while uhdev.application not in uhdev.input_nodes:
+                uhdev.dispatch(10)
+
+            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_HWHEEL))
+            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_0C))
 
     def test_ac_pan(self):
         with self.create_mouse() as uhdev:
