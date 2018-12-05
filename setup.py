@@ -12,12 +12,12 @@ setup(name='hid-tools',
       author_email='benjamin.tissoires@redhat.com',
       license='GPL',
       entry_points={
-          "console_scripts": [
+          'console_scripts': [
               'hid-recorder = hidtools.record:main',
               'hid-replay = hidtools.replay:main',
               'hid-parse= hidtools.parse_hid:main',
               'hid-parse-rdesc = hidtools.parse_rdesc:main',
-              ]
+          ]
       },
       classifiers=[
           'Development Status :: 3 - Alpha',
