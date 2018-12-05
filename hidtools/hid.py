@@ -1066,8 +1066,17 @@ class HidReport(object):
                     value_format = f'{{:{str(len(str(1 << report_item.size)) + 1)}d}}'
                 if isinstance(values[0], str):
                     value_format = "{}"
-                usage_name = self._fix_xy_usage_for_mt_devices(report_item.usage_name)
-                usage = f' {usage_name}:'
+                if report_item.usage_page_name == 'Button':
+                    if report_item.usage_name == 'B1':
+                        usage_name = 'Button'
+                        usage = f' {usage_name}:'
+                    else:
+                        usage_name = ''
+                        sep = ''
+                        usage = ''
+                else:
+                    usage_name = self._fix_xy_usage_for_mt_devices(report_item.usage_name)
+                    usage = f' {usage_name}:'
 
                 # if we don't get a key error this is a duplicate in
                 # this report descriptor and we need a linebreak
