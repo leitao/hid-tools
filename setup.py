@@ -25,6 +25,8 @@ setup(name='hid-tools',
           'Programming Language :: Python :: 3',
           'Programming Language :: Python :: 3.6'
       ],
+      data_files=[('/usr/share/man/man1', ['man/hid-recorder.1',
+                                           'man/hid-replay.1'])],
       python_requires='>=3.6',
       include_package_data=True,
       )
