@@ -96,7 +96,7 @@ for type, items in hid_items.items():
         hid_type[k] = type
 
 
-USAGES = hidtools.hut.parse()
+USAGES = hidtools.hut.usages()
 
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 

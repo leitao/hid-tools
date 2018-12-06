@@ -85,11 +85,29 @@ def _parse_usages(f):
     return usage_page
 
 
-def parse():
+USAGES = None
+
+def usages():
     """
-    Parse all .hut files in the data directory, return a dictionary using
-    the Usage Page number and the Usage as dict.
+    Return the HID Usage Tables as a dictionary where the keys are the
+    numeric Usage Page and the values are the respective
+    :class:`hidtools.HidUsagePage` object. ::
+
+        > usages = hut.usages()
+        > print(usages[0x01].page_name)
+        Generic Desktop
+        > print(usages.usage_pages[0x01].page_name)
+        Generic Desktop
+        > print(usages[0x01].page_id)
+        1
+
+    :return: a :class:`hidtools.HidUsages` object
     """
+    global USAGES
+
+    if USAGES is not None:
+        return USAGES
+
     usages = HidUsages()
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.hut'):
@@ -100,4 +118,6 @@ def parse():
                 except:
                     print(filename)
                     raise
+
+    USAGES = usages
     return usages
