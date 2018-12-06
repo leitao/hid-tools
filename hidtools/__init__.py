@@ -80,7 +80,7 @@ class HidUsagePage(dict):
         return self
 
 
-class HidUsages(dict):
+class HidUsageTable(dict):
     """
     This is a dictionary wrapper that all HID Usages known to man. Or to
     this module at least.

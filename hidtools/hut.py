@@ -20,7 +20,7 @@
 
 import os
 from parse import parse as _parse
-from hidtools import HidUsagePage, HidUsages
+from hidtools import HidUsagePage, HidUsageTable
 
 
 DATA_DIRNAME = "data"
@@ -101,14 +101,14 @@ def usages():
         > print(usages[0x01].page_id)
         1
 
-    :return: a :class:`hidtools.HidUsages` object
+    :return: a :class:`hidtools.HidUsageTable` object
     """
     global USAGES
 
     if USAGES is not None:
         return USAGES
 
-    usages = HidUsages()
+    usages = HidUsageTable()
     for filename in os.listdir(DATA_DIR):
         if filename.endswith('.hut'):
             with open(os.path.join(DATA_DIR, filename), 'r') as f:
