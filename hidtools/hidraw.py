@@ -207,25 +207,36 @@ class HidrawDevice(object):
 
     def read_events(self):
         """
-        Read events from the device and store them locally.
+        Read events from the device and store them in the device.
 
         This function simply calls :func:`os.read`, it is the caller's task to
         either make sure the device is set nonblocking or to handle any
         :class:`KeyboardInterrupt` if this call does end up blocking.
+
+        :returns: a tuple of ``(index, count)`` of the :attr:`events` added.
         """
-        data = os.read(self.device.fileno(), 4096)
-        if not data:
-            return None
 
-        now = datetime.datetime.now()
-        if self._time_offset is None:
-            self._time_offset = now
-        tdelta = now - self._time_offset
-        bytes = struct.unpack('B' * len(data), data)
+        index = max(0, len(self.events) - 1)
 
-        self.events.append(HidrawEvent(tdelta.seconds, tdelta.microseconds, bytes))
+        loop = True
+        while loop:
+            data = os.read(self.device.fileno(), 4096)
+            if not data:
+                break
+            if len(data) < 4096:
+                loop = False
 
-        return len(data)
+            now = datetime.datetime.now()
+            if self._time_offset is None:
+                self._time_offset = now
+            tdelta = now - self._time_offset
+            bytes = struct.unpack('B' * len(data), data)
+
+            self.events.append(HidrawEvent(tdelta.seconds, tdelta.microseconds, bytes))
+
+        count = len(self.events) - index
+
+        return index, count
 
     def _dump_event(self, event, file):
         report_id = event.bytes[0]
