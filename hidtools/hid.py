@@ -19,7 +19,7 @@
 #
 
 import copy
-import hidtools.hut
+from hidtools.hut import HUT
 from hidtools.util import twos_comp, to_twos_comp
 from parse import parse as _parse
 import logging
@@ -95,8 +95,6 @@ for type, items in hid_items.items():
         inv_hid[v] = k
         hid_type[k] = type
 
-
-USAGES = hidtools.hut.usages()
 
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
@@ -269,21 +267,21 @@ class _HidRDescItem(object):
             indent -= 1
         elif item == "Usage Page":
             try:
-                descr += f' ({USAGES[value].page_name})'
+                descr += f' ({HUT[value].page_name})'
             except KeyError:
                 descr += f' (Vendor Usage Page 0x{value:02x})'
         elif item == "Usage":
             usage = value | up
             try:
-                descr += f' ({USAGES[up >> 16][value]})'
+                descr += f' ({HUT[up >> 16][value]})'
             except KeyError:
-                if (up >> 16) == USAGES.usage_page_from_name('Sensor').page_id:
+                if (up >> 16) == HUT.usage_page_from_name('Sensor').page_id:
                     mod = (usage & 0xF000) >> 8
                     usage &= ~0xF000
                     mod_descr = sensor_mods[mod]
                     page_id = (usage & 0xFF00) >> 16
                     try:
-                        descr += f' ({USAGES[page_id][usage & 0xFF]}  | {mod_descr})'
+                        descr += f' ({HUT[page_id][usage & 0xFF]}  | {mod_descr})'
                     except KeyError:
                         descr += f' (Unknown Usage 0x{value:02x})'
                 else:
@@ -468,10 +466,10 @@ class _HidRDescItem(object):
 
         if isinstance(data, str):
             if name == "Usage Page":
-                value = USAGES.usage_page_from_name(data).page_id
+                value = HUT.usage_page_from_name(data).page_id
                 usage_page = value
             elif name == "Usage":
-                value = USAGES[usage_page].from_name[data]
+                value = HUT[usage_page].from_name[data]
             elif name == "Collection":
                 value = collections[data.upper()]
             elif name in 'Input Output Feature':
@@ -619,7 +617,7 @@ class _HidRDescItem(object):
         if item == "Usage":
             try:
                 page_id = up >> 16
-                dump_file.write(f'                 {USAGES[page_id][value]}\n')
+                dump_file.write(f'                 {HUT[page_id][value]}\n')
             except KeyError:
                 pass
 
@@ -697,12 +695,12 @@ class HidField(object):
     def _usage_name(self, usage):
         usage_page = usage >> 16
         value = usage & 0x0000FFFF
-        if usage_page in USAGES:
-            if USAGES[usage_page].page_name == "Button":
+        if usage_page in HUT:
+            if HUT[usage_page].page_name == "Button":
                 name = f'B{str(value)}'
             else:
                 try:
-                    name = USAGES[usage_page][value]
+                    name = HUT[usage_page][value]
                 except KeyError:
                     name = f'0x{usage:04x}'
         else:
@@ -735,7 +733,7 @@ class HidField(object):
         try:
             page_id = phys >> 16
             value = phys & 0xFF
-            phys = USAGES[page_id][value]
+            phys = HUT[page_id][value]
         except KeyError:
             try:
                 phys = f'0x{phys:04x}'
@@ -870,7 +868,7 @@ class HidField(object):
         usage_page_name = ''
         usage_page = self.usage_page >> 16
         try:
-            usage_page_name = USAGES[usage_page].page_name
+            usage_page_name = HUT[usage_page].page_name
         except KeyError:
             pass
         return usage_page_name
@@ -1003,7 +1001,7 @@ class HidReport(object):
         try:
             page_id = self.application >> 16
             value = self.application & 0xff
-            return USAGES[page_id][value]
+            return HUT[page_id][value]
         except KeyError:
             return 'Vendor'
 

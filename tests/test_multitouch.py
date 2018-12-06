@@ -19,7 +19,7 @@
 #
 
 import base
-import hidtools.hid as hid
+from hidtools.hut import HUT
 import libevdev
 import sys
 import time
@@ -543,15 +543,15 @@ class BaseTest:
                         page_id = field.usage >> 16
                         value = field.usage & 0xFF
                         try:
-                            if hid.USAGES[page_id][value] == 'Contact Max':
-                                self.assertIn(hid.USAGES[page_id][field.application],
+                            if HUT[page_id][value] == 'Contact Max':
+                                self.assertIn(HUT[page_id][field.application],
                                               ['Touch Screen', 'Touch Pad', 'System Multi-Axis Controller'])
                         except KeyError:
                             pass
 
                         try:
-                            if hid.USAGES[page_id][value] == 'Inputmode':
-                                self.assertIn(hid.USAGES[page_id][field.application],
+                            if HUT[page_id][value] == 'Inputmode':
+                                self.assertIn(HUT[page_id][field.application],
                                               ['Touch Screen', 'Touch Pad', 'Device Configuration'])
                         except KeyError:
                             pass
@@ -788,8 +788,8 @@ class BaseTest:
                         page_id = field.usage >> 16
                         value = field.usage & 0xFF
                         try:
-                            if hid.USAGES[page_id][value] == 'Inputmode':
-                                self.assertNotIn(hid.USAGES[field.application], ['Touch Screen'])
+                            if HUT[page_id][value] == 'Inputmode':
+                                self.assertNotIn(HUT[field.application], ['Touch Screen'])
                         except KeyError:
                             pass
 

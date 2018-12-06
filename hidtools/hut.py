@@ -19,7 +19,7 @@
 #
 
 import os
-from parse import parse as _parse
+import parse
 
 
 DATA_DIRNAME = "data"
@@ -156,96 +156,105 @@ class HidUsageTable(dict):
         except KeyError:
             return None
 
-def _parse_usages(f):
-    """
-    Parse a single HUT file. The file format is a set of lines in three
-    formats: ::
+    @classmethod
+    def _parse_usages(cls, f):
+        """
+        Parse a single HUT file. The file format is a set of lines in three
+        formats: ::
 
-        (01)<tab>Usage Page name
-        A0<tab>Name
-        F0-FF<tab>Reserved for somerange
+            (01)<tab>Usage Page name
+            A0<tab>Name
+            F0-FF<tab>Reserved for somerange
 
-    All numbers in hex.
+        All numbers in hex.
 
-    Only one Usage Page per file
+        Only one Usage Page per file
 
-    Usages are parsed into a dictionary[number] = name.
+        Usages are parsed into a dictionary[number] = name.
 
-    The return value is a single HidUsagePage where page[idx] = idx-name.
-    """
-    usage_page = None
-    for line in f:
-        line = line.strip()
-        if not line:
-            continue
+        The return value is a single HidUsagePage where page[idx] = idx-name.
+        """
+        usage_page = None
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
 
-        # Usage Page, e.g. '(01)	Generic Desktop'
-        if line.startswith('('):
-            assert usage_page is None
+            # Usage Page, e.g. '(01)	Generic Desktop'
+            if line.startswith('('):
+                assert usage_page is None
 
-            r = _parse('({idx:x})\t{page_name}', line)
-            assert(r is not None)
-            usage_page = HidUsagePage()
-            usage_page.page_id = r['idx']
-            usage_page.page_name = r['page_name']
-            continue
+                r = parse.parse('({idx:x})\t{page_name}', line)
+                assert(r is not None)
+                usage_page = HidUsagePage()
+                usage_page.page_id = r['idx']
+                usage_page.page_name = r['page_name']
+                continue
 
-        assert usage_page is not None
+            assert usage_page is not None
 
-        # Reserved ranges, e.g  '0B-1F	Reserved'
-        r = _parse('{:x}-{:x}\t{name}', line)
-        if r:
-            if 'reserved' not in r['name'].lower():
-                print(line)
-            continue
+            # Reserved ranges, e.g  '0B-1F	Reserved'
+            r = parse.parse('{:x}-{:x}\t{name}', line)
+            if r:
+                if 'reserved' not in r['name'].lower():
+                    print(line)
+                continue
 
-        # Single usage, e.g. 36	Slider
-        # we can not use {usage:x} or the value '0B' will be converted to 0
-        # See https://github.com/r1chardj0n3s/parse/issues/65
-        # fixed in parse 1.8.4 (May 2018)
-        r = _parse('{usage}\t{name}', line)
-        assert r is not None
-        if 'reserved' in r['name'].lower():
-            continue
+            # Single usage, e.g. 36	Slider
+            # we can not use {usage:x} or the value '0B' will be converted to 0
+            # See https://github.com/r1chardj0n3s/parse/issues/65
+            # fixed in parse 1.8.4 (May 2018)
+            r = parse.parse('{usage}\t{name}', line)
+            assert r is not None
+            if 'reserved' in r['name'].lower():
+                continue
 
-        usage_page[int(r['usage'], 16)] = r['name']
+            usage_page[int(r['usage'], 16)] = r['name']
 
-    return usage_page
+        return usage_page
 
 
-USAGES = None
+    @classmethod
+    def _from_hut_data(cls):
+        """
+        Return the HID Usage Tables as a dictionary where the keys are the
+        numeric Usage Page and the values are the respective
+        :class:`hidtools.HidUsagePage` object. ::
 
-def usages():
-    """
-    Return the HID Usage Tables as a dictionary where the keys are the
-    numeric Usage Page and the values are the respective
-    :class:`hidtools.HidUsagePage` object. ::
+            > usages = hidtools.hut.HUT()
+            > print(usages[0x01].page_name)
+            Generic Desktop
+            > print(usages.usage_pages[0x01].page_name)
+            Generic Desktop
+            > print(usages[0x01].page_id)
+            1
 
-        > usages = hut.usages()
-        > print(usages[0x01].page_name)
-        Generic Desktop
-        > print(usages.usage_pages[0x01].page_name)
-        Generic Desktop
-        > print(usages[0x01].page_id)
-        1
+        :return: a :class:`hidtools.HidUsageTable` object
+        """
+        hut = HidUsageTable()
+        for filename in os.listdir(DATA_DIR):
+            if filename.endswith('.hut'):
+                with open(os.path.join(DATA_DIR, filename), 'r') as f:
+                    try:
+                        usage_page = cls._parse_usages(f)
+                        hut[usage_page.page_id] = usage_page
+                    except:
+                        print(filename)
+                        raise
 
-    :return: a :class:`hidtools.HidUsageTable` object
-    """
-    global USAGES
+        return hut
 
-    if USAGES is not None:
-        return USAGES
+HUT = HidUsageTable._from_hut_data()
+"""
+The HID Usage Tables as a :class:`hidtools.HidUsageTable` object,
+a dictionary where the keys are the numeric Usage Page and the values are
+the respective :class:`hidtools.HidUsagePage` object. ::
 
-    usages = HidUsageTable()
-    for filename in os.listdir(DATA_DIR):
-        if filename.endswith('.hut'):
-            with open(os.path.join(DATA_DIR, filename), 'r') as f:
-                try:
-                    usage_page = _parse_usages(f)
-                    usages[usage_page.page_id] = usage_page
-                except:
-                    print(filename)
-                    raise
-
-    USAGES = usages
-    return usages
+    > usages = hidtools.hut.HUT()
+    > print(usages[0x01].page_name)
+    Generic Desktop
+    > print(usages.usage_pages[0x01].page_name)
+    Generic Desktop
+    > print(usages[0x01].page_id)
+    1
+"""
