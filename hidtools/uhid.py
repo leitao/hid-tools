@@ -78,8 +78,8 @@ class UHIDDevice(object):
     _UHID_OUTPUT_REPORT = 1
     _UHID_INPUT_REPORT = 2
 
-    polling_functions = {}
-    poll = select.poll()
+    _polling_functions = {}
+    _poll = select.poll()
     _devices = []
 
     _pyudev_context = None
@@ -97,21 +97,21 @@ class UHIDDevice(object):
 
         :returns: the number of devices data was available on
         """
-        devices = cls.poll.poll(timeout)
+        devices = cls._poll.poll(timeout)
         for fd, mask in devices:
             if mask & select.POLLIN:
-                fun = cls.polling_functions[fd]
+                fun = cls._polling_functions[fd]
                 fun()
         return len(devices)
 
     @classmethod
     def _append_fd_to_poll(cls, fd, read_function, mask=select.POLLIN):
-        cls.poll.register(fd, mask)
-        cls.polling_functions[fd] = read_function
+        cls._poll.register(fd, mask)
+        cls._polling_functions[fd] = read_function
 
     @classmethod
     def _remove_fd_from_poll(cls, fd):
-        cls.poll.unregister(fd)
+        cls._poll.unregister(fd)
 
     @classmethod
     def _init_pyudev(cls):
