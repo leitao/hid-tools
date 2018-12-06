@@ -19,7 +19,7 @@
 #
 
 import copy
-import hidtools.parse_hut
+import hidtools.hut
 from hidtools.util import twos_comp, to_twos_comp
 from parse import parse as _parse
 import logging
@@ -96,7 +96,7 @@ for type, items in hid_items.items():
         hid_type[k] = type
 
 
-USAGES = hidtools.parse_hut.parse()
+USAGES = hidtools.hut.parse()
 
 INV_COLLECTIONS = dict([(v, k) for k, v in collections.items()])
 
