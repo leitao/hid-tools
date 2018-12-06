@@ -66,13 +66,13 @@ def main():
                         help='The file to record to (default: stdout)')
     args = parser.parse_args()
 
-    if args.device is None:
-        args.device = open(list_devices())
-
-    device = HidrawDevice(args.device)
-    device.dump(args.output)
-
     try:
+        if args.device is None:
+            args.device = open(list_devices())
+
+        device = HidrawDevice(args.device)
+        device.dump(args.output)
+
         while True:
             device.read_events()
             device.dump(args.output)
