@@ -80,7 +80,7 @@ class UHIDDevice(object):
 
     polling_functions = {}
     poll = select.poll()
-    devices = []
+    _devices = []
 
     _pyudev_context = None
     _pyudev_monitor = None
@@ -131,7 +131,7 @@ class UHIDDevice(object):
         if event is None:
             return
 
-        for d in cls.devices:
+        for d in cls._devices:
             if d.udev_device is not None and d.udev_device.sys_path in event.sys_path:
                 d._udev_event(event)
 
@@ -155,7 +155,7 @@ class UHIDDevice(object):
         self.uniq = f'uhid_{str(uuid.uuid4())}'
         self._append_fd_to_poll(self._fd, self._process_one_event)
         self._init_pyudev()
-        UHIDDevice.devices.append(self)
+        UHIDDevice._devices.append(self)
 
     def __enter__(self):
         return self
@@ -163,7 +163,7 @@ class UHIDDevice(object):
     def __exit__(self, *exc_details):
         if self._ready:
             self.destroy()
-        UHIDDevice.devices.remove(self)
+        UHIDDevice._devices.remove(self)
         self._remove_fd_from_poll(self._fd)
         os.close(self._fd)
 
