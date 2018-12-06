@@ -9,18 +9,13 @@ if os.environ.get('HID_DEBUG', False):
 
 class HidUsagePage(dict):
     """
-    A dictionary of HID Usages, using the Usage number as index and the
-    string name as value.
+    A dictionary of HID Usages in the form ``{ usage: usage_name}``,
+    representing all Usages in this Usage Page.
 
-    .. attribute:: page_id
-
-        The Page ID for this Usage Page, e.g. ``01`` (Generic Desktop)
-
-    .. attribute:: page_name
-
-        The assigned name for this usage Page, e.g. "Generic Desktop"
-
-    This object a dictionary, use like this: ::
+    A HID Usage is named semantical identifier that describe how a given
+    field in a HID report is to be used. A Usage Page is a logical grouping
+    of those identifiers, e.g. "Generic Desktop", "Telephony Devices", or
+    "Digitizers".  ::
 
         > print(usage_page.page_name)
         Generic Desktop
@@ -30,6 +25,14 @@ class HidUsagePage(dict):
         Mouse
         > print(usage_page.from_name["Mouse"])
         2
+
+    .. attribute:: page_id
+
+        The Page ID for this Usage Page, e.g. ``01`` (Generic Desktop)
+
+    .. attribute:: page_name
+
+        The assigned name for this usage Page, e.g. "Generic Desktop"
 
     """
     @property
@@ -85,7 +88,7 @@ class HidUsages(dict):
     This dict is laid out as ``{page_id : usage_page_object}``
     (:class:`HidUsagePage`)
 
-    This object a dictionary, use like this: ::
+    This object is a dictionary, use like this: ::
 
         > print(usages[0x01].page_name)
         Generic Desktop
@@ -102,7 +105,7 @@ class HidUsages(dict):
     @property
     def usage_pages(self):
         """
-        A dictionary mapping `{page_id : object}`.
+        A dictionary mapping ``{page_id : object}``
         """
         return self
 

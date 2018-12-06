@@ -30,7 +30,7 @@ DATA_DIR = os.path.join(SCRIPT_DIR, DATA_DIRNAME)
 def parse_usages(f):
     """
     Parse a single HUT file. The file format is a set of lines in three
-    formats:
+    formats: ::
 
         (01)<tab>Usage Page name
         A0<tab>Name

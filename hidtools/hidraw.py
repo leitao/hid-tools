@@ -148,7 +148,14 @@ class HidRawEvent(object):
 
 class HidRawDevice(object):
     """
-    A hidraw device .
+    A device as exposed by the kernel ``hidraw`` module. ``hidraw`` allows
+    direct access to the HID device, both for reading and writing. ::
+
+        with open('/dev/hidraw0', 'r+b') as fd:
+            dev = HidrawDevice(fd)
+            while True:
+                dev.read_events()  # this blocks
+                print(f'We received {len(dev.events)} events so far')
 
     :param File device: a file-like object pointing to ``/dev/hidrawX``
 
@@ -158,7 +165,8 @@ class HidRawDevice(object):
 
     .. attribute:: bustype
 
-        The numerical bus type (0x3 for USB, 0x5 for Bluetooth, see linux/input.h)
+        The numerical bus type (``0x3`` for USB, ``0x5`` for Bluetooth, see
+        ``linux/input.h``)
 
     .. attribute:: vendor_id
 
@@ -172,6 +180,9 @@ class HidRawDevice(object):
 
         A list of 8-bit integers that is this device's report descriptor
 
+    .. attribute:: events
+
+        All events accumulated so far, a list of :class:`HidrawEvent`
     """
     def __init__(self, device):
         fd = device.fileno()
@@ -198,9 +209,9 @@ class HidRawDevice(object):
         """
         Read events from the device and store them locally.
 
-        This function simply calls ``os.read``, it is the caller's task to
+        This function simply calls :func:`os.read`, it is the caller's task to
         either make sure the device is set nonblocking or to handle any
-        ``KeyboardInterrupt`` if this call does end up blocking.
+        :class:`KeyboardInterrupt` if this call does end up blocking.
         """
         data = os.read(self.device.fileno(), 4096)
         if not data:

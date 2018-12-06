@@ -30,6 +30,10 @@ logger = logging.getLogger('hidtools.hid.uhid')
 
 
 class UHIDIncompleteException(Exception):
+    """
+    An exception raised when a UHIDDevice does not have sufficient
+    information to create a kernel device.
+    """
     pass
 
 
@@ -90,6 +94,8 @@ class UHIDDevice(object):
         The caller must call this function regularly to make sure things
         like udev events are processed correctly. There's no indicator of
         when to call :meth:`dispatch` yet, call it whenever you're idle.
+
+        :returns: the number of devices data was available on
         """
         devices = cls.poll.poll(timeout)
         for fd, mask in devices:
@@ -188,7 +194,7 @@ class UHIDDevice(object):
     @property
     def fd(self):
         """
-        The fd to the /dev/uhid device node
+        The fd to the ``/dev/uhid`` device node
         """
         return self._fd
 
@@ -317,6 +323,9 @@ class UHIDDevice(object):
         Create a kernel device from this device. Note that the device is not
         immediately ready to go after creation, you must wait for
         :meth:`start` and ideally for :meth:`open` to be called.
+
+        :raises: :class:`UHIDIncompleteException` if the device does not
+            have a name, report descriptor or the info bits set.
         """
         if (self._name is None or
            self._rdesc is None or
@@ -437,7 +446,7 @@ class UHIDDevice(object):
 
             data_bytes = uhid_device.format_report(mouse)
 
-        The UHIDDevice will order the report according to the device's report
-        descriptor.
+        The :class:`UHIDDevice` will order the report according to the
+        device's report descriptor.
         """
         return self.parsed_rdesc.format_report(data, global_data, reportID, application)

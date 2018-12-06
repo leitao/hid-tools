@@ -26,8 +26,8 @@ import hidtools.hid
 def parse_rdesc(rdesc, output_type, dump_file):
     """
     Parse the given report descriptor and outputs it to stdout if show is True.
-    Returns:
-         - a ReportDescriptor object
+
+    :returns: a :class:`hidtools.hid.ReportDescriptor` object
     """
 
     rdesc_object = hidtools.hid.ReportDescriptor.from_bytes(rdesc)

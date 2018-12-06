@@ -564,7 +564,9 @@ class _HidRDescItem(object):
 
     def dump_rdesc_kernel(self, indent, dump_file):
         """
-        Write the HID item to the file a C-style format.
+        Write the HID item to the file a C-style format, e.g. ::
+
+            0x05, 0x01,			/* Usage Page (Generic Desktop)			*/
 
         :param int indent: indentation to prefix
         :param File dump_file: file to write to
@@ -582,7 +584,13 @@ class _HidRDescItem(object):
 
     def dump_rdesc_array(self, indent, dump_file):
         """
-        Format the hid item in a C-style format.
+        Format the hid item in hexadecimal format with a
+        double-slash comment, e.g. ::
+
+           0x05, 0x01,                    // Usage Page (Generic Desktop)        0
+
+        :param int indent: indentation to prefix
+        :param File dump_file: file to write to
         """
         offset = self.index_in_report
         line = self._get_raw_values()
@@ -617,7 +625,39 @@ class _HidRDescItem(object):
 
 
 class HidField(object):
+    """
+    Represents one field in a HID report. A field is one element of a HID
+    report that matches a specific set of bits in that report.
 
+    .. attribute:: usage
+
+        A string with HID field's Usage, e.g. "Wheel". If the field has
+        multiple usages, this refers to the first one.
+
+    .. attribute:: usage_page
+
+        The string with HID field's Usage Page, e.g. "Generic Desktop"
+
+    .. attribute:: report_ID
+
+        The numeric Report ID this HID field belongs to
+
+    .. attribute:: logical_min
+
+        The logical minimum of this HID field
+
+    .. attribute:: logical_max
+
+        The logical maximum of this HID field
+
+    .. attribute:: size
+
+        Report Size in bits for this HID field
+
+    .. attribute:: count
+
+        Report Count for this HID field
+    """
     def __init__(self,
                  report_ID,
                  logical,
@@ -646,6 +686,9 @@ class HidField(object):
         self.count = count
 
     def copy(self):
+        """
+        Return a full copy of this HIDField.
+        """
         c = copy.copy(self)
         if self.usages is not None:
             c.usages = self.usages[:]
@@ -668,13 +711,23 @@ class HidField(object):
 
     @property
     def usage_name(self):
+        """
+        The Usage name for this field (e.g. "Wheel").
+        """
         return self._usage_name(self.usage)
 
     def get_usage_name(self, index):
+        """
+        Return the Usage name for this field at the given index. Use this
+        function when the HID field has multiple Usages.
+        """
         return self._usage_name(self.usages[index])
 
     @property
     def physical_name(self):
+        """
+        The physical name or ``None``
+        """
         phys = self.physical
         if phys is None:
             return phys
@@ -691,6 +744,14 @@ class HidField(object):
         return phys
 
     def _get_value(self, report, idx):
+        """
+        Extract the bits that are this HID field in the list of bytes
+        ``report``
+
+        :param list report: a list of bytes that represent a HID report
+        :param int idx: which field index to fetch, only greater than 0 if
+            :attr:`count` is larger than 1
+        """
         value = 0
         start_bit = self.start + self.size * idx
         end_bit = start_bit + self.size * (idx + 1)
@@ -709,6 +770,20 @@ class HidField(object):
         return value
 
     def get_values(self, report):
+        """
+        Assume ``report`` is a list of bytes that are a full HID report,
+        extract the values that are this HID field.
+
+        Example:
+
+        - if this field is Usage ``X`` , this returns ``[x-value]``
+        - if this field is Usage ``X``, ``Y``, this returns ``[x, y]``
+        - if this field is a button mask, this returns ``[1, 0, 1, ...]``, i.e. one value for each
+          button
+
+        :param list report: a list of bytes that are a HID report
+        :returns: a list of integer values of len :attr:`count`
+        """
         return [self._get_value(report, i) for i in range(self.count)]
 
     def _fill_value(self, report, value, idx):
@@ -740,21 +815,21 @@ class HidField(object):
 
     def fill_values(self, report, data):
         """
-        Fill in the report with the value from data. This method takes a
-        list of bytes that represent the report and a list of data values to
-        be filled in. It then fills in the report at the required bits with
-        the value from data.
-
-        ``data`` must have sufficient elements for this field's Report
-        Count.
+        Assuming ``data`` is the value for this HID field and ``report`` is
+        a HID report's bytes, this method sets those bits in ``report`` that
+        are his HID field to ``value``.
 
         Example:
 
-        - if this field is usage X , use ``fill_values(report, [x-value])``
-        - if this field is Usage X,Y, use ``fill_values(report, [x, y])``
+        - if this field is Usage ``X`` , use ``fill_values(report, [x-value])``
+        - if this field is Usage ``X``, ``Y``, use ``fill_values(report, [x, y])``
         - if this field is a button mask, use
-          ``fill_values(report, [1, 0, 1...]``, i.e. one value for each
+          ``fill_values(report, [1, 0, 1, ...]``, i.e. one value for each
           button
+
+        ``data`` must have at least :attr:`count` elements, matching this
+        field's Report Count.
+
 
         :param list report: an integer array representing this report,
             modified in place
@@ -775,14 +850,23 @@ class HidField(object):
 
     @property
     def is_array(self):
+        """
+        ``True`` if this HID field is an array
+        """
         return not (self.type & (0x1 << 1))  # Variable
 
     @property
     def is_const(self):
+        """
+        ``True`` if this HID field is const
+        """
         return self.type & (0x1 << 0)
 
     @property
     def usage_page_name(self):
+        """
+        The Usage Page name for this field, e.g. "Generic Desktop"
+        """
         usage_page_name = ''
         usage_page = self.usage_page >> 16
         try:
@@ -807,6 +891,15 @@ class HidField(object):
                      logical_max,
                      item_size,
                      count):
+        """
+        This is a function to be called by a HID report descriptor parser.
+
+        Given the current parser state and the various arguments, create the
+        required number of :class:`HidField` objects.
+
+        :returns: a list of :class:`HidField` objects
+        """
+
         usage = usage_min
         if len(usages) > 0:
             usage = usages[0]
@@ -1140,7 +1233,7 @@ class ReportDescriptor(object):
 
     .. attribute:: win8
 
-        True if the device is Windows8 compatible, False otherwise
+        ``True`` if the device is Windows8 compatible, ``False`` otherwise
 
     .. attribute:: input_reports
 
@@ -1221,7 +1314,7 @@ class ReportDescriptor(object):
 
     def get(self, reportID, reportSize):
         """
-        Return the input report with the given Report ID or None.
+        Return the input report with the given Report ID or ``None``
         """
         try:
             report = self.input_reports[reportID]
@@ -1239,7 +1332,7 @@ class ReportDescriptor(object):
 
     def get_report_from_application(self, application):
         """
-        Return the Input report that matches the application or None
+        Return the Input report that matches the application or ``None``
         """
         for r in self.input_reports.values():
             if r.application == application or r.application_name == application:
@@ -1349,6 +1442,19 @@ class ReportDescriptor(object):
         """
         Write this ReportDescriptor into the given file
 
+        The "default" format prints each item as hexadecimal format with a
+        double-slash comment, e.g. ::
+
+           0x05, 0x01,                    // Usage Page (Generic Desktop)        0
+           0x09, 0x02,                    // Usage (Mouse)                       2
+
+
+        The "kernel" format prints each item in valid C format, for easy
+        copy-paste into a kernel or C source file: ::
+
+               0x05, 0x01,         /* Usage Page (Generic Desktop)         */
+               0x09, 0x02,         /* Usage (Mouse)                        */
+
         :param File dump_file: the file to write to
         :param str output_type: the output format, one of "default" or "kernel"
         """
@@ -1371,7 +1477,7 @@ class ReportDescriptor(object):
     @property
     def bytes(self):
         """
-        This report descriptor as a series of bytes.
+        This report descriptor as a list of 8-bit integers.
         """
         data = []
         for item in self.rdesc_items:
@@ -1443,7 +1549,9 @@ class ReportDescriptor(object):
         """
         Convert the data object to an array of ints representing the report.
         Each property of the given data object is matched against the field
-        usage name (think ``hasattr``) and filled in accordingly.::
+        usage name (think ``hasattr``) and filled in accordingly. ::
+
+            rdesc = ReportDescriptor.from_bytes([10, ab, 20, cd, ...])
 
             mouse = MouseData()
             mouse.b1 = int(l)
@@ -1452,7 +1560,7 @@ class ReportDescriptor(object):
             mouse.x = x
             mouse.y = y
 
-            data_bytes = uhid_device.format_report(mouse)
+            data_bytes = rdesc.format_report(mouse)
 
         The UHIDDevice will order the report according to the device's report
         descriptor.
