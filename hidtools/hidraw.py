@@ -178,7 +178,7 @@ class HidrawDevice(object):
 
     .. attribute:: report_descriptor
 
-        A list of 8-bit integers that is this device's report descriptor
+        The :class:`hidtools.hid.ReportDescriptor` for this device
 
     .. attribute:: events
 
@@ -195,7 +195,7 @@ class HidrawDevice(object):
         rsize, desc = _HIDIOCGRDESC(fd, size)
         assert rsize == size
         assert len(desc) == rsize
-        self.report_descriptor = [x for x in desc]
+        self.report_descriptor = ReportDescriptor.from_bytes([x for x in desc])
 
         self.events = []
 
@@ -227,9 +227,9 @@ class HidrawDevice(object):
 
         return len(data)
 
-    def _dump_event(self, event, rdesc, file):
+    def _dump_event(self, event, file):
         report_id = event.bytes[0]
-        rdesc = rdesc.get(report_id, len(event.bytes))
+        rdesc = self.report_descriptor.get(report_id, len(event.bytes))
         if rdesc is None:
             return
 
@@ -278,21 +278,20 @@ class HidrawDevice(object):
         if from_the_beginning:
             self._dump_offset = 0
 
-        rdesc = ReportDescriptor.from_bytes(self.report_descriptor)
         if self._dump_offset == 0:
             print(f'# {self.name}', file=file)
             output = io.StringIO()
-            rdesc.dump(output)
+            self.report_descriptor.dump(output)
             for line in output.getvalue().split('\n'):
                 print(f'# {line}', file=file)
             output.close()
 
-            rd = " ".join([f'{b:02x}' for b in self.report_descriptor])
-            sz = len(self.report_descriptor)
+            rd = " ".join([f'{b:02x}' for b in self.report_descriptor.bytes])
+            sz = len(self.report_descriptor.bytes)
             print(f'R: {sz} {rd}', file=file)
             print(f'N: {self.name}', file=file)
             print(f'I: {self.bustype:x} {self.vendor_id:04x} {self.product_id:04x}', file=file, flush=True)
 
         for e in self.events[self._dump_offset:]:
-            self._dump_event(e, rdesc, file)
+            self._dump_event(e, file)
         self._dump_offset = len(self.events)
