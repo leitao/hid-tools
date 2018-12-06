@@ -324,3 +324,9 @@ the respective :class:`hidtools.HidUsagePage` object. ::
     > print(usages[0x01].page_id)
     1
 """
+
+# Hide the messy content of HUT from the sphinx documentation. This is a bit
+# of a hack, but should work in most cases.
+import sys
+if os.path.basename(sys.argv[0]) == "sphinx-build":
+    HUT = {}
