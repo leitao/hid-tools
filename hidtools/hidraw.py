@@ -120,7 +120,7 @@ def _HIDIOCGRAWNAME(fd):
     """ get device name """
     type = 1024 * 'c'
     cstring = _ioctl(fd, _IOC_HIDIOCGRAWNAME, None, type)
-    string = map(lambda x: x.decode('utf-8'), cstring)
+    string = b''.join(cstring).decode('utf-8')
     return "".join(string).rstrip('\x00')
 
 
