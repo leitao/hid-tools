@@ -20,11 +20,69 @@
 
 import os
 import parse
-
+import functools
 
 DATA_DIRNAME = "data"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(SCRIPT_DIR, DATA_DIRNAME)
+
+@functools.total_ordering
+class HidUsage(object):
+    """
+    A HID Usage entry as defined in the HID Usage Tablets. ::
+
+        > usage_page = hidtools.hut.HUT[0x01]  # Generic Desktop
+        > usage = usage_page[0x02]
+        > print(usage.usage)
+        2
+        > print(usage)
+        Mouse
+        > print(usage.name)
+        Mouse
+
+    :param HidUsagePage usage_page: the Usage Page this Usage belongs to
+    :param int usage: the 16-bit Usage assigned by the HID Usage Tables
+    :param str name: the usage_name
+
+    .. attribute:: usage
+
+        the 16-bit Usage assigned by the HId Usage Tables
+
+    .. attribute:: name
+
+        the semantic name for this Usage
+
+    .. attribute:: usage_page
+
+        the :class:`HidUsagePage` this Usage belongs to
+
+    """
+
+    def __init__(self, usage_page, usage, name):
+        self.usage_page = usage_page
+        self.usage = usage
+        self.name = name
+
+    # Route everything down to the name, this way we basically behave like a
+    # string
+    def __getattr__(self, attr):
+        return getattr(self.name, attr)
+
+    def __repr__(self):
+        return self.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return self.name == other
+
+    def __lt__(self, other):
+        return self.name < other
+
 
 class HidUsagePage(dict):
     """
@@ -42,8 +100,13 @@ class HidUsagePage(dict):
         1
         > print(usage_page[0x02])
         Mouse
-        > print(usage_page.from_name["Mouse"])
+        > usage = usage_page.from_name["Mouse"]
+        > print(usage.usage)
         2
+        > print(usage.name)
+        Mouse
+        > print(usage)
+        Mouse
 
     .. attribute:: page_id
 
@@ -79,15 +142,15 @@ class HidUsagePage(dict):
     @property
     def from_name(self):
         """
-        A dictionary using ``{ name: usage }`` mapping, to look up the usage
-        based on a name.
+        A dictionary using ``{ name: usage }`` mapping, to look up the
+        :class:`HidUsage` based on a name.
         """
         try:
             return self._inverted
         except AttributeError:
             self._inverted = {}
             for k, v in self.items():
-                self._inverted[v] = k
+                self._inverted[v] = v
             return self._inverted
 
     @property
@@ -209,7 +272,10 @@ class HidUsageTable(dict):
             if 'reserved' in r['name'].lower():
                 continue
 
-            usage_page[int(r['usage'], 16)] = r['name']
+            u = int(r['usage'], 16)
+            usage = HidUsage(usage_page, u, r['name'])
+
+            usage_page[u] = usage
 
         return usage_page
 
