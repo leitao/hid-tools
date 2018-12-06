@@ -22,12 +22,13 @@ import os
 from parse import parse as _parse
 from hidtools import HidUsagePage, HidUsages
 
+
 DATA_DIRNAME = "data"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(SCRIPT_DIR, DATA_DIRNAME)
 
 
-def parse_usages(f):
+def _parse_usages(f):
     """
     Parse a single HUT file. The file format is a set of lines in three
     formats: ::
@@ -94,7 +95,7 @@ def parse():
         if filename.endswith('.hut'):
             with open(os.path.join(DATA_DIR, filename), 'r') as f:
                 try:
-                    usage_page = parse_usages(f)
+                    usage_page = _parse_usages(f)
                     usages[usage_page.page_id] = usage_page
                 except:
                     print(filename)
