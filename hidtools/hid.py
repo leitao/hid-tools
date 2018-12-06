@@ -1028,12 +1028,6 @@ class HidReport(object):
         """
         return self._bitsize >> 3
 
-    @property
-    def has_been_populated(self):
-        if self.report_ID >= 0:
-            return self.bitsize > 8
-        return self.size > 0
-
     def __iter__(self):
         return iter(self.fields)
 
