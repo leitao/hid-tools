@@ -21,7 +21,7 @@ import argparse
 import sys
 import os
 
-from hidtools.hidraw import HidRawDevice
+from hidtools.hidraw import HidrawDevice
 
 
 def list_devices():
@@ -32,7 +32,7 @@ def list_devices():
             continue
 
         with open(f'/dev/{fname}') as f:
-            d = HidRawDevice(f)
+            d = HidrawDevice(f)
             devices[int(fname[6:])] = d.name
 
     print('Available devices:', file=outfile)
@@ -69,7 +69,7 @@ def main():
     if args.device is None:
         args.device = open(list_devices())
 
-    device = HidRawDevice(args.device)
+    device = HidrawDevice(args.device)
     device.dump(args.output)
 
     try:

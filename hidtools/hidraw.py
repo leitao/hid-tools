@@ -124,7 +124,7 @@ def _HIDIOCGRAWNAME(fd):
     return "".join(string).rstrip('\x00')
 
 
-class HidRawEvent(object):
+class HidrawEvent(object):
     """
     A single event from a hidraw device. The first event always has a timestamp of 0.0,
     all other events are offset accordingly.
@@ -146,7 +146,7 @@ class HidRawEvent(object):
         self.bytes = bytes
 
 
-class HidRawDevice(object):
+class HidrawDevice(object):
     """
     A device as exposed by the kernel ``hidraw`` module. ``hidraw`` allows
     direct access to the HID device, both for reading and writing. ::
@@ -223,7 +223,7 @@ class HidRawDevice(object):
         tdelta = now - self._time_offset
         bytes = struct.unpack('B' * len(data), data)
 
-        self.events.append(HidRawEvent(tdelta.seconds, tdelta.microseconds, bytes))
+        self.events.append(HidrawEvent(tdelta.seconds, tdelta.microseconds, bytes))
 
         return len(data)
 
