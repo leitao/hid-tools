@@ -1477,11 +1477,18 @@ class ReportDescriptor(object):
     @classmethod
     def from_bytes(cls, rdesc):
         """
-        Parse the given list of bytes. The argument may be a list of bytes
-        or a string.
+        Parse the given list of 8-bit integers.
 
-        If the argument is a string, the format of the string must be a
-        series of hex numbers::
+        :param list rdesc: a list of bytes that are this report descriptor
+        """
+        items = _HidRDescItem.from_bytes(rdesc)
+
+        return ReportDescriptor(items)
+
+    @classmethod
+    def from_string(cls, rdesc):
+        """
+        Parse a string in the format of series of hex numbers::
 
            12 34 ab cd ...
 
@@ -1489,15 +1496,11 @@ class ReportDescriptor(object):
         that first number. This is the format returned by your
         ``/dev/hidraw`` event node, so just pass it along.
 
-        If the argument is a list of bytes, the bytes must not contain this
-        count. Just provide the report descriptor itself.
 
-        :param list rdesc: a list of bytes that are this report descriptor
-                or a string that represents the list of bytes
+        :param list rdesc: a string that represents the list of bytes
         """
 
-        if isinstance(rdesc, str):
-            rdesc = [int(r, 16) for r in rdesc.split()[1:]]
+        rdesc = [int(r, 16) for r in rdesc.split()[1:]]
         items = _HidRDescItem.from_bytes(rdesc)
 
         return ReportDescriptor(items)

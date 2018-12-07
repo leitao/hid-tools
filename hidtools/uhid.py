@@ -211,7 +211,9 @@ class UHIDDevice(object):
         if not isinstance(rdesc, hidtools.hid.ReportDescriptor):
             if isinstance(rdesc, str):
                 rdesc = f'XXX {rdesc}'
-            parsed_rdesc = hidtools.hid.ReportDescriptor.from_bytes(rdesc)
+                parsed_rdesc = hidtools.hid.ReportDescriptor.from_string(rdesc)
+            else:
+                parsed_rdesc = hidtools.hid.ReportDescriptor.from_bytes(rdesc)
         self.parsed_rdesc = parsed_rdesc
         self._rdesc = parsed_rdesc.bytes
 

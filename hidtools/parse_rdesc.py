@@ -30,7 +30,7 @@ def parse_rdesc(rdesc, output_type, dump_file):
     :returns: a :class:`hidtools.hid.ReportDescriptor` object
     """
 
-    rdesc_object = hidtools.hid.ReportDescriptor.from_bytes(rdesc)
+    rdesc_object = hidtools.hid.ReportDescriptor.from_string(rdesc)
 
     if dump_file:
         rdesc_object.dump(dump_file, output_type)
