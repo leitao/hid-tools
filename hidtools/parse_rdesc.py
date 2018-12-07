@@ -33,7 +33,7 @@ def parse_rdesc(rdesc, output_type, dump_file):
     rdesc_object = hidtools.hid.ReportDescriptor.from_bytes(rdesc)
 
     if dump_file:
-        rdesc_object.dump(dump_file, type_output)
+        rdesc_object.dump(dump_file, output_type)
 
     return rdesc_object
 
