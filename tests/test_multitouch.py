@@ -198,7 +198,7 @@ class Digitizer(base.UHIDTestDevice):
         r = rdesc.create_report([self], None)
         return (0, r)
 
-    def set_report(self, req, rnum, rtype, size, data):
+    def set_report(self, req, rnum, rtype, data):
         if rtype != self.UHID_FEATURE_REPORT:
             return 1
 

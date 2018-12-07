@@ -404,7 +404,7 @@ class UHIDDevice(object):
         logger.debug('close')
 
 
-    def set_report(self, req, rnum, rtype, size, data):
+    def set_report(self, req, rnum, rtype, data):
         """
         Callback invoked when a process calls SetReport on this UHID device.
 
@@ -416,14 +416,13 @@ class UHIDDevice(object):
         :param req: the request identifier
         :param rnum: ???
         :param rtype: one of :attr:`UHID_FEATURE_REPORT`, :attr:`UHID_INPUT_REPORT`, or :attr:`UHID_OUTPUT_REPORT`
-        :param size: size in bytes
         :param list data: a byte string with the data
         """
         return 5  # EIO
 
     def _set_report(self, req, rnum, rtype, size, data):
         logger.debug('set report {} {} {} {} {} '.format(req, rnum, rtype, size, [f'{d:02x}' for d in data[:size]]))
-        error = self.set_report(req, rnum, rtype, size, data)
+        error = self.set_report(req, rnum, rtype, data[:size])
         self._call_set_report(req, error)
 
     def get_report(self, req, rnum, rtype):
