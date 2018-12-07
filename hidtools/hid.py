@@ -19,6 +19,7 @@
 #
 
 import copy
+import sys
 from hidtools.hut import HUT
 from hidtools.util import twos_comp, to_twos_comp
 from parse import parse as _parse
@@ -1427,7 +1428,7 @@ class ReportDescriptor(object):
             self.local.usage_min = 0
             self.local.usage_max = 0
 
-    def dump(self, dump_file, output_type='default'):
+    def dump(self, dump_file=sys.stdout, output_type='default'):
         """
         Write this ReportDescriptor into the given file
 
