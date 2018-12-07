@@ -203,7 +203,6 @@ def tearDownModule():
 
 
 def parse(input_string):
-    global run_ratbagctl_in_subprocess
     parser_test = argparse.ArgumentParser("Testsuite for hid devices")
     ns, rest = parser_test.parse_known_args(input_string)
     return rest
