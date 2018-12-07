@@ -1220,9 +1220,6 @@ class ReportDescriptor(object):
     - if your source is a human-readable descriptor, use
       :meth:`from_human_descr`
 
-    :param _HidRDescItem items: the items of this report
-         descriptor
-
     .. attribute:: win8
 
         ``True`` if the device is Windows8 compatible, ``False`` otherwise
