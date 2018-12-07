@@ -27,6 +27,9 @@ from base import main, setUpModule, tearDownModule  # noqa
 import logging
 logger = logging.getLogger('hidtools.test.mouse')
 
+class InvalidHIDCommunication(Exception):
+    pass
+
 class MouseData(object):
     pass
 
@@ -418,6 +421,29 @@ class ResolutionMultiplierMouse(TwoWheelMouse):
         self.default_reportID = 0x11
         self.wheel_multiplier = 4
 
+        # Feature Report 12, multiplier Feature value must be set to 0b01,
+        # i.e. 1. We should extract that from the descriptor instead
+        # of hardcoding it here, but meanwhile this will do.
+        self.set_feature_report = [0x12, 0x1]
+        self.have_feature_report = False
+
+    def set_report(self, req, rnum, rtype, data):
+        if rtype != self.UHID_FEATURE_REPORT:
+            raise InvalidHIDCommunication(f'Unexpected report type: {rtype}')
+        if rnum != 0x12:
+            raise InvalidHIDCommunication(f'Unexpected report number: {rnum}')
+
+        if data != self.set_feature_report:
+            raise InvalidHIDCommunication(f'Unexpected data: {data}, expected {self.set_feature_report}')
+
+        self.have_feature_report = True
+
+        return 0
+
+    def stop(self):
+        if not self.have_feature_report:
+            raise InvalidHIDCommunication(f'Expected SetFeature but it never happened')
+
 
 class ResolutionMultiplierHWheelMouse(TwoWheelMouse):
     report_descriptor = [
@@ -501,6 +527,11 @@ class ResolutionMultiplierHWheelMouse(TwoWheelMouse):
         self.default_reportID = 0x1a
         self.wheel_multiplier = 12
         self.hwheel_multiplier = 12
+
+        # Feature Report 12, multiplier Feature value must be set to 0b0101,
+        # i.e. 5. We should extract that from the descriptor instead
+        # of hardcoding it here, but meanwhile this will do.
+        self.set_feature_report = [0x12, 0x5]
 
 
 class BaseTest:
