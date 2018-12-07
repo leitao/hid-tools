@@ -218,6 +218,9 @@ class HidUsageTable(object):
         self._pages[key] = value
 
     def __getitem__(self, key):
+        if isinstance(key, str):
+            return self.usage_page_names[key]
+
         # shift the usage page bits down if we have a 32-bit usage
         if key & 0xFFFF0000 == key:
             key >>= 16
@@ -244,6 +247,13 @@ class HidUsageTable(object):
         A dictionary mapping ``{page_id : object}``
         """
         return self._pages
+
+    @property
+    def usage_page_names(self):
+        """
+        A dictionary mapping ``{page_name : object}``
+        """
+        return {v.page_name: v for k, v in self.items()}
 
     def usage_page_from_name(self, page_name):
         """

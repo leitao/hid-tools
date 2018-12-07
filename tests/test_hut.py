@@ -84,6 +84,11 @@ class TestHUT(unittest.TestCase):
 
             self.assertEqual(HUT[page_id], HUT[page_id << 16])
 
+    def test_usage_page_names(self):
+        self.assertEqual(sorted(self.pages.values()), sorted(HUT.usage_page_names))
+        self.assertEqual(HUT.usage_page_names['Generic Desktop'], HUT.usage_pages[0x01])
+        self.assertEqual(HUT['Generic Desktop'], HUT.usage_pages[0x01])
+
     def test_usage_gd(self):
         usages = {
             0x00: 'Undefined',
