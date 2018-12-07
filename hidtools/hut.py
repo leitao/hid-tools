@@ -193,22 +193,27 @@ class HidUsagePage(object):
 class HidUsageTable(object):
     """
     This effectively a dictionary of all HID Usages known to man. Or to this
-    module at least.
+    module at least. This object is a singleton, it is available as
+    ``hidtools.hut.HUT``.
 
-    This dict is laid out as ``{page_id : usage_page_object}``
-    (:class:`HidUsagePage`)
+    Elements of this dictionary are :class:`HidUsagePage` objects.
 
     This object is a dictionary, use like this: ::
 
-        > print(usages[0x01].page_name)
+        > hut = hidtools.hut.HUT
+        > print(hut[0x01].page_name)
         Generic Desktop
-        > print(usages.usage_pages[0x01].page_name)
+        > print(hut['Generic Desktop'].page_name)
         Generic Desktop
-        > print(usages[0x01].page_id)
+        > print(hut.usage_pages[0x01].page_name)
+        Generic Desktop
+        > print(hut.usage_page_names['Generic Desktop'].page_name)
+        Generic Desktop
+        > print(hut[0x01].page_id)
         1
-        > print(usages.usage_page_from_name('Generic Desktop').page_id)
+        > print(hut.usage_page_from_name('Generic Desktop').page_id)
         1
-        > print(usages.usage_page_from_page_id(0x01).page_name)
+        > print(hut.usage_page_from_page_id(0x01).page_name)
         Generic Desktop
     """
     def __init__(self):
@@ -244,37 +249,51 @@ class HidUsageTable(object):
     @property
     def usage_pages(self):
         """
-        A dictionary mapping ``{page_id : object}``
+        A dictionary mapping ``{page_id : object}``. These two are
+        equivalent calls: ::
+
+            HUT[0x1]
+            HUT.usage_pages[0x1]
+
         """
         return self._pages
 
     @property
     def usage_page_names(self):
         """
-        A dictionary mapping ``{page_name : object}``
+        A dictionary mapping ``{page_name : object}``. These two are
+        equivalent calls: ::
+
+            HUT['Generic Desktop']
+            HUT.usage_page_names['Generic Desktop']
+
         """
         return {v.page_name: v for k, v in self.items()}
 
     def usage_page_from_name(self, page_name):
         """
         Look up the usage page based on the page name (e.g. "Generic
-        Desktop").
+        Desktop"). This is identical to ::
+
+            self.usage_page_names[page_name]
+
+        except that this function returns ``None`` if the page name is
+        unknown.
 
         :return: the :meth:`HidUsagePage` or None
         """
-        for k, v in self._pages.items():
-            if v.page_name == page_name:
-                return v
-        return None
+        try:
+            return self[page_name]
+        except KeyError:
+            return None
 
     def usage_page_from_page_id(self, page_id):
         """
-        Look up the usage page based on the page ID. This is identical to
-        calling::
+        Look up the usage page based on the page ID. This is identical to ::
 
                 self.usage_pages[page_id]
 
-        except that this function returns None if the page ID is unknown.
+        except that this function returns ``None`` if the page ID is unknown.
 
         :return: the :meth:`HidUsagePage` or None
         """
