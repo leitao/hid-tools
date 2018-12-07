@@ -26,6 +26,8 @@ import time
 import unittest
 from base import main, setUpModule, tearDownModule  # noqa
 
+import logging
+logger = logging.getLogger('hidtools.test.multitouch')
 
 def BIT(x):
     return 1 << x
