@@ -111,12 +111,6 @@ class UHIDTestDevice(UHIDDevice):
             evdev.fd.close()
             del(self.input_nodes[name])
 
-    def get_report(self, req, rnum, rtype):
-        self.call_get_report(req, [], 1)
-
-    def set_report(self, req, rnum, rtype, size, data):
-        self.call_set_report(req, 1)
-
     def next_sync_events(self):
         return list(self.evdev.events())
 
