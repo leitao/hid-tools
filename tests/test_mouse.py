@@ -22,6 +22,7 @@ import base
 import libevdev
 import sys
 import hidtools.hid
+import unittest
 from base import main, setUpModule, tearDownModule  # noqa
 
 import logging
@@ -419,13 +420,11 @@ class ResolutionMultiplierMouse(TwoWheelMouse):
     def __init__(self, rdesc=report_descriptor, name=None, info=None):
         super().__init__(rdesc, name, info)
         self.default_reportID = 0x11
-        self.wheel_multiplier = 4
 
         # Feature Report 12, multiplier Feature value must be set to 0b01,
         # i.e. 1. We should extract that from the descriptor instead
         # of hardcoding it here, but meanwhile this will do.
         self.set_feature_report = [0x12, 0x1]
-        self.have_feature_report = False
 
     def set_report(self, req, rnum, rtype, data):
         if rtype != self.UHID_FEATURE_REPORT:
@@ -436,13 +435,9 @@ class ResolutionMultiplierMouse(TwoWheelMouse):
         if data != self.set_feature_report:
             raise InvalidHIDCommunication(f'Unexpected data: {data}, expected {self.set_feature_report}')
 
-        self.have_feature_report = True
+        self.wheel_multiplier = 4
 
         return 0
-
-    def stop(self):
-        if not self.have_feature_report:
-            raise InvalidHIDCommunication(f'Expected SetFeature but it never happened')
 
 
 class ResolutionMultiplierHWheelMouse(TwoWheelMouse):
@@ -525,13 +520,19 @@ class ResolutionMultiplierHWheelMouse(TwoWheelMouse):
     def __init__(self, rdesc=report_descriptor, name=None, info=None):
         super().__init__(rdesc, name, info)
         self.default_reportID = 0x1a
-        self.wheel_multiplier = 12
-        self.hwheel_multiplier = 12
 
         # Feature Report 12, multiplier Feature value must be set to 0b0101,
         # i.e. 5. We should extract that from the descriptor instead
         # of hardcoding it here, but meanwhile this will do.
         self.set_feature_report = [0x12, 0x5]
+
+    def set_report(self, req, rnum, rtype, data):
+        super().set_report(req, rnum, rtype, data)
+
+        self.wheel_multiplier = 12
+        self.hwheel_multiplier = 12
+
+        return 0
 
 
 class BaseTest:
@@ -711,18 +712,17 @@ class TestWheelMouse(BaseTest.TestMouse):
     def create_mouse(self):
         return WheelMouse()
 
-    def test_wheel_hires_exists(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
-
-            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_WHEEL))
-            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_0B))
+    def is_wheel_highres(self, uhdev):
+        self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_WHEEL))
+        return uhdev.evdev.has(libevdev.EV_REL.REL_0B)
 
     def test_wheel(self):
         with self.create_mouse() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
                 uhdev.dispatch(10)
+
+            # check if the kernel is high res wheel compatible
+            high_res_wheel = self.is_wheel_highres(uhdev)
 
             syn_event = self.syn_event
             # The Resolution Multiplier is applied to the HID reports, so we
@@ -732,7 +732,8 @@ class TestWheelMouse(BaseTest.TestMouse):
             r = uhdev.event(0, 0, wheels=1 * mult)
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120))
+            if high_res_wheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -740,7 +741,8 @@ class TestWheelMouse(BaseTest.TestMouse):
             r = uhdev.event(0, 0, wheels=-1 * mult)
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120))
+            if high_res_wheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -750,7 +752,8 @@ class TestWheelMouse(BaseTest.TestMouse):
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 360))
+            if high_res_wheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 360))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -760,18 +763,19 @@ class TestTwoWheelMouse(TestWheelMouse):
     def create_mouse(self):
         return TwoWheelMouse()
 
-    def test_hwheel_hires_exists(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
-
-            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_HWHEEL))
-            self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_0C))
+    def is_hwheel_highres(self, uhdev):
+        self.assertTrue(uhdev.evdev.has(libevdev.EV_REL.REL_HWHEEL))
+        return uhdev.evdev.has(libevdev.EV_REL.REL_0C)
 
     def test_ac_pan(self):
         with self.create_mouse() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
                 uhdev.dispatch(10)
+
+            # check if the kernel is high res wheel compatible
+            high_res_wheel = self.is_wheel_highres(uhdev)
+            high_res_hwheel = self.is_hwheel_highres(uhdev)
+            self.assertEqual(high_res_wheel, high_res_hwheel)
 
             syn_event = self.syn_event
             # The Resolution Multiplier is applied to the HID reports, so we
@@ -782,7 +786,8 @@ class TestTwoWheelMouse(TestWheelMouse):
             r = uhdev.event(0, 0, wheels=(0, 1 * hmult))
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120))
+            if high_res_hwheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -790,7 +795,8 @@ class TestTwoWheelMouse(TestWheelMouse):
             r = uhdev.event(0, 0, wheels=(0, -1 * hmult))
             expected = [syn_event]
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120))
+            if high_res_hwheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -800,7 +806,8 @@ class TestTwoWheelMouse(TestWheelMouse):
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
+            if high_res_hwheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -810,9 +817,11 @@ class TestTwoWheelMouse(TestWheelMouse):
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -360))
+            if high_res_wheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -360))
             expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 480))
+            if high_res_wheel:
+                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 480))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
@@ -822,10 +831,23 @@ class TestResolutionMultiplierMouse(TestTwoWheelMouse):
     def create_mouse(self):
         return ResolutionMultiplierMouse()
 
+    def is_wheel_highres(self, uhdev):
+        high_res = super().is_wheel_highres(uhdev)
+
+        if not high_res:
+            # the kernel doesn't seem to support the high res wheel mice,
+            # make sure we haven't triggered the feature
+            assert uhdev.wheel_multiplier == 1
+
+        return high_res
+
     def test_resolution_multiplier_wheel(self):
         with self.create_mouse() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
                 uhdev.dispatch(10)
+
+            if not self.is_wheel_highres(uhdev):
+                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
             self.assertGreater(uhdev.wheel_multiplier, 1)
             self.assertEqual(120 % uhdev.wheel_multiplier, 0)
@@ -834,6 +856,9 @@ class TestResolutionMultiplierMouse(TestTwoWheelMouse):
         with self.create_mouse() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
                 uhdev.dispatch(10)
+
+            if not self.is_wheel_highres(uhdev):
+                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
             assert uhdev.wheel_multiplier > 1
 
@@ -876,10 +901,23 @@ class TestResolutionMultiplierHWheelMouse(TestResolutionMultiplierMouse):
     def create_mouse(self):
         return ResolutionMultiplierHWheelMouse()
 
+    def is_hwheel_highres(self, uhdev):
+        high_res = super().is_hwheel_highres(uhdev)
+
+        if not high_res:
+            # the kernel doesn't seem to support the high res wheel mice,
+            # make sure we haven't triggered the feature
+            assert uhdev.hwheel_multiplier == 1
+
+        return high_res
+
     def test_resolution_multiplier_ac_pan(self):
         with self.create_mouse() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
                 uhdev.dispatch(10)
+
+            if not self.is_hwheel_highres(uhdev):
+                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
             self.assertGreater(uhdev.hwheel_multiplier, 1)
             self.assertEqual(120 % uhdev.hwheel_multiplier, 0)
@@ -888,6 +926,9 @@ class TestResolutionMultiplierHWheelMouse(TestResolutionMultiplierMouse):
         with self.create_mouse() as uhdev:
             while uhdev.application not in uhdev.input_nodes:
                 uhdev.dispatch(10)
+
+            if not self.is_hwheel_highres(uhdev):
+                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
             assert uhdev.hwheel_multiplier > 1
 
