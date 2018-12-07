@@ -124,6 +124,10 @@ class HidUsagePage(object):
         self._usages[key] = value
 
     def __getitem__(self, key):
+        # extract the usage if we have a 32-bit usage and the page ID
+        # matches
+        if key > 0xFFFF and key & 0xFFFF0000 == self.page_id << 16:
+            key &= 0xFFFF
         return self._usages[key]
 
     def __delitem__(self, key):
@@ -214,6 +218,9 @@ class HidUsageTable(object):
         self._pages[key] = value
 
     def __getitem__(self, key):
+        # shift the usage page bits down if we have a 32-bit usage
+        if key & 0xFFFF0000 == key:
+            key >>= 16
         return self._pages[key]
 
     def __delitem__(self, key):

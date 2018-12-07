@@ -82,6 +82,8 @@ class TestHUT(unittest.TestCase):
                 self.assertNotEqual(dict(page.from_name.items()), {})
                 self.assertNotEqual(dict(page.from_usage.items()), {})
 
+            self.assertEqual(HUT[page_id], HUT[page_id << 16])
+
     def test_usage_gd(self):
         usages = {
             0x00: 'Undefined',
@@ -197,6 +199,15 @@ class TestHUT(unittest.TestCase):
         for i in range(0xffff):
             if i not in usages or usages[i] == 'Reserved':
                 self.assertNotIn(i, page)
+
+    def test_32_bit_usage_lookup(self):
+        self.assertEqual(HUT[0x1][0x1 << 16 | 0x31].name, 'Y')
+        self.assertEqual(HUT[0x1][0x1 << 16 | 0x30].name, 'X')
+        self.assertEqual(HUT[0x2][0x2 << 16 | 0x09].name, 'Airplane Simulation Device')
+        self.assertEqual(HUT[0x2][0x2 << 16 | 0xB2].name, 'Anti-Torque Control')
+
+        with self.assertRaises(KeyError):
+            HUT[0x01][0x2 << 16 | 0x1]
 
     def test_duplicate_pages(self):
         # make sure we have no duplicate pages
