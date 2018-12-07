@@ -351,7 +351,7 @@ class MIDongleMIWirelessMouse(TwoWheelMouse):
         return rs
 
 
-class ResolutionMultiplierMouse(WheelMouse):
+class ResolutionMultiplierMouse(TwoWheelMouse):
     report_descriptor = [
         0x05, 0x01,  # Usage Page (Generic Desktop)        83
         0x09, 0x02,  # Usage (Mouse)                       85
@@ -841,7 +841,7 @@ class TestResolutionMultiplierMouse(TestTwoWheelMouse):
             self.assertInputEvents(expected, events)
 
 
-class TestResolutionMultiplierMouse(TestResolutionMultiplierMouse):
+class TestResolutionMultiplierHWheelMouse(TestResolutionMultiplierMouse):
     def create_mouse(self):
         return ResolutionMultiplierHWheelMouse()
 
