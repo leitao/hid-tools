@@ -86,7 +86,7 @@ class HidUsage(object):
 
 class HidUsagePage(dict):
     """
-    A dictionary of HID Usages in the form ``{ usage: usage_name}``,
+    A dictionary of HID Usages in the form ``{usage: usage_name}``,
     representing all Usages in this Usage Page.
 
     A HID Usage is named semantical identifier that describe how a given

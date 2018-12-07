@@ -166,7 +166,7 @@ class Digitizer(base.UHIDTestDevice):
         global_data.scantime = self.scantime
 
         while len(slots):
-            r = self.format_report(application=self.cur_application, data=slots, global_data=global_data)
+            r = self.create_report(application=self.cur_application, data=slots, global_data=global_data)
             self.call_input_event(r)
             rs.append(r)
             global_data.contactcount = 0
@@ -198,7 +198,7 @@ class Digitizer(base.UHIDTestDevice):
             return
 
         self.contactmax = self.max_contacts
-        r = rdesc.format_report([self], None)
+        r = rdesc.create_report([self], None)
         self.call_get_report(req, r, 0)
 
     def set_report(self, req, rnum, rtype, size, data):

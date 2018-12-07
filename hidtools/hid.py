@@ -1090,7 +1090,7 @@ class HidReport(object):
         self.prev_collection = hidInputItem.collection
         self.prev_seen_usages.append(usage)
 
-    def format_report(self, data, global_data):
+    def create_report(self, data, global_data):
         """
         Convert the data object to an array of ints representing this report.
         Each property of the given data object is matched against the field
@@ -1103,10 +1103,10 @@ class HidReport(object):
             mouse.x = x
             mouse.y = y
 
-            data_bytes = hid_report.format_report(mouse)
+            data_bytes = hid_report.create_report(mouse)
 
-        The HidReport will order the report according to the device's report
-        descriptor.
+        The HidReport will create the report according to the device's
+        report descriptor.
         """
         self.prev_seen_usages = []
         self.prev_collection = None
@@ -1538,7 +1538,7 @@ class ReportDescriptor(object):
 
         return ReportDescriptor(items)
 
-    def format_report(self, data, global_data=None, reportID=None, application=None):
+    def create_report(self, data, global_data=None, reportID=None, application=None):
         """
         Convert the data object to an array of ints representing the report.
         Each property of the given data object is matched against the field
@@ -1553,10 +1553,10 @@ class ReportDescriptor(object):
             mouse.x = x
             mouse.y = y
 
-            data_bytes = rdesc.format_report(mouse)
+            data_bytes = rdesc.create_report(mouse)
 
-        The UHIDDevice will order the report according to the device's report
-        descriptor.
+        The UHIDDevice will create the report according to the device's
+        report descriptor.
         """
         # make sure the data is iterable
         try:
@@ -1573,7 +1573,7 @@ class ReportDescriptor(object):
                 reportID = -1
             rdesc = self.input_reports[reportID]
 
-        return rdesc.format_report(data, global_data)
+        return rdesc.create_report(data, global_data)
 
     def get_str(self, data, split_lines=True):
         report = self.get(data[0], len(data))

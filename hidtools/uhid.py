@@ -433,7 +433,7 @@ class UHIDDevice(object):
             ev, data, size, rtype = struct.unpack_from('< L 4096s H B', buf)
             self._output_report(data, size, rtype)
 
-    def format_report(self, data, global_data=None, reportID=None, application=None):
+    def create_report(self, data, global_data=None, reportID=None, application=None):
         """
         Convert the data object to an array of ints representing the report.
         Each property of the given data object is matched against the field
@@ -446,9 +446,9 @@ class UHIDDevice(object):
             mouse.x = x
             mouse.y = y
 
-            data_bytes = uhid_device.format_report(mouse)
+            data_bytes = uhid_device.create_report(mouse)
 
-        The :class:`UHIDDevice` will order the report according to the
+        The :class:`UHIDDevice` will create the report according to the
         device's report descriptor.
         """
-        return self.parsed_rdesc.format_report(data, global_data, reportID, application)
+        return self.parsed_rdesc.create_report(data, global_data, reportID, application)

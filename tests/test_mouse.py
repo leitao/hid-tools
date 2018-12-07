@@ -52,7 +52,7 @@ class BaseMouse(GenericDevice):
         self.right = False
         self.middle = False
 
-    def format_report(self, x, y, buttons=None, wheels=None, reportID=None):
+    def create_report(self, x, y, buttons=None, wheels=None, reportID=None):
         """
         Return an input report for this device.
 
@@ -76,7 +76,7 @@ class BaseMouse(GenericDevice):
         r = self.right
         m = self.middle
         # Note: the BaseMouse doesn't actually have a wheel but the
-        # format_report magic only fills in those fields exist, so let's
+        # create_report magic only fills in those fields exist, so let's
         # make this generic here.
         wheel, acpan = 0, 0
         if wheels is not None:
@@ -96,7 +96,7 @@ class BaseMouse(GenericDevice):
         mouse.y = y
         mouse.wheel = wheel
         mouse.acpan = acpan
-        return super().format_report(mouse, reportID=reportID)
+        return super().create_report(mouse, reportID=reportID)
 
     def event(self, x, y, buttons=None, wheels=None):
         """
@@ -109,7 +109,7 @@ class BaseMouse(GenericDevice):
         :param wheels: a single value for the vertical wheel or a (vertical, horizontal) tuple for
             the two wheels
         """
-        r = self.format_report(x, y, buttons, wheels)
+        r = self.create_report(x, y, buttons, wheels)
         self.call_input_event(r)
         return [r]
 
@@ -342,10 +342,10 @@ class MIDongleMIWirelessMouse(TwoWheelMouse):
         # this mouse spreads the relative pointer and the mouse buttons
         # onto 2 distinct reports
         rs = []
-        r = self.format_report(x, y, buttons, wheels, reportID=1)
+        r = self.create_report(x, y, buttons, wheels, reportID=1)
         self.call_input_event(r)
         rs.append(r)
-        r = self.format_report(x, y, buttons, reportID=2)
+        r = self.create_report(x, y, buttons, reportID=2)
         self.call_input_event(r)
         rs.append(r)
         return rs
@@ -641,39 +641,39 @@ class TestSimpleMouse(BaseTest.TestMouse):
         with self.create_mouse() as uhdev:
             event = (0, 0, (None, None, None))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (0, 0, (None, True, None))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (0, 0, (True, True, None))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (0, 0, (False, False, False))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (1, 0, (True, False, True))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (-1, 0, (True, False, True))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (-5, 5, (True, False, True))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (-127, 127, (True, False, True))
             self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.format_report(*event))
+                             uhdev.create_report(*event))
 
             event = (0, -128, (True, False, True))
             with self.assertRaises(hidtools.hid.RangeError):
-                uhdev.format_report(*event)
+                uhdev.create_report(*event)
 
 
 class TestWheelMouse(BaseTest.TestMouse):
