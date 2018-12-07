@@ -899,6 +899,9 @@ class HidField(object):
         :returns: a list of :class:`HidField` objects
         """
 
+        # Note: usage_page is a 32-bit value here and usage
+        # is usage_page | usage
+
         usage = usage_min
         if len(usages) > 0:
             usage = usages[0]
