@@ -144,6 +144,12 @@ class HidUsagePage(object):
     def __len__(self):
         return len(self._usages)
 
+    def __str__(self):
+        return self.page_name
+
+    def __repr__(self):
+        return self.page_name
+
     def items(self):
         """
         Iterate over all elements, see :meth:`dict.items`
