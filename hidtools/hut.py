@@ -100,6 +100,8 @@ class HidUsagePage(object):
         1
         > print(usage_page[0x02])
         Mouse
+        > print(usage_page['Mouse'])
+        Mouse
         > usage = usage_page.from_name["Mouse"]
         > print(usage.usage)
         2
@@ -124,6 +126,9 @@ class HidUsagePage(object):
         self._usages[key] = value
 
     def __getitem__(self, key):
+        if isinstance(key, str):
+            return self.from_name[key]
+
         # extract the usage if we have a 32-bit usage and the page ID
         # matches
         if key > 0xFFFF and key & 0xFFFF0000 == self.page_id << 16:
