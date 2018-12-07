@@ -245,7 +245,7 @@ class HidrawDevice(object):
             return
 
         indent_2nd_line = 2
-        output = rdesc.get_str(event.bytes)
+        output = rdesc.format_report(event.bytes)
         try:
             first_row = output.split('\n')[0]
         except IndexError:

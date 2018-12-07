@@ -1124,9 +1124,15 @@ class HidReport(object):
 
         return r
 
-    def get_str(self, data, split_lines=True):
+    def format_report(self, data, split_lines=True):
         """
-        Translate the given report to a human readable format.
+        Format the HID Report provided as a list of 8-bit integers into a
+        human-readable format.
+
+        :param list data: a list of 8-bit integers that are this report
+        :param boolean split_lines: ``True`` if the format can be split
+            across multiple lines. This makes for easier reading but harder
+            automated processing.
         """
 
         output = ''
@@ -1575,9 +1581,18 @@ class ReportDescriptor(object):
 
         return rdesc.create_report(data, global_data)
 
-    def get_str(self, data, split_lines=True):
+    def format_report(self, data, split_lines=True):
+        """
+        Format the HID Report provided as a list of 8-bit integers into a
+        human-readable format.
+
+        :param list data: a list of 8-bit integers that are this report
+        :param boolean split_lines: ``True`` if the format can be split
+            across multiple lines. This makes for easier reading but harder
+            automated processing.
+        """
         report = self.get(data[0], len(data))
         if report is None:
             return None
 
-        return report.get_str(data, split_lines)
+        return report.format_report(data, split_lines)

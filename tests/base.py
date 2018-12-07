@@ -153,7 +153,7 @@ class BaseTestCase:
             data = [' '.join([f'{v:02x}' for v in r]) for r in reports]
 
             if uhdev is not None:
-                human_data = [uhdev.parsed_rdesc.get_str(r, split_lines=True) for r in reports]
+                human_data = [uhdev.parsed_rdesc.format_report(r, split_lines=True) for r in reports]
                 try:
                     human_data = [f'\n\t       {" " * h.index("/")}'.join(h.split('\n')) for h in human_data]
                 except ValueError:

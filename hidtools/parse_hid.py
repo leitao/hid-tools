@@ -32,7 +32,7 @@ def get_report(time, report, rdesc):
     output = f'{time:>10s} '
     indent_2nd_line = len(output)
 
-    output += rdesc.get_str(report)
+    output += rdesc.format_report(report)
 
     # align the lines with the first '/'
     try:
