@@ -180,9 +180,8 @@ class Digitizer(base.UHIDTestDevice):
         return self.input_nodes[self.application]
 
     def get_report(self, req, rnum, rtype):
-        if rtype != self._UHID_FEATURE_REPORT:
-            self.call_get_report(req, [], 1)
-            return
+        if rtype != self.UHID_FEATURE_REPORT:
+            return (1, [])
 
         rdesc = None
         for v in self.parsed_rdesc.feature_reports.values():
@@ -190,20 +189,18 @@ class Digitizer(base.UHIDTestDevice):
                 rdesc = v
 
         if rdesc is None:
-            self.call_get_report(req, [], 1)
-            return
+            return (1, [])
 
         if 'Contact Max' not in [f.usage_name for f in rdesc]:
-            self.call_get_report(req, [], 1)
-            return
+            return (1, [])
 
         self.contactmax = self.max_contacts
         r = rdesc.create_report([self], None)
-        self.call_get_report(req, r, 0)
+        return (0, r)
 
     def set_report(self, req, rnum, rtype, size, data):
-        if rtype != self._UHID_FEATURE_REPORT:
-            self.call_set_report(req, 1)
+        if rtype != self.UHID_FEATURE_REPORT:
+            return 1
 
         rdesc = None
         for v in self.parsed_rdesc.feature_reports.values():
@@ -211,12 +208,10 @@ class Digitizer(base.UHIDTestDevice):
                 rdesc = v
 
         if rdesc is None:
-            self.call_set_report(req, 1)
-            return
+            return 1
 
         if 'Inputmode' not in [f.usage_name for f in rdesc]:
-            self.call_set_report(req, 0)
-            return
+            return 0
 
         Inputmode_seen = False
         for f in rdesc:
@@ -239,7 +234,7 @@ class Digitizer(base.UHIDTestDevice):
                         # if we set twice an Input Mode in the same Feature
                         self.cur_application = 'Mouse'
 
-        self.call_set_report(req, 0)
+        return 0
 
 
 class PTP(Digitizer):

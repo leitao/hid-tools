@@ -74,9 +74,9 @@ class UHIDDevice(object):
     _UHID_SET_REPORT = 13
     _UHID_SET_REPORT_REPLY = 14
 
-    _UHID_FEATURE_REPORT = 0
-    _UHID_OUTPUT_REPORT = 1
-    _UHID_INPUT_REPORT = 2
+    UHID_FEATURE_REPORT = 0
+    UHID_OUTPUT_REPORT = 1
+    UHID_INPUT_REPORT = 2
 
     _polling_functions = {}
     _poll = select.poll()
@@ -146,8 +146,6 @@ class UHIDDevice(object):
         self._stop = self.stop
         self._open = self.open
         self._close = self.close
-        self._set_report = self.set_report
-        self._get_report = self.get_report
         self._output_report = self.output_report
         self._udev_device = None
         self._ready = False
@@ -271,14 +269,14 @@ class UHIDDevice(object):
         """
         return self._info[2]
 
-    def call_set_report(self, req, err):
+    def _call_set_report(self, req, err):
         buf = struct.pack('< L L H',
                           UHIDDevice._UHID_SET_REPORT_REPLY,
                           req,
                           err)
         os.write(self._fd, buf)
 
-    def call_get_report(self, req, data, err):
+    def _call_get_report(self, req, data, err):
         data = bytes(data)
         buf = struct.pack('< L L H H 4096s',
                           UHIDDevice._UHID_GET_REPORT_REPLY,
@@ -289,6 +287,12 @@ class UHIDDevice(object):
         os.write(self._fd, buf)
 
     def call_input_event(self, data):
+        """
+        Send an input event from this device.
+
+        :param list data: a list of 8-bit integers representing the HID
+            report for this input event
+        """
         data = bytes(data)
         buf = struct.pack('< L H 4096s',
                           UHIDDevice._UHID_INPUT2,
@@ -399,15 +403,58 @@ class UHIDDevice(object):
         """
         logger.debug('close')
 
+
     def set_report(self, req, rnum, rtype, size, data):
-        logger.debug('set report {} {} {} {} '.format(req, rtype, size, [f'{d:02x}' for d in data[:size]]))
-        self.call_set_report(req, 1)
+        """
+        Callback invoked when a process calls SetReport on this UHID device.
+
+        Return ``0`` on success or an errno on failure.
+
+        The default method always returns ``EIO`` for a failure. Override
+        this in your device if you want SetReport to succeed.
+
+        :param req: the request identifier
+        :param rnum: ???
+        :param rtype: one of :attr:`UHID_FEATURE_REPORT`, :attr:`UHID_INPUT_REPORT`, or :attr:`UHID_OUTPUT_REPORT`
+        :param size: size in bytes
+        :param list data: a byte string with the data
+        """
+        return 5  # EIO
+
+    def _set_report(self, req, rnum, rtype, size, data):
+        logger.debug('set report {} {} {} {} {} '.format(req, rnum, rtype, size, [f'{d:02x}' for d in data[:size]]))
+        error = self.set_report(req, rnum, rtype, size, data)
+        self._call_set_report(req, error)
 
     def get_report(self, req, rnum, rtype):
+        """
+        Callback invoked when a process calls SetReport on this UHID device.
+
+        Return ``(0, [data bytes])`` on success or ``(errno, [])`` on
+        failure.
+
+        The default method always returns ``(EIO, [])`` for a failure.
+        Override this in your device if you want GetReport to succeed.
+
+        :param req: the request identifier
+        :param rnum: ???
+        :param rtype: one of :attr:`UHID_FEATURE_REPORT`, :attr:`UHID_INPUT_REPORT`, or :attr:`UHID_OUTPUT_REPORT`
+        """
+        return (5, [])  # EIO
+
+    def _get_report(self, req, rnum, rtype):
         logger.debug('get report {} {} {}'.format(req, rnum, rtype))
-        self.call_get_report(req, [], 1)
+        error, data = self.get_report(req, rnum, rtype)
+        self._call_get_report(req, data, error)
 
     def output_report(self, data, size, rtype):
+        """
+        Callback invoked when a process sends raw data to the device.
+
+        :param data: the data sent by the kernel
+        :param size: size of the data
+        :param rtype: one of :attr:`UHID_FEATURE_REPORT`, :attr:`UHID_INPUT_REPORT`, or :attr:`UHID_OUTPUT_REPORT`
+        """
         logger.debug('output {} {} {}'.format(rtype, size, [f'{d:02x}' for d in data[:size]]))
 
     def _process_one_event(self):
