@@ -22,7 +22,8 @@ import copy
 import hidtools.parse_hut
 from hidtools.util import twos_comp, to_twos_comp
 from parse import parse as _parse
-
+import logging
+logger = logging.getLogger('hidtools.hid')
 
 hid_items = {
     "Main": {
