@@ -84,7 +84,7 @@ class HidUsage(object):
         return self.name < other
 
 
-class HidUsagePage(dict):
+class HidUsagePage(object):
     """
     A dictionary of HID Usages in the form ``{usage: usage_name}``,
     representing all Usages in this Usage Page.
@@ -115,8 +115,32 @@ class HidUsagePage(dict):
     .. attribute:: page_name
 
         The assigned name for this usage Page, e.g. "Generic Desktop"
-
     """
+
+    def __init__(self):
+        self._usages = {}
+
+    def __setitem__(self, key, value):
+        self._usages[key] = value
+
+    def __getitem__(self, key):
+        return self._usages[key]
+
+    def __delitem__(self, key):
+        del self._usages[key]
+
+    def __iter__(self):
+        return iter(self._usages)
+
+    def __len__(self):
+        return len(self._usages)
+
+    def items(self):
+        """
+        Iterate over all elements, see :meth:`dict.items`
+        """
+        return self._usages.items()
+
     @property
     def page_id(self):
         """
@@ -162,10 +186,10 @@ class HidUsagePage(dict):
         return self
 
 
-class HidUsageTable(dict):
+class HidUsageTable(object):
     """
-    This is a dictionary wrapper that all HID Usages known to man. Or to
-    this module at least.
+    This effectively a dictionary of all HID Usages known to man. Or to this
+    module at least.
 
     This dict is laid out as ``{page_id : usage_page_object}``
     (:class:`HidUsagePage`)
@@ -183,13 +207,36 @@ class HidUsageTable(dict):
         > print(usages.usage_page_from_page_id(0x01).page_name)
         Generic Desktop
     """
+    def __init__(self):
+        self._pages = {}
+
+    def __setitem__(self, key, value):
+        self._pages[key] = value
+
+    def __getitem__(self, key):
+        return self._pages[key]
+
+    def __delitem__(self, key):
+        del self._pages[key]
+
+    def __iter__(self):
+        return iter(self._pages)
+
+    def __len__(self):
+        return len(self._pages)
+
+    def items(self):
+        """
+        Iterate over all elements, see :meth:`dict.items`
+        """
+        return self._pages.items()
 
     @property
     def usage_pages(self):
         """
         A dictionary mapping ``{page_id : object}``
         """
-        return self
+        return self._pages
 
     def usage_page_from_name(self, page_name):
         """
@@ -198,7 +245,7 @@ class HidUsageTable(dict):
 
         :return: the :meth:`HidUsagePage` or None
         """
-        for k, v in self.items():
+        for k, v in self._pages.items():
             if v.page_name == page_name:
                 return v
         return None
@@ -283,9 +330,10 @@ class HidUsageTable(dict):
     @classmethod
     def _from_hut_data(cls):
         """
-        Return the HID Usage Tables as a dictionary where the keys are the
-        numeric Usage Page and the values are the respective
-        :class:`hidtools.HidUsagePage` object. ::
+        Return the HID Usage Tables, the keys are the numeric Usage Page and
+        the values are the respective :class:`hidtools.HidUsagePage` object.
+
+        ::
 
             > usages = hidtools.hut.HUT()
             > print(usages[0x01].page_name)
@@ -324,9 +372,3 @@ the respective :class:`hidtools.HidUsagePage` object. ::
     > print(usages[0x01].page_id)
     1
 """
-
-# Hide the messy content of HUT from the sphinx documentation. This is a bit
-# of a hack, but should work in most cases.
-import sys
-if os.path.basename(sys.argv[0]) == "sphinx-build":
-    HUT = {}

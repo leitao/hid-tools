@@ -76,11 +76,11 @@ class TestHUT(unittest.TestCase):
             self.assertEqual(page.page_name, name)
             print(page, page.page_name)
             if page.page_name in empty_pages:
-                self.assertEqual(page.from_name, {})
-                self.assertEqual(page.from_usage, {})
+                self.assertEqual(dict(page.from_name.items()), {})
+                self.assertEqual(dict(page.from_usage.items()), {})
             else:
-                self.assertNotEqual(page.from_name, {})
-                self.assertNotEqual(page.from_usage, {})
+                self.assertNotEqual(dict(page.from_name.items()), {})
+                self.assertNotEqual(dict(page.from_usage.items()), {})
 
     def test_usage_gd(self):
         usages = {
