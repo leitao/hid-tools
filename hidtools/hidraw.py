@@ -257,8 +257,8 @@ class HidrawDevice(object):
             except:
                 pass
             else:
-                # the `-1` below is to make a better visual effect
-                indent_2nd_line = slash - 1
+                # the `+1` below is to make a better visual effect
+                indent_2nd_line = slash + 1
         indent = f'\n#{" " * indent_2nd_line}'
         output = indent.join(output.split('\n'))
         print(f'# {output}')
