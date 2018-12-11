@@ -18,7 +18,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import hidtools.parse_hid
+import hidtools.cli.parse_hid
 
 if __name__ == "__main__":
-    hidtools.parse_hid.main()
+    hidtools.cli.parse_hid.main()

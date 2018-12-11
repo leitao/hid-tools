@@ -17,7 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
-import hidtools.record
+import hidtools.cli.record
 
 if __name__ == "__main__":
-    hidtools.record.main()
+    hidtools.cli.record.main()

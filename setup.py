@@ -13,9 +13,9 @@ setup(name='hid-tools',
       license='GPL',
       entry_points={
           'console_scripts': [
-              'hid-recorder = hidtools.record:main',
-              'hid-replay = hidtools.replay:main',
-              'hid-parse= hidtools.parse_hid:main',
+              'hid-recorder = hidtools.cli.record:main',
+              'hid-replay = hidtools.cli.replay:main',
+              'hid-parse= hidtools.cli.parse_hid:main',
           ]
       },
       classifiers=[
