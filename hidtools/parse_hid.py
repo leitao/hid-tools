@@ -75,7 +75,7 @@ def dump_report(line, rdesc_object, f_out):
         f_out.write("\n")
 
 
-def parse_hid(f_in, f_out):
+def parse_hid(f_in, f_out, print_events=True):
     rdesc_dict = {}
     device_index = 0
     while True:
@@ -96,7 +96,8 @@ def parse_hid(f_in, f_out):
             assert(r is not None)
             device_index = r['d']
         elif line.startswith("E:"):
-            dump_report(line, rdesc_dict[device_index], f_out)
+            if print_events:
+                dump_report(line, rdesc_dict[device_index], f_out)
         elif line == '':
             # End of file
             break
@@ -113,10 +114,13 @@ def main():
     parser.add_argument('recording', metavar='recording.hid', nargs='?',
                         help='Path to device recording (stdin if missing)',
                         type=argparse.FileType('r'), default=sys.stdin)
+    parser.add_argument('--report-descriptor-only', action='store_true',
+                        help='Only print the Report Descriptor',
+                        default=False)
     args = parser.parse_args()
     with args.recording as f:
         try:
-            parse_hid(f, sys.stdout)
+            parse_hid(f, sys.stdout, not args.report_descriptor_only)
         except KeyboardInterrupt:
             pass
         except BrokenPipeError:
