@@ -16,7 +16,6 @@ setup(name='hid-tools',
               'hid-recorder = hidtools.record:main',
               'hid-replay = hidtools.replay:main',
               'hid-parse= hidtools.parse_hid:main',
-              'hid-parse-rdesc = hidtools.parse_rdesc:main',
           ]
       },
       classifiers=[
