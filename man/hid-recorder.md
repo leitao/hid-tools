@@ -3,7 +3,7 @@
 NAME
 ----
 
-hid-recorder - HID Input device recorder
+hid-recorder - HID input device recorder
 
 SYNOPSIS
 --------
@@ -17,9 +17,9 @@ OPTIONS
 
 DESCRIPTION
 -----------
-**hid-recorder** captures hidraw report descriptors and hid reports (events)
-and prints them in a standardized format (see below) to debug and replay HID
-devices.
+**hid-recorder** captures report descriptors and hid reports (events)
+through the *hidraw* kernel module and prints them in a standardized format
+(see below) to debug and replay HID devices.
 
 When invoked without arguments, **hid-recorder** shows a list of available
 devices.
@@ -52,8 +52,9 @@ hid-replay(1)
 
 COPYRIGHT
 ---------
- Copyright 2012-2018, Benjamin Tissoires.
- Copyright 2018, Red Hat, Inc.
+Copyright 2012-2018, Benjamin Tissoires.
+
+Copyright 2018, Red Hat, Inc.
 
 AUTHOR
 ------
