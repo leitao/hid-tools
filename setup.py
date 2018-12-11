@@ -13,6 +13,7 @@ setup(name='hid-tools',
       license='GPL',
       entry_points={
           'console_scripts': [
+              'hid-decode= hidtools.cli.decode:main',
               'hid-recorder = hidtools.cli.record:main',
               'hid-replay = hidtools.cli.replay:main',
               'hid-parse= hidtools.cli.parse_hid:main',
@@ -25,7 +26,8 @@ setup(name='hid-tools',
           'Programming Language :: Python :: 3.6'
       ],
       data_files=[('/usr/share/man/man1', ['man/hid-recorder.1',
-                                           'man/hid-replay.1'])],
+                                           'man/hid-replay.1',
+                                           'man/hid-decode.1'])],
       python_requires='>=3.6',
       include_package_data=True,
       )
