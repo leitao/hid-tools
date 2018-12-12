@@ -73,7 +73,8 @@
 97	System Function Shift
 98	System Function Shift Lock
 99	System Function Shift Lock Indicator
-9A-9F	Reserved
+9A	System Dismiss Notification
+9B-9F	Reserved
 A0	System Dock
 A1	System UnDock
 A2	System Setup

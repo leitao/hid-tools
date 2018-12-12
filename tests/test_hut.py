@@ -168,6 +168,7 @@ class TestHUT(unittest.TestCase):
             0x97: 'System Function Shift',
             0x98: 'System Function Shift Lock',
             0x99: 'System Function Shift Lock Indicator',
+            0x9A: 'System Dismiss Notification',
             0xA0: 'System Dock',
             0xA1: 'System UnDock',
             0xA2: 'System Setup',
@@ -239,6 +240,7 @@ class TestHUT(unittest.TestCase):
         self.assertEqual(HUT[0x01].page_name, 'Generic Desktop')
         self.assertEqual(HUT[0x01][0x0A].name, 'Water Cooling Device')
         self.assertEqual(HUT[0x01][0x10].name, 'Assistive Control')
+        self.assertEqual(HUT[0x01][0x9A].name, 'System Dismiss Notification')
 
     def test_up12_eye_and_head_trackers(self):
         self.assertEqual(HUT[0x12].page_name, 'Eye and Head Trackers')
