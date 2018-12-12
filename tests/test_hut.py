@@ -263,6 +263,11 @@ class TestHUT(unittest.TestCase):
         self.assertEqual(HUT[0x0d][0x61].name, 'Gesture Character Quality')
         self.assertEqual(HUT[0x0d][0x69].name, 'UTF32 Big Endian Character Gesture Encoding')
 
+    def test_up20_sensor(self):
+        self.assertEqual(HUT[0x20].page_name, 'Sensor')
+        self.assertEqual(HUT[0x20][0x3A].name, 'Environmental: Object Presence')
+        self.assertEqual(HUT[0x20][0x43A].name, 'Data Field: Object Presence')
+
     def test_up41_braille_display(self):
         self.assertEqual(HUT[0x41].page_name, 'Braille Display')
         self.assertEqual(HUT[0x41][0x03].name, '8 Dot Braille Cell')

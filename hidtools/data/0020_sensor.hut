@@ -34,7 +34,9 @@
 37	Environmental: Heat Index
 38	Environmental: Surface Temperature
 39	Environmental: Volatile Organic Compounds
-3A-3F	Environmental: Reserved
+3A	Environmental: Object Presence
+3B	Environmental: Object Proximity
+3C-3F	Environmental: Reserved
 40	Light
 41	Light: Ambient Light
 42	Light: Consumer Infrared
@@ -205,7 +207,10 @@ F0-FF	Reserved for Vendors/OEMs
 0437	Data Field: Air Quality Index
 0438	Data Field: Equivalent CO2
 0439	Data Field: Volatile Organic Compound Concentration
-043A-043F	Data Field: Environmental Reserved
+043A	Data Field: Object Presence
+043B	Data Field: Object Proximity Range
+043C	Data Field: Object Proximity Out of Range
+043D-043F	Data Field: Environmental Reserved
 0440	Property: Environmental
 0441	Property: Reference Pressure
 0442-044F	Property: Environmental Reserved
