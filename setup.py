@@ -30,4 +30,5 @@ setup(name='hid-tools',
                                            'man/hid-decode.1'])],
       python_requires='>=3.6',
       include_package_data=True,
+      install_requires=['parse', 'pyudev']
       )
