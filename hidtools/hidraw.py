@@ -199,7 +199,7 @@ class HidrawDevice(object):
 
         self.events = []
 
-        self._dump_offset = 0
+        self._dump_offset = -1
         self._time_offset = None
 
     def __repr__(self):
@@ -287,9 +287,9 @@ class HidrawDevice(object):
         """
 
         if from_the_beginning:
-            self._dump_offset = 0
+            self._dump_offset = -1
 
-        if self._dump_offset == 0:
+        if self._dump_offset == -1:
             print(f'# {self.name}', file=file)
             output = io.StringIO()
             self.report_descriptor.dump(output)
@@ -302,6 +302,7 @@ class HidrawDevice(object):
             print(f'R: {sz} {rd}', file=file)
             print(f'N: {self.name}', file=file)
             print(f'I: {self.bustype:x} {self.vendor_id:04x} {self.product_id:04x}', file=file, flush=True)
+            self._dump_offset = 0
 
         for e in self.events[self._dump_offset:]:
             self._dump_event(e, file)
