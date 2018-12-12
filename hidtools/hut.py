@@ -334,7 +334,7 @@ class HidUsageTable(object):
         usage_page = None
         for line in f:
             line = line.strip()
-            if not line:
+            if not line or line.startswith('#'):
                 continue
 
             # Usage Page, e.g. '(01)	Generic Desktop'
