@@ -41,6 +41,7 @@ class TestHUT(unittest.TestCase):
         0x0d: 'Digitizers',
         0x0e: 'Haptic',
         0x10: 'Unicode',
+        0x12: 'Eye and Head Trackers',
         0x14: 'Auxiliary Display',
         0x20: 'Sensor',
         0x40: 'Medical Instruments',
@@ -66,7 +67,7 @@ class TestHUT(unittest.TestCase):
 
     def test_hut_size(self):
         # Update this test when a new Usage Page is added
-        self.assertEqual(len(HUT), 34)
+        self.assertEqual(len(HUT), 35)
 
     def test_usage_pages(self):
         pages = self.pages
@@ -230,3 +231,9 @@ class TestHUT(unittest.TestCase):
             keys.remove(p)
             for k in keys:
                 self.assertNotEqual(page, HUT[k])
+
+    def test_up12_eye_and_head_trackers(self):
+        self.assertEqual(HUT[0x12].page_name, 'Eye and Head Trackers')
+        self.assertEqual(HUT[0x12][0x1].name, 'Eye Tracker')
+        self.assertEqual(HUT[0x12][0x205].name, 'Calibrated Screen Height')
+        self.assertEqual(HUT[0x12][0x400].name, 'Device Mode Request')
