@@ -53,7 +53,13 @@
 76	Camera Access Enabled
 77	Camera Access Disabled
 78	Camera Access Toggle
-79-7F	Reserved
+79	Keyboard Brightness Increment 
+7A	Keyboard Brightness Decrement
+7B	Keyboard Backlight Set Level
+7C	Keyboard Backlight OOC
+7D	Keyboard Backlight Set Minimum
+7E	Keyboard Backlight Set Maximum
+7F	Keyboard Backlight Auto
 80	Selection
 81	Assign Selection
 82	Mode Step

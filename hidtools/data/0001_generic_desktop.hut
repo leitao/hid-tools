@@ -69,7 +69,10 @@
 94	Index Trigger
 95	Palm Trigger
 96	Thumbstick
-97-9F	Reserved
+97	System Function Shift
+98	System Function Shift Lock
+99	System Function Shift Lock Indicator
+9A-9F	Reserved
 A0	System Dock
 A1	System UnDock
 A2	System Setup
