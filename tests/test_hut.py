@@ -20,6 +20,8 @@
 import unittest
 from hidtools.hut import HUT
 
+import logging
+logger = logging.getLogger('hidtools.test.hut')
 
 class TestHUT(unittest.TestCase):
     pages = {
