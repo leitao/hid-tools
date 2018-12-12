@@ -237,3 +237,11 @@ class TestHUT(unittest.TestCase):
         self.assertEqual(HUT[0x12][0x1].name, 'Eye Tracker')
         self.assertEqual(HUT[0x12][0x205].name, 'Calibrated Screen Height')
         self.assertEqual(HUT[0x12][0x400].name, 'Device Mode Request')
+
+    def test_up0c_consumer_devices(self):
+        self.assertEqual(HUT[0x0c].page_name, 'Consumer Devices')
+        self.assertEqual(HUT[0x0c][0x29E].name, 'AC Navigation Guidance')
+
+        # HUTRR32: 1C8 AL Message Status
+        # HUTRR75: 1C8 AL Navigation
+        self.assertEqual(HUT[0x0c][0x1C8].name, 'AL Message Status')

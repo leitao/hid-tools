@@ -270,6 +270,7 @@ F6-FF	Reserved
 1C5	AL Online Activity Browser
 1C6	AL Research/Search Browser
 1C7	AL Audio Player
+# Duplicate in HUTRR75: 1C8 AL Navigation
 1C8	AL Message Status
 1C9	AL Contact Sync
 1CA-1FF	Reserved
@@ -416,7 +417,8 @@ F6-FF	Reserved
 29B	AC Disribute Horizontally
 29C	AC Distribute Vertically
 29D	AC Next Keyboard Layout Select
-29E-29F	Reserved
+29E	AC Navigation Guidance
+29F-29F	Reserved
 2A0	ACSoft Key Left
 2A1	ACSoft Key Right
 2A2-2AF	Reserved
