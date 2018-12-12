@@ -245,3 +245,9 @@ class TestHUT(unittest.TestCase):
         # HUTRR32: 1C8 AL Message Status
         # HUTRR75: 1C8 AL Navigation
         self.assertEqual(HUT[0x0c][0x1C8].name, 'AL Message Status')
+
+    def test_up0d_digitizers(self):
+        self.assertEqual(HUT[0x0d].page_name, 'Digitizers')
+        self.assertEqual(HUT[0x0d][0x24].name, 'Character Gesture')
+        self.assertEqual(HUT[0x0d][0x61].name, 'Gesture Character Quality')
+        self.assertEqual(HUT[0x0d][0x69].name, 'UTF32 Big Endian Character Gesture Encoding')

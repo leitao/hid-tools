@@ -19,7 +19,8 @@
 21	Puck
 22	Finger
 23	Device Settings
-24-2F	Reserved
+24	Character Gesture
+25-2F	Reserved
 30	Tip Pressure
 31	Barrel Pressure
 32	In Range
@@ -62,6 +63,17 @@
 5D	Preferred Color is Locked
 5E	Preferred Line Width
 5F	Preferred Line Width is Locked
+61	Gesture Character Quality
+62	Character Gesture Data Length
+63	Character Gesture Data
+64	Gesture Character Encoding
+65	UTF8 Character Gesture Encoding Sel
+66	UTF16 Little Endian Character Gesture Encoding Sel
+67	UTF16 Big Endian Character Gesture Encoding Sel
+68	UTF32 Little Endian Character Gesture Encoding
+69	UTF32 Big Endian Character Gesture Encoding
+6A	Gesture Character Enable
+6B-6F	Reserved
 70	Preferred Line Style
 71	Preferred Line Style is Locked
 72	Ink
