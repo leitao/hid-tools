@@ -72,7 +72,7 @@ class TestHUT(unittest.TestCase):
 
     def test_usage_pages(self):
         pages = self.pages
-        empty_pages = ['Unicode', 'Power Device', 'Battery System', 'Gaming Device']
+        empty_pages = ['Unicode', 'Battery System', 'Gaming Device']
 
         for page_id, name in pages.items():
             page = HUT[page_id]
@@ -263,4 +263,7 @@ class TestHUT(unittest.TestCase):
         self.assertEqual(HUT[0x41][0x100].name, 'Router Button')
         self.assertEqual(HUT[0x41][0x210].name, 'Braille Joystick Center')
 
+    def test_up84_power_device(self):
+        self.assertEqual(HUT[0x84].page_name, 'Power Device')
+        self.assertEqual(HUT[0x84][0x06].name, 'Peripheral Device')
 
