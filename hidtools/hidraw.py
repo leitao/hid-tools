@@ -183,6 +183,13 @@ class HidrawDevice(object):
     .. attribute:: events
 
         All events accumulated so far, a list of :class:`HidrawEvent`
+
+    ... attribute:: time_offset
+
+        The offset to be used for recording events. By default the offset is
+        the timestamp of the first event. When recording multiple devices,
+        the time_offset from the first device to receive an event should be
+        copied to the other device to ensure all recordings are in sync.
     """
     def __init__(self, device):
         fd = device.fileno()
@@ -200,7 +207,7 @@ class HidrawDevice(object):
         self.events = []
 
         self._dump_offset = -1
-        self._time_offset = None
+        self.time_offset = None
 
     def __repr__(self):
         return f'{self.name} bus: {self.bustype:02x} vendor: {self.vendor_id:04x} product: {self.product_id:04x}'
@@ -227,9 +234,9 @@ class HidrawDevice(object):
                 loop = False
 
             now = datetime.datetime.now()
-            if self._time_offset is None:
-                self._time_offset = now
-            tdelta = now - self._time_offset
+            if self.time_offset is None:
+                self.time_offset = now
+            tdelta = now - self.time_offset
             bytes = struct.unpack('B' * len(data), data)
 
             self.events.append(HidrawEvent(tdelta.seconds, tdelta.microseconds, bytes))

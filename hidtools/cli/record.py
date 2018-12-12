@@ -17,6 +17,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 
+import select
 import argparse
 import sys
 import os
@@ -57,7 +58,7 @@ def list_devices():
 def main():
     parser = argparse.ArgumentParser(description='Record a HID device')
     parser.add_argument('device', metavar='/dev/hidrawX',
-                        nargs="?", default=None,
+                        nargs="+", default=None,
                         type=argparse.FileType('r'),
                         help='Path to the hidraw device node')
     parser.add_argument('--output', metavar='output file',
@@ -66,16 +67,41 @@ def main():
                         help='The file to record to (default: stdout)')
     args = parser.parse_args()
 
+    devices = {}
+    last_index = -1
+    poll = select.poll()
+    is_first_event = True
+
     try:
         if args.device is None:
-            args.device = open(list_devices())
+            args.device = [open(list_devices())]
 
-        device = HidrawDevice(args.device)
-        device.dump(args.output)
+        for idx, fd in enumerate(args.device):
+            device = HidrawDevice(fd)
+            if len(args.device) > 1:
+                print(f'D: {idx}', file=args.output)
+            device.dump(args.output)
+            poll.register(fd, select.POLLIN)
+            devices[fd.fileno()] = (idx, device)
+
+        if len(devices) == 1:
+            last_index = 0
 
         while True:
-            device.read_events()
-            device.dump(args.output)
+            events = poll.poll()
+            for fd, event in events:
+                idx, device = devices[fd]
+                device.read_events()
+                if last_index != idx:
+                    print(f'D: {idx}', file=args.output)
+                    last_index = idx
+                device.dump(args.output)
+
+                if is_first_event:
+                    is_first_event = False
+                    for idx, d in devices.values():
+                        d.time_offset = device.time_offset
+
     except KeyboardInterrupt:
         pass
 

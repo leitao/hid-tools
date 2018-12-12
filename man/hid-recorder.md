@@ -7,7 +7,7 @@ hid-recorder - HID input device recorder
 
 SYNOPSIS
 --------
-**hid-recorder** *\[\-\-output=output_file\]* *[/dev/hidrawX]*
+**hid-recorder** *\[\-\-output=output_file\]* *[/dev/hidrawX]* [*[/dev/hidrawX]* [...]]
 
 OPTIONS
 -------
