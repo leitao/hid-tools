@@ -46,6 +46,7 @@ class TestHUT(unittest.TestCase):
         0x20: 'Sensor',
         0x40: 'Medical Instruments',
         0x41: 'Braille Display',
+        0x59: 'Lighting and Illumination',
         0x80: 'Monitor',
         0x81: 'Monitor Enumerated Values',
         0x82: 'VESA Virtual Controls',
@@ -68,7 +69,7 @@ class TestHUT(unittest.TestCase):
 
     def test_hut_size(self):
         # Update this test when a new Usage Page is added
-        self.assertEqual(len(HUT), 36)
+        self.assertEqual(len(HUT), 37)
 
     def test_usage_pages(self):
         pages = self.pages
@@ -273,6 +274,12 @@ class TestHUT(unittest.TestCase):
         self.assertEqual(HUT[0x41][0x03].name, '8 Dot Braille Cell')
         self.assertEqual(HUT[0x41][0x100].name, 'Router Button')
         self.assertEqual(HUT[0x41][0x210].name, 'Braille Joystick Center')
+
+    def test_up59_lighting_and_illumination(self):
+        self.assertEqual(HUT[0x59].page_name, 'Lighting and Illumination')
+        self.assertEqual(HUT[0x59][0x7].name, 'Lamp Array Kind')
+        self.assertEqual(HUT[0x59][0x22].name, 'Lamp Attributes Response Report')
+        self.assertEqual(HUT[0x59][0x53].name, 'Blue Update Channel')
 
     def test_up84_power_device(self):
         self.assertEqual(HUT[0x84].page_name, 'Power Device')
