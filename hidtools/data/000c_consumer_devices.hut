@@ -418,7 +418,8 @@ F6-FF	Reserved
 29C	AC Distribute Vertically
 29D	AC Next Keyboard Layout Select
 29E	AC Navigation Guidance
-29F-29F	Reserved
+29F	AC Desktop Show All Windows
+# Duplicate in HUTRR77: 2A0 AC Desktop Show All Applications
 2A0	ACSoft Key Left
 2A1	ACSoft Key Right
 2A2-2AF	Reserved

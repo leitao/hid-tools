@@ -246,6 +246,10 @@ class TestHUT(unittest.TestCase):
         # HUTRR75: 1C8 AL Navigation
         self.assertEqual(HUT[0x0c][0x1C8].name, 'AL Message Status')
 
+        # HUTRR32: 2A0  ACSoft Key Left
+        # HUTRR77: 2A0  AC Desktop Show All Applications
+        self.assertEqual(HUT[0x0c][0x2A0].name, 'ACSoft Key Left')
+
     def test_up0d_digitizers(self):
         self.assertEqual(HUT[0x0d].page_name, 'Digitizers')
         self.assertEqual(HUT[0x0d][0x24].name, 'Character Gesture')
