@@ -105,12 +105,13 @@ class TestHUT(unittest.TestCase):
             0x07: 'Keypad',
             0x08: 'Multi Axis',
             0x09: 'Reserved',
-            0x0A: 'Water Cooling Device / Assistive Control',
+            0x0A: 'Water Cooling Device',
             0x0B: 'Computer Chassis Device',
             0x0C: 'Wireless Radio Controls',
             0x0D: 'Portable Device Control',
             0x0E: 'System Multi-Axis Controller',
             0x0F: 'Spatial Controller',
+            0x10: 'Assistive Control',
             0x30: 'X',
             0x31: 'Y',
             0x32: 'Z',
@@ -232,6 +233,11 @@ class TestHUT(unittest.TestCase):
             keys.remove(p)
             for k in keys:
                 self.assertNotEqual(page, HUT[k])
+
+    def test_up01_generic_desktop(self):
+        self.assertEqual(HUT[0x01].page_name, 'Generic Desktop')
+        self.assertEqual(HUT[0x01][0x0A].name, 'Water Cooling Device')
+        self.assertEqual(HUT[0x01][0x10].name, 'Assistive Control')
 
     def test_up12_eye_and_head_trackers(self):
         self.assertEqual(HUT[0x12].page_name, 'Eye and Head Trackers')

@@ -9,13 +9,14 @@
 07	Keypad
 08	Multi Axis
 09	Reserved
-0A	Water Cooling Device / Assistive Control
+0A	Water Cooling Device
 0B	Computer Chassis Device
 0C	Wireless Radio Controls
 0D	Portable Device Control
 0E	System Multi-Axis Controller
 0F	Spatial Controller
-10-2F	Reserved
+10	Assistive Control
+11-2F	Reserved
 30	X
 31	Y
 32	Z
