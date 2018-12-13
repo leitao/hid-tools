@@ -1,13 +1,14 @@
 # vim: set expandtab shiftwidth=2 tabstop=8 textwidth=0:
 
 variables:
-  FEDORA_RPMS: 'python3-parse python3-pyudev python3-flake8 python3-pypandoc pandoc'
+  ARCH_PKGS: 'flake8 python-parse python-pyudev python-pypandoc pandoc'
 
 .default_setup:
-  image: fedora:29
+  image: base/archlinux
   before_script:
-    - dnf upgrade -y
-    - dnf install -y $FEDORA_RPMS
+    - pacman -S --refresh
+    - pacman -S --sysupgrade --noconfirm
+    - pacman -S --noconfirm $ARCH_PKGS
 
 flake:
   extends: .default_setup
@@ -22,5 +23,5 @@ install:
 install_no_man_pages:
   extends: .default_setup
   script:
-    - dnf remove -y pandoc
+    - pacman -R --noconfirm pandoc python-pypandoc
     - python3 setup.py install
