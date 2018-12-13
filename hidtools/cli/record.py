@@ -62,8 +62,7 @@ def list_devices():
 def main():
     parser = argparse.ArgumentParser(description='Record a HID device')
     parser.add_argument('device', metavar='/dev/hidrawX',
-                        nargs="+", default=None,
-                        type=argparse.FileType('r'),
+                        nargs="*", type=argparse.FileType('r'),
                         help='Path to the hidraw device node')
     parser.add_argument('--output', metavar='output file',
                         nargs=1, default=sys.stdout,
@@ -77,7 +76,7 @@ def main():
     is_first_event = True
 
     try:
-        if args.device is None:
+        if not args.device:
             args.device = [open(list_devices())]
 
         for idx, fd in enumerate(args.device):
