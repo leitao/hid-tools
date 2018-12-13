@@ -403,7 +403,6 @@ class UHIDDevice(object):
         """
         logger.debug('close')
 
-
     def set_report(self, req, rnum, rtype, data):
         """
         Callback invoked when a process calls SetReport on this UHID device.

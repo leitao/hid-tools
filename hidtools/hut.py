@@ -26,6 +26,7 @@ DATA_DIRNAME = "data"
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 DATA_DIR = os.path.join(SCRIPT_DIR, DATA_DIRNAME)
 
+
 @functools.total_ordering
 class HidUsage(object):
     """
@@ -373,7 +374,6 @@ class HidUsageTable(object):
 
         return usage_page
 
-
     @classmethod
     def _from_hut_data(cls):
         """
@@ -404,6 +404,7 @@ class HidUsageTable(object):
                         raise
 
         return hut
+
 
 HUT = HidUsageTable._from_hut_data()
 """

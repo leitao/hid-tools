@@ -37,8 +37,8 @@ def list_devices():
             devices[int(fname[6:])] = d.name
 
     if not devices:
-         print('No devices found', file=sys.stderr)
-         sys.exit(1)
+        print('No devices found', file=sys.stderr)
+        sys.exit(1)
 
     print('Available devices:', file=outfile)
     for num, name in sorted(devices.items()):
