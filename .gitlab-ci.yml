@@ -1,0 +1,26 @@
+# vim: set expandtab shiftwidth=2 tabstop=8 textwidth=0:
+
+variables:
+  FEDORA_RPMS: 'python3-parse python3-pyudev python3-flake8 python3-pypandoc pandoc'
+
+.default_setup:
+  image: fedora:29
+  before_script:
+    - dnf upgrade -y
+    - dnf install -y $FEDORA_RPMS
+
+flake:
+  extends: .default_setup
+  script:
+    - python3 setup.py flake8
+
+install:
+  extends: .default_setup
+  script:
+    - python3 setup.py install
+
+install_no_man_pages:
+  extends: .default_setup
+  script:
+    - dnf remove -y pandoc
+    - python3 setup.py install
