@@ -269,6 +269,7 @@ class TestHUT(unittest.TestCase):
         # HUTRR87: 6A Capacitive Heat Map Protocol Vendor ID
         self.assertEqual(HUT[0x0d][0x6A].name, 'Gesture Character Enable')
         self.assertEqual(HUT[0x0d][0x6B].name, 'Capacitive Heat Map Protocol Version')
+        self.assertEqual(HUT[0x0d][0x98].name, 'Microsoft Pen Protocol')
 
     def test_up20_sensor(self):
         self.assertEqual(HUT[0x20].page_name, 'Sensor')
