@@ -265,6 +265,10 @@ class TestHUT(unittest.TestCase):
         self.assertEqual(HUT[0x0d][0x24].name, 'Character Gesture')
         self.assertEqual(HUT[0x0d][0x61].name, 'Gesture Character Quality')
         self.assertEqual(HUT[0x0d][0x69].name, 'UTF32 Big Endian Character Gesture Encoding')
+        # HUTRR76: 6A Gesture Character Enable
+        # HUTRR87: 6A Capacitive Heat Map Protocol Vendor ID
+        self.assertEqual(HUT[0x0d][0x6A].name, 'Gesture Character Enable')
+        self.assertEqual(HUT[0x0d][0x6B].name, 'Capacitive Heat Map Protocol Version')
 
     def test_up20_sensor(self):
         self.assertEqual(HUT[0x20].page_name, 'Sensor')

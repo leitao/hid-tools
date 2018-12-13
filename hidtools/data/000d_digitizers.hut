@@ -14,7 +14,8 @@
 0C	Multiple Point Digitizer
 0D	Free Space Wand
 0E	Device Configuration
-0F-1F	Reserved
+0F	Capacitive Heat Map Digitizer
+10-1F	Reserved
 20	Stylus
 21	Puck
 22	Finger
@@ -72,7 +73,10 @@
 67	UTF16 Big Endian Character Gesture Encoding Sel
 68	UTF32 Little Endian Character Gesture Encoding
 69	UTF32 Big Endian Character Gesture Encoding
+# Duplicate in HUTRR87: 6A Capacitive Heat Map Protocol Vendor ID
 6A	Gesture Character Enable
+6B	Capacitive Heat Map Protocol Version
+6C	Capacitive Heat Map Frame Data
 6B-6F	Reserved
 70	Preferred Line Style
 71	Preferred Line Style is Locked
