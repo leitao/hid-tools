@@ -1068,7 +1068,6 @@ class HidReport(object):
         if hidInputItem.is_const:
             return
 
-        # FIXME: arrays?
         usage = hidInputItem.usage_name
 
         usage = self._fix_xy_usage_for_mt_devices(usage)
@@ -1084,12 +1083,18 @@ class HidReport(object):
         # Match the HID usage with our attributes, so
         # Contact Count -> contactcount, etc.
         field = usage.replace(' ', '').lower()
+
         if len(data) > 0 and hasattr(data[0], field):
             value = getattr(data[0], field)
         elif global_data is not None and hasattr(global_data, field):
             value = getattr(global_data, field)
 
-        hidInputItem.fill_values(r_out, [value])
+        try:
+            value[0]
+        except TypeError:
+            value = [value]
+
+        hidInputItem.fill_values(r_out, value)
         self.prev_collection = hidInputItem.collection
         self.prev_seen_usages.append(usage)
 
