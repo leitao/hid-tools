@@ -44,7 +44,6 @@ class GenericDevice(base.UHIDTestDevice):
             info = (3, 1, 2)
         super().__init__(name, rdesc=rdesc)
         self.info = info
-        self.create_kernel_device()
         self.default_reportID = None
 
 

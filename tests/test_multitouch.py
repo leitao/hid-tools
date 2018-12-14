@@ -24,7 +24,7 @@ import libevdev
 import sys
 import time
 import unittest
-from base import main, setUpModule, tearDownModule  # noqa
+from base import main, setUpModule, tearDownModule, skipIfUHDev  # noqa
 
 import logging
 logger = logging.getLogger('hidtools.test.multitouch')
@@ -142,9 +142,6 @@ class Digitizer(base.UHIDTestDevice):
                 if self.physical not in physicals and None not in physicals:
                     continue
                 self.fields = [f.usage_name for f in r]
-
-        # self.parsed_rdesc.dump(sys.stdout)
-        self.create_kernel_device()
 
     @property
     def touches_in_a_report(self):
@@ -636,6 +633,7 @@ class BaseTest:
             self.assertEqual(uhdev.evdev.slots[slot0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
             self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
+        @skipIfUHDev(lambda uhdev: uhdev.max_contacts <= 2, 'Device not compatible')
         def test_mt_triple_tap(self):
             """Send 3 touches in the first 3 slots.
             Make sure the kernel sees this as a triple touch.
@@ -643,8 +641,6 @@ class BaseTest:
 
             Note: PTP will send here BTN_TRIPLETAP emulation"""
             uhdev = self.uhdev
-            if uhdev.max_contacts <= 2:
-                raise unittest.SkipTest('Device not compatible')
 
             t0 = Touch(1, 50, 100)
             t1 = Touch(2, 150, 200)
@@ -682,13 +678,12 @@ class BaseTest:
             self.assertEqual(uhdev.evdev.slots[slot1][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
             self.assertEqual(uhdev.evdev.slots[slot2][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
+        @skipIfUHDev(lambda uhdev: uhdev.max_contacts <= 2, 'Device not compatible')
         def test_mt_max_contact(self):
             """send the maximum number of contact as reported by the device.
             Make sure all contacts are forwarded and that there is no miss.
             Release and check."""
             uhdev = self.uhdev
-            if uhdev.max_contacts <= 2:
-                raise unittest.SkipTest('Device not compatible')
 
             touches = [Touch(i, (i + 3) * 20, (i + 3) * 20 + 5) for i in range(uhdev.max_contacts)]
             if uhdev.quirks is not None and 'SLOT_IS_CONTACTID_MINUS_ONE' in uhdev.quirks:
@@ -717,17 +712,15 @@ class BaseTest:
 
                 self.assertEqual(uhdev.evdev.slots[slot][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
+        @skipIfUHDev(lambda uhdev: (uhdev.touches_in_a_report == 1 or
+                                    uhdev.quirks is not None and 'CONTACT_CNT_ACCURATE' not in uhdev.quirks),
+                     'Device not compatible, we can not trigger the conditions')
         def test_mt_contact_count_accurate(self):
             """Test the MT_QUIRK_CONTACT_CNT_ACCURATE from the kernel.
             A report should forward an accurate contact count and the kernel
             should ignore any data provided after we have reached this
             contact count."""
             uhdev = self.uhdev
-            if uhdev.quirks is not None and 'CONTACT_CNT_ACCURATE' not in uhdev.quirks:
-                raise unittest.SkipTest('Device not compatible')
-
-            if uhdev.touches_in_a_report == 1:
-                raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
             t0 = Touch(1, 50, 100)
             t1 = Touch(2, 150, 200)
@@ -766,13 +759,12 @@ class BaseTest:
                     except KeyError:
                         pass
 
+        @skipIfUHDev(lambda uhdev: uhdev.fields.count('X') == uhdev.touches_in_a_report,
+                     'Device not compatible, we can not trigger the conditions')
         def test_mt_tx_cx(self):
             """send a single touch in the first slot of the device, with
             different values of Tx and Cx. Make sure the kernel reports Tx."""
             uhdev = self.uhdev
-            if uhdev.fields.count('X') == uhdev.touches_in_a_report:
-                # there is not point testing those
-                raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
             t0 = Touch(1, 5, 10)
             t0.cx = 50
@@ -787,6 +779,8 @@ class BaseTest:
             self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_POSITION_Y], 10)
             self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TOOL_Y], 100)
 
+        @skipIfUHDev(lambda uhdev: 'In Range' not in uhdev.fields,
+                     'Device not compatible, missing In Range usage')
         def test_mt_inrange(self):
             """Send one contact that has the InRange bit set before/after
             tipswitch.
@@ -798,8 +792,6 @@ class BaseTest:
             Make sure the contact is only released from the kernel POV
             when the inrange bit is set to 0."""
             uhdev = self.uhdev
-            if 'In Range' not in uhdev.fields:
-                raise unittest.SkipTest('Device not compatible, missing In Range usage')
 
             t0 = Touch(1, 150, 200)
             t0.tipswitch = False
@@ -889,14 +881,14 @@ class BaseTest:
             self.debug_reports(r, uhdev); print(events)
             self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], 1)
 
+        @skipIfUHDev(lambda uhdev: 'Azimuth' not in uhdev.fields,
+                     'Device not compatible, missing Azimuth usage')
         def test_mt_azimuth(self):
             """Check for the azimtuh information bit.
             When azimuth is presented by the device, it should be exported
             as ABS_MT_ORIENTATION and the exported value should report a quarter
             of circle."""
             uhdev = self.uhdev
-            if 'Azimuth' not in uhdev.fields:
-                raise unittest.SkipTest('Device not compatible, missing Azimuth usage')
 
             t0 = Touch(1, 5, 10)
             t0.azimuth = 270
@@ -960,6 +952,8 @@ class BaseTest:
                 self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0), events)
                 self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
 
+        @skipIfUHDev(lambda uhdev: 'Confidence' not in uhdev.fields,
+                     'Device not compatible, missing Confidence usage')
         def test_ptp_confidence(self):
             """Check for the validity of the confidence bit.
             When a contact is marked as not confident, it should be detected
@@ -968,8 +962,6 @@ class BaseTest:
             Note: if the kernel exports ABS_MT_TOOL_TYPE, it shouldn't release
             the touch but instead convert it to ABS_MT_TOOL_PALM."""
             uhdev = self.uhdev
-            if 'Confidence' not in uhdev.fields:
-                raise unittest.SkipTest('Device not compatible, missing Confidence usage')
 
             t0 = Touch(1, 150, 200)
             r = uhdev.event([t0])
@@ -994,6 +986,8 @@ class BaseTest:
             self.assertIn(libevdev.InputEvent(libevdev.EV_KEY.BTN_TOUCH, 0), events)
             self.assertEqual(uhdev.evdev.slots[0][libevdev.EV_ABS.ABS_MT_TRACKING_ID], -1)
 
+        @skipIfUHDev(lambda uhdev: uhdev.touches_in_a_report >= uhdev.max_contacts,
+                     'Device not compatible, we can not trigger the conditions')
         def test_ptp_non_touch_data(self):
             """Some single finger hybrid touchpads might not provide the
             button information in subsequent reports (only in the first report).
@@ -1001,9 +995,6 @@ class BaseTest:
             Emulate this and make sure we do not release the buttons in the
             middle of the event."""
             uhdev = self.uhdev
-            if uhdev.touches_in_a_report >= uhdev.max_contacts:
-                # there is not point testing those
-                raise unittest.SkipTest('Device not compatible, we can not trigger the conditions')
 
             touches = [Touch(i, i * 10, i * 10 + 5) for i in range(uhdev.max_contacts)]
             contact_count = uhdev.max_contacts
@@ -1525,6 +1516,8 @@ class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
     def _create_device(self):
         return Win8TSConfidence(5)
 
+    @skipIfUHDev(lambda uhdev: 'Confidence' not in uhdev.fields,
+                 'Device not compatible, missing Confidence usage')
     def test_mt_confidence_bad_release(self):
             """Check for the validity of the confidence bit.
             When a contact is marked as not confident, it should be detected
@@ -1533,8 +1526,6 @@ class TestWin8TSConfidence(BaseTest.TestWin8Multitouch):
             Note: if the kernel exports ABS_MT_TOOL_TYPE, it shouldn't release
             the touch but instead convert it to ABS_MT_TOOL_PALM."""
             uhdev = self.uhdev
-            if 'Confidence' not in uhdev.fields:
-                raise unittest.SkipTest('Device not compatible, missing Confidence usage')
 
             t0 = Touch(1, 150, 200)
             r = uhdev.event([t0])

@@ -123,6 +123,14 @@ class UHIDTestDevice(UHIDDevice):
         return self.input_nodes[list(self.input_nodes.keys())[0]]
 
 
+def skipIfUHDev(condition, reason):
+    def decorator(func):
+        func.skip_test_if_uhdev = condition
+        func.skip_test_if_uhdev_reason = reason
+        return func
+    return decorator
+
+
 class BaseTestCase:
     class ContextTest(unittest.TestCase):
         """A unit test where setUp/tearDown are amalgamated into a
@@ -190,8 +198,20 @@ class BaseTestCase:
         def assertName(self, uhdev):
             self.assertEqual(uhdev.evdev.name, uhdev.name)
 
+        def _skip_conditions(self, udev):
+            method = getattr(self, self._testMethodName)
+            try:
+                skip_test_if_uhdev = method.skip_test_if_uhdev
+            except AttributeError:
+                return
+
+            if skip_test_if_uhdev(self.uhdev):
+                self.skipTest(method.skip_test_if_uhdev_reason)
+
         def context(self):
             with self.create_device() as self.uhdev:
+                self._skip_conditions(self.uhdev)
+                self.uhdev.create_kernel_device()
                 while self.uhdev.application not in self.uhdev.input_nodes:
                     self.uhdev.dispatch(10)
                 self.assertIsNotNone(self.uhdev.evdev)
