@@ -995,7 +995,7 @@ class HidReport(object):
         self.fields.extend(fields)
         for f in fields:
             f.start = self._bitsize
-            self._bitsize += f.size
+            self._bitsize += f.size * f.count
 
     @property
     def application_name(self):
@@ -1212,7 +1212,7 @@ class HidReport(object):
                             usage = report_item.get_usage_name(v)
                             if "no event indicated" in usage.lower():
                                 usage = ''
-                        usages.append(usage)
+                        usages.append(f'\'{usage}\'')
                 output += f'{sep}{usage_page_name} [{", ".join(usages)}] '
             sep = '|'
             prev = report_item
