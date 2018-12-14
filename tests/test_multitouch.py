@@ -106,8 +106,7 @@ class Digitizer(base.UHIDTestDevice):
     '''
 
     def __init__(self, name, rdesc_str=None, rdesc=None, application='Touch Screen', physical='Finger', max_contacts=None, info=(3, 1, 2), quirks=None):
-        super().__init__(name, rdesc_str, rdesc)
-        self.info = info
+        super().__init__(name, application, rdesc_str, rdesc, info)
         self.scantime = 0
         self.quirks = quirks
         if max_contacts is None:
@@ -126,7 +125,6 @@ class Digitizer(base.UHIDTestDevice):
                 self.max_contacts = 1
         else:
             self.max_contacts = max_contacts
-        self.application = application
         self.physical = physical
         self.cur_application = application
 
@@ -168,13 +166,6 @@ class Digitizer(base.UHIDTestDevice):
             rs.append(r)
             global_data.contactcount = 0
         return rs
-
-    @property
-    def evdev(self):
-        if self.application not in self.input_nodes:
-            return None
-
-        return self.input_nodes[self.application]
 
     def get_report(self, req, rnum, rtype):
         if rtype != self.UHID_FEATURE_REPORT:

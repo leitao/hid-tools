@@ -38,14 +38,21 @@ from hidtools.uhid import UHIDDevice  # noqa
 
 
 class UHIDTestDevice(UHIDDevice):
-    def __init__(self, name, rdesc_str=None, rdesc=None):
+    def __init__(self, name, application, rdesc_str=None, rdesc=None, info=None):
         if rdesc_str is None and rdesc is None:
             raise Exception('Please provide at least a rdesc or rdesc_str')
         super().__init__()
+        if name is None:
+            name = f'uhid test {self.__class__.__name__}'
+        if info is None:
+            info = (3, 1, 2)
         self.name = name
+        self.info = info
+        self.default_reportID = None
         if not name.startswith('uhid test '):
             self.name = 'uhid test ' + self.name
         self.opened = False
+        self.application = application
         self.input_nodes = {}
         self._opened_files = []
         if rdesc is None:
@@ -116,11 +123,10 @@ class UHIDTestDevice(UHIDDevice):
 
     @property
     def evdev(self):
-        if len(self.input_nodes) == 0:
+        if self.application not in self.input_nodes:
             return None
 
-        # return the 'first' input node
-        return self.input_nodes[list(self.input_nodes.keys())[0]]
+        return self.input_nodes[self.application]
 
 
 def skipIfUHDev(condition, reason):

@@ -31,26 +31,15 @@ logger = logging.getLogger('hidtools.test.mouse')
 class InvalidHIDCommunication(Exception):
     pass
 
+
 class MouseData(object):
     pass
 
 
-class GenericDevice(base.UHIDTestDevice):
+class BaseMouse(base.UHIDTestDevice):
     def __init__(self, rdesc, name=None, info=None):
         assert rdesc is not None
-        if name is None:
-            name = f'uhid test {self.__class__.__name__}'
-        if info is None:
-            info = (3, 1, 2)
-        super().__init__(name, rdesc=rdesc)
-        self.info = info
-        self.default_reportID = None
-
-
-class BaseMouse(GenericDevice):
-    def __init__(self, rdesc, name=None, info=None):
-        super().__init__(rdesc, name, info)
-        self.application = 'Mouse'
+        super().__init__(name, 'Mouse', info=info, rdesc=rdesc)
         self.left = False
         self.right = False
         self.middle = False
@@ -115,13 +104,6 @@ class BaseMouse(GenericDevice):
         r = self.create_report(x, y, buttons, wheels)
         self.call_input_event(r)
         return [r]
-
-    @property
-    def evdev(self):
-        if self.application not in self.input_nodes:
-            return None
-
-        return self.input_nodes[self.application]
 
 
 class ButtonMouse(BaseMouse):
