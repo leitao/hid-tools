@@ -30,11 +30,12 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.realpath(__file__)) + '/..')
 
 import logging
-logger = logging.getLogger('hidtools.test.base')
 
 import hidtools.hid as hid # noqa
 from hidtools.util import twos_comp, to_twos_comp # noqa
 from hidtools.uhid import UHIDDevice  # noqa
+
+logger = logging.getLogger('hidtools.test.base')
 
 
 class UHIDTestDevice(UHIDDevice):
@@ -155,6 +156,7 @@ class BaseTestCase:
         def setUp(self):
             self.__context = self.context()
             next(self.__context)
+
         def tearDown(self):
             for _ in self.__context:
                 raise RuntimeError("context method should only yield once")

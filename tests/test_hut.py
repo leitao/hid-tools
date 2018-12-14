@@ -23,6 +23,7 @@ from hidtools.hut import HUT
 import logging
 logger = logging.getLogger('hidtools.test.hut')
 
+
 class TestHUT(unittest.TestCase):
     pages = {
         0x00: 'Undefined',
@@ -291,4 +292,3 @@ class TestHUT(unittest.TestCase):
     def test_up84_power_device(self):
         self.assertEqual(HUT[0x84].page_name, 'Power Device')
         self.assertEqual(HUT[0x84][0x06].name, 'Peripheral Device')
-

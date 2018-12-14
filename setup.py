@@ -89,6 +89,6 @@ setup(name='hid-tools',
       include_package_data=True,
       install_requires=['parse', 'pyudev'],
       cmdclass=dict(
-        install=ManPageGenerator,
+          install=ManPageGenerator,
       )
       )

@@ -28,6 +28,7 @@ from base import main, setUpModule, tearDownModule  # noqa
 import logging
 logger = logging.getLogger('hidtools.test.mouse')
 
+
 class InvalidHIDCommunication(Exception):
     pass
 
