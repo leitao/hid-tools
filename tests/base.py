@@ -114,8 +114,12 @@ class UHIDTestDevice(UHIDDevice):
         pass
 
     def stop(self):
+        to_remove = []
         for name, evdev in self.input_nodes.items():
             evdev.fd.close()
+            to_remove.append(name)
+
+        for name in to_remove:
             del(self.input_nodes[name])
 
     def next_sync_events(self):
