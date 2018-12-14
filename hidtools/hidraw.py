@@ -247,28 +247,27 @@ class HidrawDevice(object):
 
     def _dump_event(self, event, file):
         report_id = event.bytes[0]
-        rdesc = self.report_descriptor.get(report_id, len(event.bytes))
-        if rdesc is None:
-            return
 
-        indent_2nd_line = 2
-        output = rdesc.format_report(event.bytes)
-        try:
-            first_row = output.split('\n')[0]
-        except IndexError:
-            pass
-        else:
-            # we have a multi-line output, find where the fields are split
+        rdesc = self.report_descriptor.get(report_id, len(event.bytes))
+        if rdesc is not None:
+            indent_2nd_line = 2
+            output = rdesc.format_report(event.bytes)
             try:
-                slash = first_row.index('/')
-            except:
+                first_row = output.split('\n')[0]
+            except IndexError:
                 pass
             else:
-                # the `+1` below is to make a better visual effect
-                indent_2nd_line = slash + 1
-        indent = f'\n#{" " * indent_2nd_line}'
-        output = indent.join(output.split('\n'))
-        print(f'# {output}')
+                # we have a multi-line output, find where the fields are split
+                try:
+                    slash = first_row.index('/')
+                except:
+                    pass
+                else:
+                    # the `+1` below is to make a better visual effect
+                    indent_2nd_line = slash + 1
+            indent = f'\n#{" " * indent_2nd_line}'
+            output = indent.join(output.split('\n'))
+            print(f'# {output}')
 
         data = map(lambda x: f'{x:02x}', event.bytes)
         print(f'E: {event.sec:06d}.{event.usec:06d} {len(event.bytes)} {" ".join(data)}', file=file, flush=True)
