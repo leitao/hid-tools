@@ -537,179 +537,153 @@ class ResolutionMultiplierHWheelMouse(TwoWheelMouse):
 
 class BaseTest:
     class TestMouse(base.BaseTestCase.TestUhid):
-        def create_mouse(self):
-            raise Exception('please reimplement me in subclasses')
-
-        def test_creation(self):
-            """Make sure the device gets processed by the kernel and creates
-            the expected application input node.
-
-            If this fail, there is something wrong in the device report
-            descriptors."""
-            with self.create_mouse() as uhdev:
-                while uhdev.application not in uhdev.input_nodes:
-                    uhdev.dispatch(10)
-                self.assertIsNotNone(uhdev.evdev)
-                self.assertEqual(uhdev.evdev.name, uhdev.name)
-                self.assertEqual(len(uhdev.next_sync_events()), 0)
-                uhdev.destroy()
-                while uhdev.opened:
-                    if uhdev.dispatch(100) == 0:
-                        break
-                with self.assertRaises(OSError):
-                    uhdev.evdev.fd.read()
-
         def test_buttons(self):
             """check for button reliability."""
-            with self.create_mouse() as uhdev:
-                while uhdev.application not in uhdev.input_nodes:
-                    uhdev.dispatch(10)
+            uhdev = self.uhdev
+            syn_event = self.syn_event
 
-                syn_event = self.syn_event
+            r = uhdev.event(0, 0, (None, True, None))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
 
-                r = uhdev.event(0, 0, (None, True, None))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
+            r = uhdev.event(0, 0, (None, False, None))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
 
-                r = uhdev.event(0, 0, (None, False, None))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
+            r = uhdev.event(0, 0, (None, None, True))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 1)
 
-                r = uhdev.event(0, 0, (None, None, True))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 1)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 1)
+            r = uhdev.event(0, 0, (None, None, False))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 0)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 0)
 
-                r = uhdev.event(0, 0, (None, None, False))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_MIDDLE, 0)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_MIDDLE], 0)
+            r = uhdev.event(0, 0, (True, None, None))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
-                r = uhdev.event(0, 0, (True, None, None))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
+            r = uhdev.event(0, 0, (False, None, None))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
-                r = uhdev.event(0, 0, (False, None, None))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
+            r = uhdev.event(0, 0, (True, True, None))
+            expected_event0 = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
+            expected_event1 = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event0, expected_event1), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
 
-                r = uhdev.event(0, 0, (True, True, None))
-                expected_event0 = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 1)
-                expected_event1 = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 1)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event0, expected_event1), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 1)
+            r = uhdev.event(0, 0, (False, None, None))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
-                r = uhdev.event(0, 0, (False, None, None))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_LEFT, 0)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 1)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
-
-                r = uhdev.event(0, 0, (None, False, None))
-                expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEventsIn((syn_event, expected_event), events)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
-                self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
+            r = uhdev.event(0, 0, (None, False, None))
+            expected_event = libevdev.InputEvent(libevdev.EV_KEY.BTN_RIGHT, 0)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEventsIn((syn_event, expected_event), events)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_RIGHT], 0)
+            self.assertEqual(uhdev.evdev.value[libevdev.EV_KEY.BTN_LEFT], 0)
 
         def test_relative(self):
             """Check for relative events."""
-            with self.create_mouse() as uhdev:
-                while uhdev.application not in uhdev.input_nodes:
-                    uhdev.dispatch(10)
+            uhdev = self.uhdev
 
-                syn_event = self.syn_event
+            syn_event = self.syn_event
 
-                r = uhdev.event(0, -1)
-                expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_Y, -1)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEvents((syn_event, expected_event), events)
+            r = uhdev.event(0, -1)
+            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_Y, -1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents((syn_event, expected_event), events)
 
-                r = uhdev.event(1, 0)
-                expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_X, 1)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEvents((syn_event, expected_event), events)
+            r = uhdev.event(1, 0)
+            expected_event = libevdev.InputEvent(libevdev.EV_REL.REL_X, 1)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents((syn_event, expected_event), events)
 
-                r = uhdev.event(-1, 2)
-                expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
-                expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEvents((syn_event, expected_event0, expected_event1), events)
+            r = uhdev.event(-1, 2)
+            expected_event0 = libevdev.InputEvent(libevdev.EV_REL.REL_X, -1)
+            expected_event1 = libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2)
+            events = uhdev.next_sync_events()
+            self.debug_reports(r, uhdev, events)
+            self.assertInputEvents((syn_event, expected_event0, expected_event1), events)
 
 
 class TestSimpleMouse(BaseTest.TestMouse):
-    def create_mouse(self):
+    def create_device(self):
         return ButtonMouse()
 
     def test_rdesc(self):
         """Check that the testsuite actually manages to format the
         reports according to the report descriptors.
         No kernel device is used here"""
-        with self.create_mouse() as uhdev:
-            event = (0, 0, (None, None, None))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        uhdev = self.uhdev
 
-            event = (0, 0, (None, True, None))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        event = (0, 0, (None, None, None))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
 
-            event = (0, 0, (True, True, None))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        event = (0, 0, (None, True, None))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
 
-            event = (0, 0, (False, False, False))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        event = (0, 0, (True, True, None))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
 
-            event = (1, 0, (True, False, True))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        event = (0, 0, (False, False, False))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
 
-            event = (-1, 0, (True, False, True))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        event = (1, 0, (True, False, True))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
 
-            event = (-5, 5, (True, False, True))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        event = (-1, 0, (True, False, True))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
 
-            event = (-127, 127, (True, False, True))
-            self.assertEqual(uhdev.fake_report(*event),
-                             uhdev.create_report(*event))
+        event = (-5, 5, (True, False, True))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
 
-            event = (0, -128, (True, False, True))
-            with self.assertRaises(hidtools.hid.RangeError):
-                uhdev.create_report(*event)
+        event = (-127, 127, (True, False, True))
+        self.assertEqual(uhdev.fake_report(*event),
+                         uhdev.create_report(*event))
+
+        event = (0, -128, (True, False, True))
+        with self.assertRaises(hidtools.hid.RangeError):
+            uhdev.create_report(*event)
 
 
 class TestWheelMouse(BaseTest.TestMouse):
-    def create_mouse(self):
+    def create_device(self):
         return WheelMouse()
 
     def is_wheel_highres(self, uhdev):
@@ -717,50 +691,48 @@ class TestWheelMouse(BaseTest.TestMouse):
         return uhdev.evdev.has(libevdev.EV_REL.REL_0B)
 
     def test_wheel(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
+        uhdev = self.uhdev
 
-            # check if the kernel is high res wheel compatible
-            high_res_wheel = self.is_wheel_highres(uhdev)
+        # check if the kernel is high res wheel compatible
+        high_res_wheel = self.is_wheel_highres(uhdev)
 
-            syn_event = self.syn_event
-            # The Resolution Multiplier is applied to the HID reports, so we
-            # need to pre-multiply too.
-            mult = uhdev.wheel_multiplier
+        syn_event = self.syn_event
+        # The Resolution Multiplier is applied to the HID reports, so we
+        # need to pre-multiply too.
+        mult = uhdev.wheel_multiplier
 
-            r = uhdev.event(0, 0, wheels=1 * mult)
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
-            if high_res_wheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=1 * mult)
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
+        if high_res_wheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            r = uhdev.event(0, 0, wheels=-1 * mult)
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1))
-            if high_res_wheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=-1 * mult)
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -1))
+        if high_res_wheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            r = uhdev.event(-1, 2, wheels=3 * mult)
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3))
-            if high_res_wheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 360))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(-1, 2, wheels=3 * mult)
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 3))
+        if high_res_wheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 360))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
 
 class TestTwoWheelMouse(TestWheelMouse):
-    def create_mouse(self):
+    def create_device(self):
         return TwoWheelMouse()
 
     def is_hwheel_highres(self, uhdev):
@@ -768,67 +740,65 @@ class TestTwoWheelMouse(TestWheelMouse):
         return uhdev.evdev.has(libevdev.EV_REL.REL_0C)
 
     def test_ac_pan(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
+        uhdev = self.uhdev
 
-            # check if the kernel is high res wheel compatible
-            high_res_wheel = self.is_wheel_highres(uhdev)
-            high_res_hwheel = self.is_hwheel_highres(uhdev)
-            self.assertEqual(high_res_wheel, high_res_hwheel)
+        # check if the kernel is high res wheel compatible
+        high_res_wheel = self.is_wheel_highres(uhdev)
+        high_res_hwheel = self.is_hwheel_highres(uhdev)
+        self.assertEqual(high_res_wheel, high_res_hwheel)
 
-            syn_event = self.syn_event
-            # The Resolution Multiplier is applied to the HID reports, so we
-            # need to pre-multiply too.
-            hmult = uhdev.hwheel_multiplier
-            vmult = uhdev.wheel_multiplier
+        syn_event = self.syn_event
+        # The Resolution Multiplier is applied to the HID reports, so we
+        # need to pre-multiply too.
+        hmult = uhdev.hwheel_multiplier
+        vmult = uhdev.wheel_multiplier
 
-            r = uhdev.event(0, 0, wheels=(0, 1 * hmult))
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
-            if high_res_hwheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=(0, 1 * hmult))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
+        if high_res_hwheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            r = uhdev.event(0, 0, wheels=(0, -1 * hmult))
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1))
-            if high_res_hwheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=(0, -1 * hmult))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, -1))
+        if high_res_hwheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            r = uhdev.event(-1, 2, wheels=(0, 3 * hmult))
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3))
-            if high_res_hwheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(-1, 2, wheels=(0, 3 * hmult))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 3))
+        if high_res_hwheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 360))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            r = uhdev.event(-1, 2, wheels=(-3 * vmult, 4 * hmult))
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3))
-            if high_res_wheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -360))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4))
-            if high_res_wheel:
-                expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 480))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(-1, 2, wheels=(-3 * vmult, 4 * hmult))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, -1))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, 2))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, -3))
+        if high_res_wheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -360))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 4))
+        if high_res_wheel:
+            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 480))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
 
 class TestResolutionMultiplierMouse(TestTwoWheelMouse):
-    def create_mouse(self):
+    def create_device(self):
         return ResolutionMultiplierMouse()
 
     def is_wheel_highres(self, uhdev):
@@ -842,63 +812,59 @@ class TestResolutionMultiplierMouse(TestTwoWheelMouse):
         return high_res
 
     def test_resolution_multiplier_wheel(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
+        uhdev = self.uhdev
 
-            if not self.is_wheel_highres(uhdev):
-                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
+        if not self.is_wheel_highres(uhdev):
+            raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
-            self.assertGreater(uhdev.wheel_multiplier, 1)
-            self.assertEqual(120 % uhdev.wheel_multiplier, 0)
+        self.assertGreater(uhdev.wheel_multiplier, 1)
+        self.assertEqual(120 % uhdev.wheel_multiplier, 0)
 
     def test_wheel_with_multiplier(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
+        uhdev = self.uhdev
 
-            if not self.is_wheel_highres(uhdev):
-                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
+        if not self.is_wheel_highres(uhdev):
+            raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
-            assert uhdev.wheel_multiplier > 1
+        assert uhdev.wheel_multiplier > 1
 
-            syn_event = self.syn_event
-            mult = uhdev.wheel_multiplier
+        syn_event = self.syn_event
+        mult = uhdev.wheel_multiplier
 
-            r = uhdev.event(0, 0, wheels=1)
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120 / mult))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=1)
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120 / mult))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            r = uhdev.event(0, 0, wheels=-1)
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120 / mult))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=-1)
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, -120 / mult))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, 1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, -2))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120 / mult))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, 1))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, -2))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0B, 120 / mult))
 
-            for _ in range(mult - 1):
-                r = uhdev.event(1, -2, wheels=1)
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEvents(expected, events)
-
+        for _ in range(mult - 1):
             r = uhdev.event(1, -2, wheels=1)
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
+
+        r = uhdev.event(1, -2, wheels=1)
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_WHEEL, 1))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
 
 class TestResolutionMultiplierHWheelMouse(TestResolutionMultiplierMouse):
-    def create_mouse(self):
+    def create_device(self):
         return ResolutionMultiplierHWheelMouse()
 
     def is_hwheel_highres(self, uhdev):
@@ -912,63 +878,59 @@ class TestResolutionMultiplierHWheelMouse(TestResolutionMultiplierMouse):
         return high_res
 
     def test_resolution_multiplier_ac_pan(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
+        uhdev = self.uhdev
 
-            if not self.is_hwheel_highres(uhdev):
-                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
+        if not self.is_hwheel_highres(uhdev):
+            raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
-            self.assertGreater(uhdev.hwheel_multiplier, 1)
-            self.assertEqual(120 % uhdev.hwheel_multiplier, 0)
+        self.assertGreater(uhdev.hwheel_multiplier, 1)
+        self.assertEqual(120 % uhdev.hwheel_multiplier, 0)
 
     def test_ac_pan_with_multiplier(self):
-        with self.create_mouse() as uhdev:
-            while uhdev.application not in uhdev.input_nodes:
-                uhdev.dispatch(10)
+        uhdev = self.uhdev
 
-            if not self.is_hwheel_highres(uhdev):
-                raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
+        if not self.is_hwheel_highres(uhdev):
+            raise unittest.SkipTest('Kernel not compatible, we can not trigger the conditions')
 
-            assert uhdev.hwheel_multiplier > 1
+        assert uhdev.hwheel_multiplier > 1
 
-            syn_event = self.syn_event
-            hmult = uhdev.hwheel_multiplier
+        syn_event = self.syn_event
+        hmult = uhdev.hwheel_multiplier
 
-            r = uhdev.event(0, 0, wheels=(0, 1))
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120 / hmult))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=(0, 1))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120 / hmult))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            r = uhdev.event(0, 0, wheels=(0, -1))
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120 / hmult))
-            events = uhdev.next_sync_events()
-            self.debug_reports(r, uhdev, events)
-            self.assertInputEvents(expected, events)
+        r = uhdev.event(0, 0, wheels=(0, -1))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, -120 / hmult))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
-            expected = [syn_event]
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, 1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, -2))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120 / hmult))
+        expected = [syn_event]
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_X, 1))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_Y, -2))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_0C, 120 / hmult))
 
-            for _ in range(hmult - 1):
-                r = uhdev.event(1, -2, wheels=(0, 1))
-                events = uhdev.next_sync_events()
-                self.debug_reports(r, uhdev, events)
-                self.assertInputEvents(expected, events)
-
+        for _ in range(hmult - 1):
             r = uhdev.event(1, -2, wheels=(0, 1))
-            expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
             events = uhdev.next_sync_events()
             self.debug_reports(r, uhdev, events)
             self.assertInputEvents(expected, events)
+
+        r = uhdev.event(1, -2, wheels=(0, 1))
+        expected.append(libevdev.InputEvent(libevdev.EV_REL.REL_HWHEEL, 1))
+        events = uhdev.next_sync_events()
+        self.debug_reports(r, uhdev, events)
+        self.assertInputEvents(expected, events)
 
 
 class TestMiMouse(TestWheelMouse):
-    def create_mouse(self):
+    def create_device(self):
         return MIDongleMIWirelessMouse()
 
     def assertInputEvents(self, expected_events, effective_events):

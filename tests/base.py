@@ -124,7 +124,24 @@ class UHIDTestDevice(UHIDDevice):
 
 
 class BaseTestCase:
-    class TestUhid(unittest.TestCase):
+    class ContextTest(unittest.TestCase):
+        """A unit test where setUp/tearDown are amalgamated into a
+        single generator
+
+        see https://stackoverflow.com/questions/13874859/python-with-statement-and-its-use-in-a-class"""
+        def context(self):
+            """Put both setUp and tearDown code in this generator method
+            with a single `yield` between"""
+            yield
+
+        def setUp(self):
+            self.__context = self.context()
+            next(self.__context)
+        def tearDown(self):
+            for _ in self.__context:
+                raise RuntimeError("context method should only yield once")
+
+    class TestUhid(ContextTest):
         syn_event = libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0)
         key_event = libevdev.InputEvent(libevdev.EV_KEY)
         abs_event = libevdev.InputEvent(libevdev.EV_ABS)
@@ -166,6 +183,35 @@ class BaseTestCase:
 
             if events is not None:
                 print('events received:', events)
+
+        def create_device(self):
+            raise Exception('please reimplement me in subclasses')
+
+        def assertName(self, uhdev):
+            self.assertEqual(uhdev.evdev.name, uhdev.name)
+
+        def context(self):
+            with self.create_device() as self.uhdev:
+                while self.uhdev.application not in self.uhdev.input_nodes:
+                    self.uhdev.dispatch(10)
+                self.assertIsNotNone(self.uhdev.evdev)
+                yield
+
+        def test_creation(self):
+            """Make sure the device gets processed by the kernel and creates
+            the expected application input node.
+
+            If this fail, there is something wrong in the device report
+            descriptors."""
+            uhdev = self.uhdev
+            self.assertName(uhdev)
+            self.assertEqual(len(uhdev.next_sync_events()), 0)
+            uhdev.destroy()
+            while uhdev.opened:
+                if uhdev.dispatch(100) == 0:
+                    break
+            with self.assertRaises(OSError):
+                uhdev.evdev.fd.read()
 
 
 def reload_udev_rules():

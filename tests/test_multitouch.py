@@ -475,6 +475,7 @@ class BaseTest:
         def __init__(self, methodName='runTest'):
             super().__init__(methodName)
             self.__create_device = self._create_device
+            self.create_device = self._create_device
             self.__assertName = self.assertName
 
         def _create_device(self):
