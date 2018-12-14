@@ -65,9 +65,9 @@ class BaseMouse(base.UHIDTestDevice):
                 self.right = r
             if m is not None:
                 self.middle = m
-        l = self.left
-        r = self.right
-        m = self.middle
+        left = self.left
+        right = self.right
+        middle = self.middle
         # Note: the BaseMouse doesn't actually have a wheel but the
         # create_report magic only fills in those fields exist, so let's
         # make this generic here.
@@ -82,9 +82,9 @@ class BaseMouse(base.UHIDTestDevice):
         reportID = reportID or self.default_reportID
 
         mouse = MouseData()
-        mouse.b1 = int(l)
-        mouse.b2 = int(r)
-        mouse.b3 = int(m)
+        mouse.b1 = int(left)
+        mouse.b2 = int(right)
+        mouse.b3 = int(middle)
         mouse.x = x
         mouse.y = y
         mouse.wheel = wheel
@@ -145,19 +145,19 @@ class ButtonMouse(BaseMouse):
 
     def fake_report(self, x, y, buttons):
         if buttons is not None:
-            l, r, m = buttons
-            if l is None:
-                l = self.left
-            if r is None:
-                r = self.right
-            if m is None:
-                m = self.middle
+            left, right, middle = buttons
+            if left is None:
+                left = self.left
+            if right is None:
+                right = self.right
+            if middle is None:
+                middle = self.middle
         else:
-            l = self.left
-            r = self.right
-            m = self.middle
+            left = self.left
+            right = self.right
+            middle = self.middle
 
-        button_mask = sum(1 << i for i, b in enumerate([l, r, m]) if b)
+        button_mask = sum(1 << i for i, b in enumerate([left, right, middle]) if b)
         x = max(-127, min(127, x))
         y = max(-127, min(127, y))
         x = base.to_twos_comp(x, 8)

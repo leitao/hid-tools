@@ -39,30 +39,30 @@ class HIDReplay(object):
         self.replayed_count = 0
         with open(filename) as f:
             idx = 0
-            for l in f:
-                l = l.strip()
-                if l.startswith('D:'):
-                    r = parse('D: {idx:d}', l)
+            for line in f:
+                line = line.strip()
+                if line.startswith('D:'):
+                    r = parse('D: {idx:d}', line)
                     assert r is not None
                     idx = r['idx']
                     continue
                 if idx not in self._devices:
                     self._devices[idx] = hidtools.uhid.UHIDDevice()
                 dev = self._devices[idx]
-                if l.startswith('N:'):
-                    r = parse('N: {name}', l)
+                if line.startswith('N:'):
+                    r = parse('N: {name}', line)
                     assert r is not None
                     dev.name = r['name']
-                elif l.startswith('I:'):
-                    r = parse('I: {bus:x} {vid:x} {pid:x}', l)
+                elif line.startswith('I:'):
+                    r = parse('I: {bus:x} {vid:x} {pid:x}', line)
                     assert r is not None
                     dev.info = [r['bus'], r['vid'], r['pid']]
-                elif l.startswith('P:'):
-                    r = parse('P: {phys}', l)
+                elif line.startswith('P:'):
+                    r = parse('P: {phys}', line)
                     if r is not None:
                         dev.phys = r['phys']
-                elif l.startswith('R:'):
-                    r = parse('R: {length:d} {desc}', l)
+                elif line.startswith('R:'):
+                    r = parse('R: {length:d} {desc}', line)
                     assert r is not None
                     length = r['length']
                     dev.rdesc = r['desc']
