@@ -23,7 +23,6 @@ from hidtools.hut import HUT
 import libevdev
 import sys
 import time
-import unittest
 from base import main, setUpModule, tearDownModule, skipIfUHDev  # noqa
 
 import logging
