@@ -43,7 +43,7 @@ def get_report(time, report, rdesc):
         # we have a multi-line output, find where the fields are split
         try:
             slash = first_row.index('/')
-        except:
+        except ValueError:
             indent_2nd_line = 2
         else:
             # the `-1` below is to make a better visual effect

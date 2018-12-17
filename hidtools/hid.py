@@ -193,7 +193,7 @@ class _HidRDescItem(object):
         self.value = value
         try:
             self.item = inv_hid[self.hid]
-        except:
+        except KeyError:
             error = f'error while parsing {hid:02x}'
             raise KeyError(error)
 
