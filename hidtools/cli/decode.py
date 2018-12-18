@@ -98,16 +98,16 @@ def open_report_descriptor(path):
         return open_devnode_rdesc(path)
     if re.match('/dev/hidraw[0-9]+', abspath):
         return open_hidraw(path)
-    data = open_binary(path)
-    if data is not None:
-        return data
+    rdesc = open_binary(path)
+    if rdesc is not None:
+        return rdesc
 
     with open(path, 'r') as fd:
         logger.debug(f'Opening {path} as text file')
         lines = fd.readlines()
-        data = interpret_file_hidrecorder(lines)
-        if data is not None:
-            return data
+        rdesc = interpret_file_hidrecorder(lines)
+        if rdesc is not None:
+            return rdesc
 
     raise Oops(f'Unable to detect file type for {path}')
 
