@@ -113,7 +113,7 @@ def open_report_descriptor(path):
     raise Oops(f'Unable to detect file type for {path}')
 
 
-def main():
+def main(argv=sys.argv):
     try:
         parser = argparse.ArgumentParser(description='Decode a HID report descriptor to human-readable format ')
         parser.add_argument('report_descriptor', help='Path to report descriptor(s)', nargs='+', type=str)
@@ -123,7 +123,7 @@ def main():
                             help='The file to record to (default: stdout)')
         parser.add_argument('--verbose', action='store_true',
                             default=False, help='Show debugging information')
-        args = parser.parse_args()
+        args = parser.parse_args(argv[1:])
         # argparse gives us a list size 1 for nargs 1
         output = args.output[0]
         if args.verbose:
