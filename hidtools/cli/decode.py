@@ -117,17 +117,23 @@ def main():
     try:
         parser = argparse.ArgumentParser(description='Decode a HID report descriptor to human-readable format ')
         parser.add_argument('report_descriptor', help='Path to report descriptor(s)', nargs='+', type=str)
+        parser.add_argument('--output', metavar='output-file',
+                            nargs=1, default=[sys.stdout],
+                            type=argparse.FileType('w'),
+                            help='The file to record to (default: stdout)')
         parser.add_argument('--verbose', action='store_true',
                             default=False, help='Show debugging information')
         args = parser.parse_args()
+        # argparse gives us a list size 1 for nargs 1
+        output = args.output[0]
         if args.verbose:
             base_logger.setLevel(logging.DEBUG)
         for path in args.report_descriptor:
             rdescs = open_report_descriptor(path)
             for rdesc in rdescs:
-                rdesc.dump(sys.stdout)
+                rdesc.dump(output)
                 if rdesc.win8:
-                    sys.stdout.write("**** win 8 certified ****\n")
+                    output.write("**** win 8 certified ****\n")
     except BrokenPipeError:
         pass
     except PermissionError as e:
