@@ -39,7 +39,7 @@ def open_sysfs_rdesc(path):
     logger.debug(f'Reading sysfs file {path}')
     with open(path, 'rb') as fd:
         data = fd.read()
-        return hidtools.hid.ReportDescriptor.from_bytes(data)
+        return [hidtools.hid.ReportDescriptor.from_bytes(data)]
 
 
 def open_devnode_rdesc(path):
@@ -59,7 +59,7 @@ def open_devnode_rdesc(path):
 def open_hidraw(path):
     with open(path, 'rb+') as fd:
         device = hidtools.hidraw.HidrawDevice(fd)
-        return device.report_descriptor
+        return [device.report_descriptor]
 
 
 def open_binary(path):
@@ -69,7 +69,7 @@ def open_binary(path):
         data = fd.read(4096)
         if b'\0' in data:
             logger.debug(f'{path} is a binary file')
-            return hidtools.hid.ReportDescriptor.from_bytes(data)
+            return [hidtools.hid.ReportDescriptor.from_bytes(data)]
     return None
 
 
@@ -78,11 +78,12 @@ def interpret_file_hidrecorder(lines):
     if not r_lines:
         return None
 
-    if len(r_lines) > 1:
-        raise Oops(f'File contains multiple report descriptors, this is not yet supported')
+    rdescs = []
+    for l in r_lines:
+        bytes = l[3:]  # drop R:
+        rdescs.append(hidtools.hid.ReportDescriptor.from_string(bytes))
 
-    bytes = r_lines[0][3:]  # drop R:
-    return hidtools.hid.ReportDescriptor.from_string(bytes)
+    return rdescs
 
 
 def open_report_descriptor(path):
@@ -122,11 +123,11 @@ def main():
         if args.verbose:
             base_logger.setLevel(logging.DEBUG)
         for path in args.report_descriptor:
-            rdesc = open_report_descriptor(path)
-            rdesc.dump(sys.stdout)
-
-            if rdesc.win8:
-                sys.stdout.write("**** win 8 certified ****\n")
+            rdescs = open_report_descriptor(path)
+            for rdesc in rdescs:
+                rdesc.dump(sys.stdout)
+                if rdesc.win8:
+                    sys.stdout.write("**** win 8 certified ****\n")
     except BrokenPipeError:
         pass
     except PermissionError as e:
