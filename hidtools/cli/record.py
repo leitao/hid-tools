@@ -64,7 +64,7 @@ def main():
     parser.add_argument('device', metavar='/dev/hidrawX',
                         nargs="*", type=argparse.FileType('r'),
                         help='Path to the hidraw device node')
-    parser.add_argument('--output', metavar='output file',
+    parser.add_argument('--output', metavar='output-file',
                         nargs=1, default=sys.stdout,
                         type=argparse.FileType('w'),
                         help='The file to record to (default: stdout)')
