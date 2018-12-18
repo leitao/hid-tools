@@ -124,6 +124,9 @@ def main():
         for path in args.report_descriptor:
             rdesc = open_report_descriptor(path)
             rdesc.dump(sys.stdout)
+
+            if rdesc.win8:
+                sys.stdout.write("**** win 8 certified ****\n")
     except BrokenPipeError:
         pass
     except PermissionError as e:
