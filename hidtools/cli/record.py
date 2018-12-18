@@ -65,7 +65,7 @@ def main():
                         nargs="*", type=argparse.FileType('r'),
                         help='Path to the hidraw device node')
     parser.add_argument('--output', metavar='output-file',
-                        nargs=1, default=sys.stdout,
+                        nargs=1, default=[sys.stdout],
                         type=argparse.FileType('w'),
                         help='The file to record to (default: stdout)')
     args = parser.parse_args()
@@ -75,6 +75,9 @@ def main():
     poll = select.poll()
     is_first_event = True
 
+    # argparse always gives us a list for nargs 1
+    output = args.output[0]
+
     try:
         if not args.device:
             args.device = [open(list_devices())]
@@ -82,8 +85,8 @@ def main():
         for idx, fd in enumerate(args.device):
             device = HidrawDevice(fd)
             if len(args.device) > 1:
-                print(f'D: {idx}', file=args.output)
-            device.dump(args.output)
+                print(f'D: {idx}', file=output)
+            device.dump(output)
             poll.register(fd, select.POLLIN)
             devices[fd.fileno()] = (idx, device)
 
@@ -96,9 +99,9 @@ def main():
                 idx, device = devices[fd]
                 device.read_events()
                 if last_index != idx:
-                    print(f'D: {idx}', file=args.output)
+                    print(f'D: {idx}', file=output)
                     last_index = idx
-                device.dump(args.output)
+                device.dump(output)
 
                 if is_first_event:
                     is_first_event = False
