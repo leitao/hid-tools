@@ -29,7 +29,7 @@ human-readable format. It supports a variety of inputs:
 The format is deduced based on the input arguments. Undetected formats are
 assumed to be binary files.
 
-Accessing a _/dev/hidraw/ node usually requires root permissions.
+Accessing a _/dev/hidraw/_ node usually requires root permissions.
 
 EXIT CODE
 ---------
