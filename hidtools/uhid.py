@@ -155,6 +155,7 @@ class UHIDDevice(object):
         self._output_report = self.output_report
         self._udev_device = None
         self._ready = False
+        self._is_destroyed = False
         self.device_nodes = []
         self.hidraw_nodes = []
         self.uniq = f'uhid_{str(uuid.uuid4())}'
@@ -166,11 +167,8 @@ class UHIDDevice(object):
         return self
 
     def __exit__(self, *exc_details):
-        if self._ready:
+        if not self._is_destroyed:
             self.destroy()
-        UHIDDevice._devices.remove(self)
-        self._remove_fd_from_poll(self._fd)
-        os.close(self._fd)
 
     def udev_event(self, event):
         """
@@ -366,12 +364,28 @@ class UHIDDevice(object):
 
     def destroy(self):
         """
-        Destroy the device.
+        Destroy the device. The kernel will trigger the appropriate
+        messages in response before removing the device.
+
+        This function is called automatically on __exit__()
         """
-        self._ready = False
-        buf = struct.pack('< L',
-                          UHIDDevice._UHID_DESTROY)
-        os.write(self._fd, buf)
+
+        if self._ready:
+            buf = struct.pack('< L', UHIDDevice._UHID_DESTROY)
+            os.write(self._fd, buf)
+            self._ready = False
+            # equivalent to dispatch() but just for our device.
+            # this ensures that the callbacks are called correctly
+            poll = select.poll()
+            poll.register(self._fd, select.POLLIN)
+            if poll.poll(100):
+                fun = self._polling_functions[self._fd]
+                fun()
+
+        UHIDDevice._devices.remove(self)
+        self._remove_fd_from_poll(self._fd)
+        os.close(self._fd)
+        self._is_destroyed = True
 
     def start(self, flags):
         """
