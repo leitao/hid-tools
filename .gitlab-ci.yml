@@ -4,7 +4,7 @@ variables:
   ARCH_PKGS: 'flake8 python-parse python-pyudev python-pypandoc pandoc'
 
 .default_setup:
-  image: base/archlinux
+  image: archlinux/base
   before_script:
     - pacman -S --refresh
     - pacman -S --sysupgrade --noconfirm
