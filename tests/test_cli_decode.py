@@ -19,7 +19,7 @@
 
 import tempfile
 import unittest
-from tests.base import UHIDTestDevice
+from base import UHIDTestDevice
 from hidtools.cli.decode import main as decode
 import logging
 logger = logging.getLogger('hidtools.test.cli.decode')
