@@ -41,7 +41,7 @@ class ManPageGenerator(install):
                 return None
 
             # now do the actual conversion
-            here = os.path.dirname(__file__) or '.'
+            here = '.'
             mandir = os.path.join(here, 'man')
             man_pages = []
             for f in os.listdir(mandir):
