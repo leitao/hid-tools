@@ -75,3 +75,7 @@ applications.
 
 **The hidtools python module does not provide any API stability guarantee.
 It may change at any time**
+
+# License
+
+`hid-tools` is licensed under the GPLv2+.
