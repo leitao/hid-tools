@@ -164,7 +164,7 @@ class BaseTestCase:
                 raise RuntimeError("context method should only yield once")
             with open('/proc/sys/kernel/tainted') as f:
                 taint = int(f.readline())
-                self.assertEquals(self.__taint, taint)
+                self.assertEqual(self.__taint, taint)
 
     class TestUhid(ContextTest):
         syn_event = libevdev.InputEvent(libevdev.EV_SYN.SYN_REPORT, 0)
