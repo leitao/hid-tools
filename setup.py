@@ -62,7 +62,7 @@ class ManPageGenerator(install):
 
 
 setup(name='hid-tools',
-      version='0.1',
+      version='0.2',
       description='HID tools',
       long_description=open('README.md', 'r').read(),
       url='http://gitlab.freedesktop.org/libevdev/hid-tools',
