@@ -158,7 +158,7 @@ class UHIDDevice(object):
         self._is_destroyed = False
         self.device_nodes = []
         self.hidraw_nodes = []
-        self.uniq = f'uhid_{str(uuid.uuid4())}'
+        self.uniq = 'uhid_{str(uuid.uuid4())}'.format(**locals())
         self._append_fd_to_poll(self._fd, self._process_one_event)
         self._init_pyudev()
         UHIDDevice._devices.append(self)
@@ -215,7 +215,7 @@ class UHIDDevice(object):
         parsed_rdesc = rdesc
         if not isinstance(rdesc, hidtools.hid.ReportDescriptor):
             if isinstance(rdesc, str):
-                rdesc = f'XXX {rdesc}'
+                rdesc = 'XXX {rdesc}'.format(**locals())
                 parsed_rdesc = hidtools.hid.ReportDescriptor.from_string(rdesc)
             else:
                 parsed_rdesc = hidtools.hid.ReportDescriptor.from_bytes(rdesc)
@@ -443,7 +443,7 @@ class UHIDDevice(object):
         return 5  # EIO
 
     def _set_report(self, req, rnum, rtype, size, data):
-        logger.debug('set report {} {} {} {} {} '.format(req, rnum, rtype, size, [f'{d:02x}' for d in data[:size]]))
+        logger.debug('set report {} {} {} {} {} '.format(req, rnum, rtype, size, ['{d:02x}'.format(**locals()) for d in data[:size]]))
         error = self.set_report(req, rnum, rtype, [int(x) for x in data[:size]])
         self._call_set_report(req, error)
 
@@ -476,7 +476,7 @@ class UHIDDevice(object):
         :param size: size of the data
         :param rtype: one of :attr:`UHID_FEATURE_REPORT`, :attr:`UHID_INPUT_REPORT`, or :attr:`UHID_OUTPUT_REPORT`
         """
-        logger.debug('output {} {} {}'.format(rtype, size, [f'{d:02x}' for d in data[:size]]))
+        logger.debug('output {} {} {}'.format(rtype, size, ['{d:02x}'.format(**locals()) for d in data[:size]]))
 
     def _process_one_event(self):
         buf = os.read(self._fd, 4380)

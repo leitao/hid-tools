@@ -155,7 +155,7 @@ class HidrawDevice(object):
             dev = HidrawDevice(fd)
             while True:
                 dev.read_events()  # this blocks
-                print(f'We received {len(dev.events)} events so far')
+                print('We received {len(dev.events)} events so far'.format(**locals()))
 
     :param File device: a file-like object pointing to ``/dev/hidrawX``
 
@@ -210,7 +210,7 @@ class HidrawDevice(object):
         self.time_offset = None
 
     def __repr__(self):
-        return f'{self.name} bus: {self.bustype:02x} vendor: {self.vendor_id:04x} product: {self.product_id:04x}'
+        return '{self.name} bus: {self.bustype:02x} vendor: {self.vendor_id:04x} product: {self.product_id:04x}'.format(**locals())
 
     def read_events(self):
         """
@@ -265,12 +265,12 @@ class HidrawDevice(object):
                 else:
                     # the `+1` below is to make a better visual effect
                     indent_2nd_line = slash + 1
-            indent = f'\n#{" " * indent_2nd_line}'
+            indent = '\n#{" " * indent_2nd_line}'.format(**locals())
             output = indent.join(output.split('\n'))
-            print(f'# {output}')
+            print('# {output}'.format(**locals()))
 
-        data = map(lambda x: f'{x:02x}', event.bytes)
-        print(f'E: {event.sec:06d}.{event.usec:06d} {len(event.bytes)} {" ".join(data)}', file=file, flush=True)
+        data = map(lambda x: '{x:02x}'.format(**locals()), event.bytes)
+        print('E: {event.sec:06d}.{event.usec:06d} {len(event.bytes)} {" ".join(data)}'.format(**locals()), file=file, flush=True)
 
     def dump(self, file=sys.stdout, from_the_beginning=False):
         """
@@ -296,18 +296,18 @@ class HidrawDevice(object):
             self._dump_offset = -1
 
         if self._dump_offset == -1:
-            print(f'# {self.name}', file=file)
+            print('# {self.name}'.format(**locals()), file=file)
             output = io.StringIO()
             self.report_descriptor.dump(output)
             for line in output.getvalue().split('\n'):
-                print(f'# {line}', file=file)
+                print('# {line}'.format(**locals()), file=file)
             output.close()
 
-            rd = " ".join([f'{b:02x}' for b in self.report_descriptor.bytes])
+            rd = " ".join(['{b:02x}'.format(**locals()) for b in self.report_descriptor.bytes])
             sz = len(self.report_descriptor.bytes)
-            print(f'R: {sz} {rd}', file=file)
-            print(f'N: {self.name}', file=file)
-            print(f'I: {self.bustype:x} {self.vendor_id:04x} {self.product_id:04x}', file=file, flush=True)
+            print('R: {sz} {rd}'.format(**locals()), file=file)
+            print('N: {self.name}'.format(**locals()), file=file)
+            print('I: {self.bustype:x} {self.vendor_id:04x} {self.product_id:04x}'.format(**locals()), file=file, flush=True)
             self._dump_offset = 0
 
         for e in self.events[self._dump_offset:]:

@@ -29,7 +29,7 @@ def get_report(time, report, rdesc):
     Translate the given report to a human readable format.
     """
 
-    output = f'{time:>10s} '
+    output = '{time:>10s} '.format(**locals())
     indent_2nd_line = len(output)
 
     output += rdesc.format_report(report)
@@ -49,7 +49,7 @@ def get_report(time, report, rdesc):
             # the `-1` below is to make a better visual effect
             indent_2nd_line = slash - 1
 
-    indent = f'\n{" " * indent_2nd_line}'
+    indent = '\n{" " * indent_2nd_line}'.format(**locals())
 
     return indent.join(output.split('\n'))
 

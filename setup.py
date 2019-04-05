@@ -47,7 +47,7 @@ class ManPageGenerator(install):
             for f in os.listdir(mandir):
                 if f.endswith('.md'):
                     path = os.path.join(mandir, f)
-                    outfile = f'{path[:-3]}.1'
+                    outfile = '{path[:-3]}.1'.format(**locals())
                     pypandoc.convert_file(path, 'man',
                                           outputfile=outfile,
                                           extra_args=['-s'])

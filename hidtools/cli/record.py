@@ -32,7 +32,7 @@ def list_devices():
         if not fname.startswith('hidraw'):
             continue
 
-        with open(f'/dev/{fname}') as f:
+        with open('/dev/{fname}'.format(**locals())) as f:
             d = HidrawDevice(f)
             devices[int(fname[6:])] = d.name
 
@@ -42,18 +42,18 @@ def list_devices():
 
     print('Available devices:', file=outfile)
     for num, name in sorted(devices.items()):
-        print(f'/dev/hidraw{num}:	{name}', file=outfile)
+        print('/dev/hidraw{num}:	{name}'.format(**locals()), file=outfile)
 
     lo = min(devices.keys())
     hi = max(devices.keys())
 
-    print(f'Select the device event number [{lo}-{hi}]: ',
+    print('Select the device event number [{lo}-{hi}]: '.format(**locals()),
           end='', flush=True, file=outfile)
     try:
         num = int(sys.stdin.readline())
         if num < lo or num > hi:
             raise ValueError
-        return f'/dev/hidraw{num}'
+        return '/dev/hidraw{num}'.format(**locals())
     except ValueError:
         print('Invalid device', file=sys.stderr)
         sys.exit(1)
@@ -85,7 +85,7 @@ def main():
         for idx, fd in enumerate(args.device):
             device = HidrawDevice(fd)
             if len(args.device) > 1:
-                print(f'D: {idx}', file=output)
+                print('D: {idx}'.format(**locals()), file=output)
             device.dump(output)
             poll.register(fd, select.POLLIN)
             devices[fd.fileno()] = (idx, device)
@@ -99,7 +99,7 @@ def main():
                 idx, device = devices[fd]
                 device.read_events()
                 if last_index != idx:
-                    print(f'D: {idx}', file=output)
+                    print('D: {idx}'.format(**locals()), file=output)
                     last_index = idx
                 device.dump(output)
 

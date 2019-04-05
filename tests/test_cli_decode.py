@@ -38,7 +38,7 @@ class BaseTest:
                 sourcefile.write(data)
                 sourcefile.seek(0)
                 with tempfile.NamedTemporaryFile(mode='r', delete=True) as outfile:
-                    decode(['hid-decode.test'] + self.cli_args + [f'--output', outfile.name, sourcefile.name])
+                    decode(['hid-decode.test'] + self.cli_args + ['--output'.format(**locals()), outfile.name, sourcefile.name])
                     return outfile.readlines()
 
         @property
@@ -77,21 +77,20 @@ class BaseTest:
 
 
 class TestHidRecording(BaseTest.HidDecodeBase):
-    data = f'''
-R: 67 05 01 09 02 a1 01 09 01 a1 00 05 09 19 01 29 10 15 00 25 01 95 10 75 01 81 02 05 01 16 01 80 26 ff 7f 75 10 95 02 09 30 09 31 81 06 15 81 25 7f 75 08 95 01 09 38 81 06 05 0c 0a 38 02 95 01 81 06 c0 c0
+    data = ''.format(**locals())R: 67 05 01 09 02 a1 01 09 01 a1 00 05 09 19 01 29 10 15 00 25 01 95 10 75 01 81 02 05 01 16 01 80 26 ff 7f 75 10 95 02 09 30 09 31 81 06 15 81 25 7f 75 08 95 01 09 38 81 06 05 0c 0a 38 02 95 01 81 06 c0 c0
 N: Logitech G500s Laser Gaming Mouse
 I: 3 046d c24e
 '''
 
     def test_dump(self):
-        self.assertEqual(self.output[0].strip(), f'0x05, 0x01,                    // Usage Page (Generic Desktop)        0')
-        self.assertEqual(self.output[1].strip(), f'0x09, 0x02,                    // Usage (Mouse)                       2')
+        self.assertEqual(self.output[0].strip(), '0x05, 0x01,                    // Usage Page (Generic Desktop)        0'.format(**locals()))
+        self.assertEqual(self.output[1].strip(), '0x09, 0x02,                    // Usage (Mouse)                       2'.format(**locals()))
         self.assertIn('End Collection', self.output[-1])
         self.assertIn('End Collection', self.output[-2])
 
         bytelist = self.output_to_bytes(self.output)
-        strbytes = " ".join(f'{x:02x}' for x in bytelist)
-        expected = f'R: {len(bytelist)} {strbytes}'
+        strbytes = " ".join('{x:02x}'.format(**locals()) for x in bytelist)
+        expected = 'R: {len(bytelist)} {strbytes}'.format(**locals())
         self.assertEqual(self.data.split('\n')[1], expected)
 
 
@@ -194,7 +193,7 @@ class TestHidrawSysfsReportDescriptor(BaseTest.HidDecodeBase):
         node = self.uhid_device.device_nodes[0]
         self.assertTrue(node.startswith('/dev/input/'))
         node = node[len('/dev/input/'):]
-        sysfs = f'/sys/class/input/{node}/device/device/report_descriptor'
+        sysfs = '/sys/class/input/{node}/device/device/report_descriptor'.format(**locals())
         self.data = open(sysfs, 'rb').read()
 
     def tearDown(self):
@@ -209,7 +208,7 @@ class TestHidrawSysfsReportDescriptor(BaseTest.HidDecodeBase):
         # same as above, but passes the hidraw node into hid-decode
         source = self.uhid_device.hidraw_nodes[0]
         with tempfile.NamedTemporaryFile(mode='r', delete=True) as outfile:
-            decode(['hid-decode.test'] + self.cli_args + [f'--output', outfile.name, source])
+            decode(['hid-decode.test'] + self.cli_args + ['--output'.format(**locals()), outfile.name, source])
             lines = outfile.readlines()
             self.assertEqual(self.rdesc, self.output_to_bytes(lines))
 
@@ -217,7 +216,7 @@ class TestHidrawSysfsReportDescriptor(BaseTest.HidDecodeBase):
         # same as above, but passes the event node into hid-decode
         source = self.uhid_device.device_nodes[0]
         with tempfile.NamedTemporaryFile(mode='r', delete=True) as outfile:
-            decode(['hid-decode.test'] + self.cli_args + [f'--output', outfile.name, source])
+            decode(['hid-decode.test'] + self.cli_args + ['--output'.format(**locals()), outfile.name, source])
             lines = outfile.readlines()
             self.assertEqual(self.rdesc, self.output_to_bytes(lines))
 

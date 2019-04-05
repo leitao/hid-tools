@@ -44,7 +44,7 @@ class UHIDTestDevice(UHIDDevice):
             raise Exception('Please provide at least a rdesc or rdesc_str')
         super().__init__()
         if name is None:
-            name = f'uhid test {self.__class__.__name__}'
+            name = 'uhid test {self.__class__.__name__}'.format(**locals())
         if info is None:
             info = (3, 1, 2)
         self.name = name
@@ -186,23 +186,21 @@ class BaseTestCase:
 
         @classmethod
         def debug_reports(cls, reports, uhdev=None, events=None):
-            data = [' '.join([f'{v:02x}' for v in r]) for r in reports]
+            data = [' '.join(['{v:02x}'.format(**locals()) for v in r]) for r in reports]
 
             if uhdev is not None:
                 human_data = [uhdev.parsed_rdesc.format_report(r, split_lines=True) for r in reports]
                 try:
-                    human_data = [f'\n\t       {" " * h.index("/")}'.join(h.split('\n')) for h in human_data]
-                except ValueError:
+                    human_data = ['\n\t       {" " * h.index("/")}'.format(**locals()).join(h.split(                except ValueError:
                     # '/' not found: not a numbered report
-                    human_data = [f'\n\t      '.join(h.split('\n')) for h in human_data]
-                data = [f'{d}\n\t ====> {h}' for d, h in zip(data, human_data)]
+                    human_data = ['\n\t      '.format(**locals()).join(h.split(                data = ['{d}\n\t ====> {h}'.format(**locals()) for d, h in zip(data, human_data)]
 
             reports = data
 
             if len(reports) == 1:
-                print(f'sending 1 report:')
+                print('sending 1 report:'.format(**locals()))
             else:
-                print(f'sending {len(reports)} reports:')
+                print('sending {len(reports)} reports:'.format(**locals()))
             for report in reports:
                 print('\t', report)
 
@@ -259,14 +257,13 @@ def reload_udev_rules():
 
 def create_udev_rule(uuid):
     os.makedirs('/run/udev/rules.d', exist_ok=True)
-    with open(f'/run/udev/rules.d/91-uhid-test-device-REMOVEME-{uuid}.rules', 'w') as f:
-        f.write('KERNELS=="*input*", ATTRS{name}=="uhid test *", ENV{LIBINPUT_IGNORE_DEVICE}="1"\n')
+    with open('/run/udev/rules.d/91-uhid-test-device-REMOVEME-{uuid}.rules'.format(**locals()),         f.write('KERNELS=="*input*", ATTRS{name}=="uhid test *", ENV{LIBINPUT_IGNORE_DEVICE}="1"\n')
         f.write('KERNELS=="*input*", ATTRS{name}=="uhid test * System Multi Axis", ENV{ID_INPUT_TOUCHSCREEN}="", ENV{ID_INPUT_SYSTEM_MULTIAXIS}="1"\n')
     reload_udev_rules()
 
 
 def teardown_udev_rule(uuid):
-    os.remove(f'/run/udev/rules.d/91-uhid-test-device-REMOVEME-{uuid}.rules')
+    os.remove('/run/udev/rules.d/91-uhid-test-device-REMOVEME-{uuid}.rules'.format(**locals()))
     reload_udev_rules()
 
 

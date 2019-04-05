@@ -410,12 +410,12 @@ class ResolutionMultiplierMouse(TwoWheelMouse):
 
     def set_report(self, req, rnum, rtype, data):
         if rtype != self.UHID_FEATURE_REPORT:
-            raise InvalidHIDCommunication(f'Unexpected report type: {rtype}')
+            raise InvalidHIDCommunication('Unexpected report type: {rtype}'.format(**locals()))
         if rnum != 0x12:
-            raise InvalidHIDCommunication(f'Unexpected report number: {rnum}')
+            raise InvalidHIDCommunication('Unexpected report number: {rnum}'.format(**locals()))
 
         if data != self.set_feature_report:
-            raise InvalidHIDCommunication(f'Unexpected data: {data}, expected {self.set_feature_report}')
+            raise InvalidHIDCommunication('Unexpected data: {data}, expected {self.set_feature_report}'.format(**locals()))
 
         self.wheel_multiplier = 4
 

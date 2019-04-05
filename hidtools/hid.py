@@ -127,7 +127,7 @@ class RangeError(Exception):
 
     def __str__(self):
         min, max = self.range
-        return f'Value {self.value} is outside range {min}, {max} for {self.field.usage_name}'
+        return 'Value {self.value} is outside range {min}, {max} for {self.field.usage_name}'.format(**locals())
 
 
 class _HidRDescItem(object):
@@ -194,7 +194,7 @@ class _HidRDescItem(object):
         try:
             self.item = inv_hid[self.hid]
         except KeyError:
-            error = f'error while parsing {hid:02x}'
+            error = 'error while parsing {hid:02x}'.format(**locals())
             raise KeyError(error)
 
         if self.item in ("Logical Minimum",
@@ -230,14 +230,14 @@ class _HidRDescItem(object):
         return [h] + self.raw_value.copy()
 
     def __repr__(self):
-        data = [f'{i:02x}' for i in self.bytes]
-        return f'{" ".join(data)}'
+        data = ['{i:02x}'.format(**locals()) for i in self.bytes]
+        return '{" ".join(data)}'.format(**locals())
 
     def _get_raw_values(self):
         """The raw values as comma-separated hex numbers"""
         data = str(self)
         # prefix each individual value by "0x" and insert "," in between
-        data = f'0x{data.replace(" ", ", 0x")},'
+        data = '0x{data.replace(" ", ", 0x")},'.format(**locals())
         return data
 
     def get_human_descr(self, indent):
@@ -260,21 +260,21 @@ class _HidRDescItem(object):
                     "Report Size",
                     "Report Count",
                     "Unit Exponent"):
-            descr += f' ({str(value)})'
+            descr += ' ({str(value)})'.format(**locals())
         elif item == "Collection":
-            descr += f' ({INV_COLLECTIONS[value].capitalize()})'
+            descr += ' ({INV_COLLECTIONS[value].capitalize()})'.format(**locals())
             indent += 1
         elif item == "End Collection":
             indent -= 1
         elif item == "Usage Page":
             try:
-                descr += f' ({HUT[value].page_name})'
+                descr += ' ({HUT[value].page_name})'.format(**locals())
             except KeyError:
-                descr += f' (Vendor Usage Page 0x{value:02x})'
+                descr += ' (Vendor Usage Page 0x{value:02x})'.format(**locals())
         elif item == "Usage":
             usage = value | up
             try:
-                descr += f' ({HUT[up >> 16][value]})'
+                descr += ' ({HUT[up >> 16][value]})'.format(**locals())
             except KeyError:
                 if (up >> 16) == HUT.usage_page_from_name('Sensor').page_id:
                     mod = (usage & 0xF000) >> 8
@@ -282,11 +282,11 @@ class _HidRDescItem(object):
                     mod_descr = sensor_mods[mod]
                     page_id = (usage & 0xFF00) >> 16
                     try:
-                        descr += f' ({HUT[page_id][usage & 0xFF]}  | {mod_descr})'
+                        descr += ' ({HUT[page_id][usage & 0xFF]}  | {mod_descr})'.format(**locals())
                     except KeyError:
-                        descr += f' (Unknown Usage 0x{value:02x})'
+                        descr += ' (Unknown Usage 0x{value:02x})'.format(**locals())
                 else:
-                    descr += f' (Vendor Usage 0x{value:02x})'
+                    descr += ' (Vendor Usage 0x{value:02x})'.format(**locals())
         elif item == "Input" \
                 or item == "Output" \
                 or item == "Feature":
@@ -373,7 +373,7 @@ class _HidRDescItem(object):
             size = 4
         hid = header & 0xfc
         if hid == 0:
-            raise ParseError(f'Unexpected HID type 0 in {header:02x}')
+            raise ParseError('Unexpected HID type 0 in {header:02x}'.format(**locals()))
 
         value = 0
         raw_values = []
@@ -532,7 +532,7 @@ class _HidRDescItem(object):
 
         bit_size = 0
         if value is not None:
-            bit_size = len(f'{value + 1:x}') * 4
+            bit_size = len('{value + 1:x}'.format(**locals())) * 4
         else:
             value = 0
         tag = hid_items[hid_type[name]][name]
@@ -577,8 +577,8 @@ class _HidRDescItem(object):
         descr, indent = self.get_human_descr(indent)
 
         descr += "\t" * (int((52 - len(descr)) / 8))
-        # dump_file.write(f'{line}/* {descr} {str(offset)} */\n')
-        dump_file.write(f'\t{line}/* {descr}*/\n')
+        # dump_file.write('{line}/* {descr} {str(offset)} */\n'.format(**locals()))
+        dump_file.write('\t{line}/* {descr}*/\n'.format(**locals()))
         return indent
 
     def dump_rdesc_array(self, indent, dump_file):
@@ -598,7 +598,7 @@ class _HidRDescItem(object):
         descr, indent = self.get_human_descr(indent)
 
         descr += " " * (35 - len(descr))
-        dump_file.write(f'{line} // {descr} {str(offset)}\n')
+        dump_file.write('{line} // {descr} {str(offset)}\n'.format(**locals()))
         return indent
 
     def dump_rdesc_lsusb(self, indent, dump_file):
@@ -612,13 +612,13 @@ class _HidRDescItem(object):
         if item != "End Collection":
             data = " ["
             for v in self.raw_value:
-                data += f' 0x{v & 0xff:02x}'
-            data += f' ] {value}'
-        dump_file.write(f'            Item({hid_type[item]:6s}): {item}, data={data}\n')
+                data += ' 0x{v & 0xff:02x}'.format(**locals())
+            data += ' ] {value}'.format(**locals())
+        dump_file.write('            Item({hid_type[item]:6s}): {item}, data={data}\n'.format(**locals()))
         if item == "Usage":
             try:
                 page_id = up >> 16
-                dump_file.write(f'                 {HUT[page_id][value]}\n')
+                dump_file.write('                 {HUT[page_id][value]}\n'.format(**locals()))
             except KeyError:
                 pass
 
@@ -698,14 +698,14 @@ class HidField(object):
         value = usage & 0x0000FFFF
         if usage_page in HUT:
             if HUT[usage_page].page_name == "Button":
-                name = f'B{str(value)}'
+                name = 'B{str(value)}'.format(**locals())
             else:
                 try:
                     name = HUT[usage_page][value]
                 except KeyError:
-                    name = f'0x{usage:04x}'
+                    name = '0x{usage:04x}'.format(**locals())
         else:
-            name = f'0x{usage:04x}'
+            name = '0x{usage:04x}'.format(**locals())
         return name
 
     @property
@@ -737,7 +737,7 @@ class HidField(object):
             phys = HUT[page_id][value]
         except KeyError:
             try:
-                phys = f'0x{phys:04x}'
+                phys = '0x{phys:04x}'.format(**locals())
             except:
                 pass
         return phys
@@ -791,7 +791,7 @@ class HidField(object):
 
         max = (1 << n) - 1
         if value > max:
-            raise Exception(f'_set_value(): value {value} is larger than size {self.size}')
+            raise Exception('_set_value(): value {value} is larger than size {self.size}'.format(**locals()))
 
         byte_idx = int(start_bit / 8)
         bit_shift = start_bit % 8
@@ -1150,12 +1150,12 @@ class HidReport(object):
         sep = ''
         if self.numbered:
             assert self.report_ID == data[0]
-            output += f'ReportID: {self.report_ID} '
+            output += 'ReportID: {self.report_ID} '.format(**locals())
             sep = '/'
         prev = None
         for report_item in self:
             if report_item.is_const:
-                output += f'{sep} # '
+                output += '{sep} # '.format(**locals())
                 continue
 
             # get the value and consumes bits
@@ -1164,20 +1164,20 @@ class HidReport(object):
             if not report_item.is_array:
                 value_format = "{:d}"
                 if report_item.size > 1:
-                    value_format = f'{{:{str(len(str(1 << report_item.size)) + 1)}d}}'
+                    value_format = '{{:{str(len(str(1 << report_item.size)) + 1)}d}}'.format(**locals())
                 if isinstance(values[0], str):
                     value_format = "{}"
                 if report_item.usage_page_name == 'Button':
                     if report_item.usage_name == 'B1':
                         usage_name = 'Button'
-                        usage = f' {usage_name}:'
+                        usage = ' {usage_name}:'.format(**locals())
                     else:
                         usage_name = ''
                         sep = ''
                         usage = ''
                 else:
                     usage_name = self._fix_xy_usage_for_mt_devices(report_item.usage_name)
-                    usage = f' {usage_name}:'
+                    usage = ' {usage_name}:'.format(**locals())
 
                 # if we don't get a key error this is a duplicate in
                 # this report descriptor and we need a linebreak
@@ -1195,7 +1195,7 @@ class HidReport(object):
                    prev.usage == report_item.usage):
                     sep = ","
                     usage = ""
-                output += f'{sep}{usage} {value_format.format(values[0])} '
+                output += '{sep}{usage} {value_format.format(values[0])} '.format(**locals())
             else:
                 usage_page_name = report_item.usage_page_name
                 if not usage_page_name:
@@ -1210,7 +1210,7 @@ class HidReport(object):
                         if isinstance(values[0], str):
                             usage = v
                         else:
-                            usage = f'{v:02x}'
+                            usage = '{v:02x}'.format(**locals())
                         if ('vendor' not in usage_page_name.lower() and
                            v > 0 and
                            v < len(report_item.usages)):
@@ -1218,7 +1218,7 @@ class HidReport(object):
                             if "no event indicated" in usage.lower():
                                 usage = ''
                         usages.append('\'{usage}\''.format(**locals()))
-                output += f'{sep}{usage_page_name} [{", ".join(usages)}] '
+                output += '{sep}{usage_page_name} [{", ".join(usages)}] '.format(**locals())
             sep = '|'
             prev = report_item
         return output

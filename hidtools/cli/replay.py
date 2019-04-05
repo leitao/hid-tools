@@ -132,8 +132,7 @@ class HIDReplay(object):
     def replay_one_sequence(self):
         count = self.replayed_count
         re = '' if count == 0 else 're'
-        print(f'Hit enter to {re}start replaying the events', end='', flush=True)
-        sys.stdin.readline()
+        print('Hit enter to {re}start replaying the events'.format(**locals()), end=        sys.stdin.readline()
         self.inject_events()
 
         while count == self.replayed_count:

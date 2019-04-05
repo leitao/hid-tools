@@ -36,7 +36,7 @@ class Oops(Exception):
 
 
 def open_sysfs_rdesc(path):
-    logger.debug(f'Reading sysfs file {path}')
+    logger.debug('Reading sysfs file {path}'.format(**locals()))
     with open(path, 'rb') as fd:
         data = fd.read()
         return [hidtools.hid.ReportDescriptor.from_bytes(data)]
@@ -44,14 +44,14 @@ def open_sysfs_rdesc(path):
 
 def open_devnode_rdesc(path):
     if not path.startswith('/dev/input/event'):
-        raise Oops(f'Unexpected event node: {path}')
+        raise Oops('Unexpected event node: {path}'.format(**locals()))
 
     node = path[len('/dev/input/'):]
     # should use pyudev here, but let's keep that for later
-    sysfs = f'/sys/class/input/{node}/device/device/report_descriptor'
+    sysfs = '/sys/class/input/{node}/device/device/report_descriptor'.format(**locals())
 
     if not os.path.exists(sysfs):
-        raise Oops(f'Unable to find report descriptor for {path}, is this a HID device?')
+        raise Oops('Unable to find report descriptor for {path}, is this a HID device?'.format(**locals()))
 
     return open_sysfs_rdesc(sysfs)
 
@@ -68,7 +68,7 @@ def open_binary(path):
     with open(path, 'rb') as fd:
         data = fd.read(4096)
         if b'\0' in data:
-            logger.debug(f'{path} is a binary file')
+            logger.debug('{path} is a binary file'.format(**locals()))
             return [hidtools.hid.ReportDescriptor.from_bytes(data)]
     return None
 
@@ -88,10 +88,10 @@ def interpret_file_hidrecorder(lines):
 
 def open_report_descriptor(path):
     abspath = os.path.abspath(path)
-    logger.debug(f'Processing {abspath}')
+    logger.debug('Processing {abspath}'.format(**locals()))
 
     if os.path.isdir(abspath) or not os.path.exists(abspath):
-        raise Oops(f'Invalid path: {path}')
+        raise Oops('Invalid path: {path}'.format(**locals()))
 
     if re.match('/sys/.*/report_descriptor', abspath):
         return open_sysfs_rdesc(path)
@@ -104,13 +104,13 @@ def open_report_descriptor(path):
         return rdesc
 
     with open(path, 'r') as fd:
-        logger.debug(f'Opening {path} as text file')
+        logger.debug('Opening {path} as text file'.format(**locals()))
         lines = fd.readlines()
         rdesc = interpret_file_hidrecorder(lines)
         if rdesc is not None:
             return rdesc
 
-    raise Oops(f'Unable to detect file type for {path}')
+    raise Oops('Unable to detect file type for {path}'.format(**locals()))
 
 
 def main(argv=sys.argv):
@@ -137,9 +137,9 @@ def main(argv=sys.argv):
     except BrokenPipeError:
         pass
     except PermissionError as e:
-        print(f'{e}', file=sys.stderr)
+        print('{e}'.format(**locals()), file=sys.stderr)
     except Oops as e:
-        print(f'{e}', file=sys.stderr)
+        print('{e}'.format(**locals()), file=sys.stderr)
 
 
 if __name__ == "__main__":
