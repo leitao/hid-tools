@@ -395,7 +395,8 @@ class HidUsageTable(object):
         hut = HidUsageTable()
         for filename in os.listdir(DATA_DIR):
             if filename.endswith('.hut'):
-                with open(os.path.join(DATA_DIR, filename), 'r') as f:
+                with open(os.path.join(DATA_DIR, filename), 'r',
+                          encoding="utf-8") as f:
                     try:
                         usage_page = cls._parse_usages(f)
                         hut[usage_page.page_id] = usage_page
