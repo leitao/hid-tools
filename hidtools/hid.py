@@ -1217,7 +1217,7 @@ class HidReport(object):
                             usage = report_item.get_usage_name(v)
                             if "no event indicated" in usage.lower():
                                 usage = ''
-                        usages.append(f'\'{usage}\'')
+                        usages.append('\'{usage}\''.format(**locals()))
                 output += f'{sep}{usage_page_name} [{", ".join(usages)}] '
             sep = '|'
             prev = report_item
